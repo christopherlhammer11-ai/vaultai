@@ -1,0 +1,31 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VaultAI armored mascot">
+  <defs>
+    <linearGradient id="armor" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f04d4d" />
+      <stop offset="100%" stop-color="#bf1527" />
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#c7c7c7" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="32" fill="#0f0f10" />
+  <g transform="translate(48 32)">
+    <ellipse cx="80" cy="184" rx="56" ry="18" fill="#050505" opacity="0.35" />
+    <g transform="translate(8 8)">
+      <path d="M72 8c-22 0-44 12-44 36v28c0 20 18 36 44 40s44-12 44-32V44c0-24-22-36-44-36z" fill="url(#armor)" stroke="#540910" stroke-width="4" />
+      <path d="M36 42h72v28c0 18-14 28-36 30s-36-12-36-28V42z" fill="#fff" opacity="0.12" />
+      <path d="M44 56h18c2 0 4 2 4 4v10c0 2-2 4-4 4H44c-2 0-4-2-4-4V60c0-2 2-4 4-4zm44 0h18c2 0 4 2 4 4v10c0 2-2 4-4 4h-18c-2 0-4-2-4-4V60c0-2 2-4 4-4z" fill="#0f0f10" />
+      <path d="M62 92h28" stroke="#540910" stroke-width="4" stroke-linecap="round" />
+      <path d="M24 96h96l-10 58c-2 10-10 18-20 18H54c-10 0-18-8-20-18z" fill="url(#metal)" stroke="#555" stroke-width="3" />
+      <rect x="46" y="116" width="60" height="20" rx="8" fill="#0f0f10" opacity="0.25" />
+      <path d="M14 96l-10 40c-2 8 2 16 9 18l15 4" fill="none" stroke="#a7a9ac" stroke-width="4" stroke-linecap="round" />
+      <path d="M134 96l10 40c2 8-2 16-9 18l-15 4" fill="none" stroke="#a7a9ac" stroke-width="4" stroke-linecap="round" />
+      <path d="M32 154l-6 34h24l6-28z" fill="#8f101d" stroke="#290106" stroke-width="3" />
+      <path d="M104 154l6 34H86l-6-28z" fill="#8f101d" stroke="#290106" stroke-width="3" />
+      <path d="M70 0h20l12 16H58z" fill="#540910" />
+      <circle cx="48" cy="60" r="6" fill="#fff" opacity="0.6" />
+      <circle cx="108" cy="60" r="6" fill="#fff" opacity="0.6" />
+    </g>
+  </g>
+</svg>
