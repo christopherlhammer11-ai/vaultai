@@ -4,6 +4,15 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  Activity,
+  FilePlus,
+  FileText,
+  Play,
+  Send,
+  User,
+  Menu
+} from "lucide-react";
 
 type Message = {
   role: "user" | "ai";
@@ -11,25 +20,34 @@ type Message = {
   timestamp: string;
 };
 
-const sidebarActions = [
-  { label: "Status", payload: "vaultai status" },
-  { label: "Load persona", payload: "vaultai load persona" },
-  { label: "Load plan", payload: "vaultai load plan" },
-  { label: "Execute step", payload: "vaultai execute step" },
-  { label: "Write file", payload: "vaultai write file" }
+type SidebarAction = {
+  label: string;
+  payload: string;
+  icon: React.ComponentType<{ size?: number }>;
+};
+
+const sidebarActions: SidebarAction[] = [
+  { label: "Status", payload: "vaultai status", icon: Activity },
+  { label: "Load persona", payload: "vaultai load persona", icon: User },
+  { label: "Load plan", payload: "vaultai load plan", icon: FileText },
+  { label: "Execute step", payload: "vaultai execute step", icon: Play },
+  { label: "Write file", payload: "vaultai write file", icon: FilePlus }
 ];
 
-const formatTime = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const formatTime = () =>
+  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "ai",
-      content: "VaultAI kernel ready. Local memory mounted and encrypted.",
+      content:
+        "VaultAI ready. Load your persona or plan to begin. Type commands or chat naturally.",
       timestamp: formatTime()
     }
   ]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,10 +60,10 @@ export default function Home() {
     setMessages((prev) => [...prev, { role, content, timestamp: formatTime() }]);
   };
 
-  const simulateAiResponse = (inputText: string) => {
+  const mockExecute = (text: string) => {
     appendMessage(
       "ai",
-      `Acknowledged command:\n\n\`\`\`bash\n${inputText}\n\`\`\`\n\nStatus: queued in local executor.`
+      `Acknowledged command:\n\n\`\`\`bash\n${text}\n\`\`\`\n\nStatus: queued in operator console.`
     );
   };
 
@@ -53,34 +71,46 @@ export default function Home() {
     evt.preventDefault();
     if (!input.trim()) return;
     appendMessage("user", input.trim());
-    simulateAiResponse(input.trim());
+    mockExecute(input.trim());
     setInput("");
   };
 
   const handleAction = (payload: string) => {
     appendMessage("user", payload);
-    simulateAiResponse(payload);
+    mockExecute(payload);
   };
 
   return (
     <div className="main-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? "" : "collapsed"}`}>
         <div className="sidebar-logo">
-          <Image src="/vaultai-logo.svg" alt="VaultAI" width={40} height={40} />
+          <Image src="/vaultai-logo.svg" alt="VaultAI" width={44} height={44} />
           <div className="sidebar-title">VAULTAI</div>
         </div>
-        {sidebarActions.map((action, idx) => (
-          <button
-            key={action.label}
-            className={idx === 0 ? "secondary" : undefined}
-            onClick={() => handleAction(action.payload)}
-          >
-            {action.label}
-          </button>
-        ))}
-        <button className="primary" onClick={() => handleAction("vaultai cta run")}>Run command</button>
+        <nav>
+          {sidebarActions.map((action) => (
+            <button key={action.label} onClick={() => handleAction(action.payload)}>
+              <action.icon size={18} />
+              {action.label}
+            </button>
+          ))}
+        </nav>
+        <button className="cta" onClick={() => handleAction("vaultai run now")}> 
+          <Play size={18} /> Run Command
+        </button>
       </aside>
-      <div className="app-content">
+      <main className="app-body">
+        <header className="top-bar">
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <span className="app-name">VAULTAI</span>
+            <span className="status-indicator">
+              <span className="status-dot" /> Healthy
+            </span>
+          </div>
+          <button className="mobile-toggle" onClick={() => setSidebarOpen((prev) => !prev)}>
+            <Menu size={18} />
+          </button>
+        </header>
         <section className="chat-panel">
           <div className="chat-log" ref={logRef}>
             {messages.map((msg, idx) => (
@@ -94,17 +124,20 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <form className="chat-input-bar" onSubmit={handleSubmit}>
-            <input
-              placeholder="Type a command..."
-              value={input}
-              onChange={(evt) => setInput(evt.target.value)}
-            />
-            <button type="submit">Send</button>
-          </form>
+          <div className="chat-input">
+            <form onSubmit={handleSubmit}>
+              <textarea
+                placeholder="Type a command or natural language request..."
+                value={input}
+                onChange={(evt) => setInput(evt.target.value)}
+              />
+              <button type="submit">
+                Send <Send size={18} />
+              </button>
+            </form>
+          </div>
         </section>
-        <div className="footer-tag">VAULTAI</div>
-      </div>
+      </main>
     </div>
   );
 }
