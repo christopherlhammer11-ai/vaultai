@@ -123,7 +123,7 @@ export default function Home() {
     <div className="main-shell">
       <aside className={`sidebar ${sidebarOpen ? "" : "collapsed"}`}>
         <div className="sidebar-logo">
-          <Image src="/vaultai-logo.svg" alt="VaultAI" width={44} height={44} />
+          <Image src="/vaultai-logo.png" alt="VaultAI" width={44} height={44} />
           <div className="sidebar-title">VAULTAI</div>
         </div>
         <nav>
