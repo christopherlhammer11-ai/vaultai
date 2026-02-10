@@ -134,6 +134,61 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="usecases">
+        <div className="section-label">Use Cases</div>
+        <h2>Built for people with something to protect.</h2>
+        <p className="section-subtitle">
+          If your conversations, research, or strategy would hurt you in the wrong hands — VaultAI was built for you.
+        </p>
+        <div className="usecases-grid">
+          {[
+            {
+              label: "Founders & CEOs",
+              headline: "Competitive intel without a paper trail",
+              body:
+                "Research competitors, draft investor decks, plan acquisitions — without your queries living on someone else's server. Your strategy stays yours.",
+              prompt: '"summarize competitor landscape for CBD supplements in the EU"',
+              response: "3 sources analyzed. Report saved locally. ✓"
+            },
+            {
+              label: "Legal & Compliance",
+              headline: "Privileged research stays privileged",
+              body:
+                "Review regulations, draft compliance memos, research case law. Attorney-client privilege doesn't survive a third-party AI server. VaultAI keeps it local.",
+              prompt: '"summarize 2026 FDA guidance on hemp-derived supplements"',
+              response: "4 sources cited. Encrypted to device. ✓"
+            },
+            {
+              label: "Finance & Advisory",
+              headline: "Client data never touches the cloud",
+              body:
+                "Model scenarios, summarize earnings, draft client reports. Fiduciary duty means your clients' data doesn't belong on an AI company's training set.",
+              prompt: '"analyze Q4 portfolio exposure to semiconductor tariffs"',
+              response: "Analysis complete. Stored locally. ✓"
+            },
+            {
+              label: "Operators & Builders",
+              headline: "Your playbook, your machine",
+              body:
+                "Load your persona, your SOPs, your market research. VaultAI remembers how you think and what you're building — without broadcasting it to the world.",
+              prompt: '"load persona and draft distributor outreach for Japan market"',
+              response: "Persona loaded. Draft ready. Encrypted. ✓"
+            }
+          ].map((card) => (
+            <article key={card.label} className="usecase-card">
+              <div className="usecase-label">{card.label}</div>
+              <h3>{card.headline}</h3>
+              <p>{card.body}</p>
+              <div className="usecase-terminal">
+                <div><span className="prompt">vault &gt;</span> {card.prompt}</div>
+                <div className="meta">{card.response}</div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+
       <section id="features" className="features">
         <div className="section-label">What You Get</div>
         <h2>Everything an AI should be. Nothing it shouldn&apos;t.</h2>

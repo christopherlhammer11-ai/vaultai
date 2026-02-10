@@ -751,3 +751,66 @@ section.timeline-section {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.usecases {
+  padding: 0 8vw 140px;
+}
+
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.usecase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.usecase-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.25s ease;
+}
+
+.usecase-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-hover);
+}
+
+.usecase-card:hover::before {
+  background: linear-gradient(90deg, var(--accent-green), transparent);
+}
+
+.usecase-label {
+  font-family: var(--font-jetbrains);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent-green);
+}
+
+.usecase-terminal {
+  margin-top: 18px;
+  background: #080808;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px;
+  font-family: var(--font-jetbrains);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.usecase-terminal .prompt {
+  color: var(--accent-green);
+}
