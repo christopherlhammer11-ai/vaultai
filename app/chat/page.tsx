@@ -50,6 +50,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [liveTimestamp, setLiveTimestamp] = useState("--:--");
   const logRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isUnlocked) {
@@ -73,6 +74,7 @@ export default function ChatPage() {
     if (logRef.current) {
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const persistMessages = async (nextMessages: VaultMessage[]) => {
@@ -219,6 +221,7 @@ export default function ChatPage() {
               {msg.pending && <div className="message-status">Queued…</div>}
             </div>
           ))}
+          <div ref={endRef} />
         </div>
 
         <div className="console-input">
