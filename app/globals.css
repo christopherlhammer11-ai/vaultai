@@ -211,6 +211,11 @@ a:hover {
   animation: fadeUp 0.25s ease;
 }
 
+.message.pending .message-bubble {
+  opacity: 0.7;
+  font-style: italic;
+}
+
 .message-meta {
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -287,6 +292,11 @@ a:hover {
   align-items: center;
   gap: 8px;
   transition: background 0.2s ease;
+}
+
+.chat-input button:disabled {
+  background: #7c4f39;
+  cursor: not-allowed;
 }
 
 .chat-input button:hover {

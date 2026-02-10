@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 
 type Message = {
+  id: string;
   role: "user" | "ai";
   content: string;
   timestamp: string;
+  pending?: boolean;
 };
 
 type SidebarAction = {
@@ -27,27 +29,34 @@ type SidebarAction = {
 };
 
 const sidebarActions: SidebarAction[] = [
-  { label: "Status", payload: "vaultai status", icon: Activity },
-  { label: "Load persona", payload: "vaultai load persona", icon: User },
-  { label: "Load plan", payload: "vaultai load plan", icon: FileText },
-  { label: "Execute step", payload: "vaultai execute step", icon: Play },
-  { label: "Write file", payload: "vaultai write file", icon: FilePlus }
+  { label: "Status", payload: "status", icon: Activity },
+  { label: "Load persona", payload: "load persona", icon: User },
+  { label: "Load plan", payload: "load plan", icon: FileText },
+  { label: "Execute step", payload: "execute step", icon: Play },
+  { label: "Write file", payload: "write file", icon: FilePlus }
 ];
 
 const formatTime = () =>
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+const createMessage = (role: Message["role"], content: string, pending = false): Message => ({
+  id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+  role,
+  content,
+  pending,
+  timestamp: formatTime()
+});
+
 export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "ai",
-      content:
-        "VaultAI ready. Load your persona or plan to begin. Type commands or chat naturally.",
-      timestamp: formatTime()
-    }
+    createMessage(
+      "ai",
+      "VaultAI ready. Load your persona or plan to begin. Type commands or chat naturally."
+    )
   ]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,28 +65,58 @@ export default function Home() {
     }
   }, [messages]);
 
-  const appendMessage = (role: Message["role"], content: string) => {
-    setMessages((prev) => [...prev, { role, content, timestamp: formatTime() }]);
+  const appendMessage = (message: Message) => {
+    setMessages((prev) => [...prev, message]);
   };
 
-  const mockExecute = (text: string) => {
-    appendMessage(
-      "ai",
-      `Acknowledged command:\n\n\`\`\`bash\n${text}\n\`\`\`\n\nStatus: queued in operator console.`
+  const updateMessage = (id: string, content: string, pending = false) => {
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === id ? { ...msg, content, pending } : msg))
     );
+  };
+
+  const sendCommand = async (command: string) => {
+    if (!command.trim()) return;
+    appendMessage(createMessage("user", command));
+    const pendingId = createMessage("ai", "Processing command...", true).id;
+    appendMessage({
+      id: pendingId,
+      role: "ai",
+      content: "Processing command...",
+      timestamp: formatTime(),
+      pending: true
+    });
+    setIsSending(true);
+    try {
+      const response = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command })
+      });
+      const data = await response.json();
+      const reply = data.reply || "No response.";
+      updateMessage(pendingId, reply, false);
+    } catch (error) {
+      updateMessage(
+        pendingId,
+        `Command failed: ${(error as Error).message ?? "unknown error"}`,
+        false
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleSubmit = (evt: React.FormEvent) => {
     evt.preventDefault();
     if (!input.trim()) return;
-    appendMessage("user", input.trim());
-    mockExecute(input.trim());
+    const cmd = input.trim();
     setInput("");
+    sendCommand(cmd);
   };
 
   const handleAction = (payload: string) => {
-    appendMessage("user", payload);
-    mockExecute(payload);
+    sendCommand(payload);
   };
 
   return (
@@ -95,7 +134,7 @@ export default function Home() {
             </button>
           ))}
         </nav>
-        <button className="cta" onClick={() => handleAction("vaultai run now")}> 
+        <button className="cta" onClick={() => handleAction("run latest command")}> 
           <Play size={18} /> Run Command
         </button>
       </aside>
@@ -113,8 +152,8 @@ export default function Home() {
         </header>
         <section className="chat-panel">
           <div className="chat-log" ref={logRef}>
-            {messages.map((msg, idx) => (
-              <article key={idx} className={`message ${msg.role}`}>
+            {messages.map((msg) => (
+              <article key={msg.id} className={`message ${msg.role}${msg.pending ? " pending" : ""}`}>
                 <span className="message-meta">
                   {msg.role === "ai" ? "vaultai" : "you"} · {msg.timestamp}
                 </span>
@@ -130,9 +169,10 @@ export default function Home() {
                 placeholder="Type a command or natural language request..."
                 value={input}
                 onChange={(evt) => setInput(evt.target.value)}
+                disabled={isSending}
               />
-              <button type="submit">
-                Send <Send size={18} />
+              <button type="submit" disabled={isSending}>
+                {isSending ? "Running" : "Send"} <Send size={18} />
               </button>
             </form>
           </div>
