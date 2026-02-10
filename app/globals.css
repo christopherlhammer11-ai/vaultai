@@ -685,6 +685,7 @@ section.timeline-section {
   align-self: flex-start;
   background: #0e130f;
   border-left: 3px solid var(--accent-green);
+  color: var(--accent-green);
 }
 
 .chat-bubble.user {

@@ -2,16 +2,59 @@
 
 import Image from "next/image";
 import { Menu, Send } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useState } from "react";
 
-const sampleMessages = [
-  { id: 1, role: "ai", content: "VaultAI kernel online. Vault mounted." },
-  { id: 2, role: "user", content: "Summarize today's hemp regulation updates." },
-  { id: 3, role: "ai", content: "Pulled 4 sources. Colorado finalized HB-1220, California extended SB512. All notes stored locally." }
-];
+type Message = {
+  id: string;
+  role: "user" | "ai";
+  content: string;
+};
+
+const initialMessage: Message = {
+  id: "welcome",
+  role: "ai",
+  content: "VaultAI ready. Load persona or send a command."
+};
 
 export default function ChatPage() {
-  const [messages] = useState(sampleMessages);
+  const [messages, setMessages] = useState<Message[]>([initialMessage]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const sendMessage = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || sending) return;
+    const userMessage: Message = { id: crypto.randomUUID(), role: "user", content: trimmed };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setSending(true);
+    try {
+      const res = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: trimmed })
+      });
+      const data = await res.json();
+      const reply = data?.reply || "(no response)";
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: "ai", content: reply }
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "ai",
+          content: `Command failed: ${(error as Error).message}`
+        }
+      ]);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="chat-shell">
@@ -40,14 +83,25 @@ export default function ChatPage() {
         <div className="chat-feed">
           {messages.map((msg) => (
             <div key={msg.id} className={`chat-bubble ${msg.role}`}>
-              {msg.content}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
             </div>
           ))}
         </div>
-        <form className="chat-input-bar">
-          <textarea placeholder="Type a command or question..." />
-          <button type="button">
-            Send <Send size={16} />
+        <form
+          className="chat-input-bar"
+          onSubmit={(evt) => {
+            evt.preventDefault();
+            sendMessage();
+          }}
+        >
+          <textarea
+            placeholder="Type a command or question..."
+            value={input}
+            onChange={(evt) => setInput(evt.target.value)}
+            disabled={sending}
+          />
+          <button type="submit" disabled={sending}>
+            {sending ? "Sending" : "Send"} <Send size={16} />
           </button>
         </form>
       </main>
