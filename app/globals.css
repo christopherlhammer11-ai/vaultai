@@ -1348,6 +1348,73 @@ footer .logo-mark { font-size: 0.85rem; }
 }
 
 /* ============================================================
+   Command Palette
+   ============================================================ */
+
+.command-palette-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 120px;
+  animation: fadeIn 0.15s ease;
+}
+
+.command-palette {
+  background: var(--bg-card);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg);
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 255, 136, 0.05);
+  overflow: hidden;
+  animation: scaleIn 0.15s ease;
+}
+
+.command-palette-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 14px 18px;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.command-palette-item:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.command-palette-hint {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-jetbrains);
+}
+
+/* ============================================================
    Old chat styles (legacy, kept for compatibility)
    ============================================================ */
 

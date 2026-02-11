@@ -20,6 +20,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useVault, VaultMessage } from "@/lib/vault-store";
 import { useRouter } from "next/navigation";
 
+type SidebarPanel = "console" | "persona" | "vault" | "commands" | "settings";
+
 const quickCommands = ["status", "vault list", "share all", "summarize", "help"];
 const SEARCH_TRIGGER = /^(?:web\s+)?search\b|^find\b|^latest on\b|^look up\b/i;
 
@@ -51,6 +53,8 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [liveTimestamp, setLiveTimestamp] = useState("--:--");
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [activePanel, setActivePanel] = useState<SidebarPanel>("console");
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -181,27 +185,61 @@ export default function ChatPage() {
     router.replace("/vault");
   };
 
+  const handleExport = () => {
+    const text = messages
+      .filter((m) => !m.pending)
+      .map((m) => `[${messageLabel(m.role)}] ${formatTimestamp(m.timestamp)}\n${m.content}`)
+      .join("\n\n---\n\n");
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vaultai-export-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleClearChat = async () => {
+    if (!confirm("Clear all chat history? This cannot be undone.")) return;
+    await persistMessages([defaultMessage]);
+  };
+
+  // ⌘K / Ctrl+K command palette toggle
+  useEffect(() => {
+    const handler = (evt: KeyboardEvent) => {
+      if ((evt.metaKey || evt.ctrlKey) && evt.key === "k") {
+        evt.preventDefault();
+        setShowCommandPalette((prev) => !prev);
+      }
+      if (evt.key === "Escape") {
+        setShowCommandPalette(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <div className="console-layout">
       <aside className="console-sidebar">
         <div className="sidebar-section">
           <div className="sidebar-label">CONSOLE</div>
-          <button className="sidebar-item active">
+          <button className={`sidebar-item${activePanel === "console" ? " active" : ""}`} onClick={() => setActivePanel("console")}>
             <ChevronRight size={16} /> Operator Console
           </button>
-          <button className="sidebar-item">
+          <button className={`sidebar-item${activePanel === "persona" ? " active" : ""}`} onClick={() => { setActivePanel("persona"); sendCommand("who am I?"); }}>
             <User size={16} /> Persona
           </button>
-          <button className="sidebar-item">
+          <button className={`sidebar-item${activePanel === "vault" ? " active" : ""}`} onClick={() => { setActivePanel("vault"); sendCommand("vault list"); }}>
             <Lock size={16} /> Vault
           </button>
         </div>
         <div className="sidebar-section">
           <div className="sidebar-label">TOOLS</div>
-          <button className="sidebar-item">
+          <button className={`sidebar-item${activePanel === "commands" ? " active" : ""}`} onClick={() => { setActivePanel("commands"); sendCommand("help"); }}>
             <Terminal size={16} /> Commands
           </button>
-          <button className="sidebar-item">
+          <button className={`sidebar-item${activePanel === "settings" ? " active" : ""}`} onClick={() => { setActivePanel("settings"); sendCommand("status"); }}>
             <Settings size={16} /> Settings
           </button>
         </div>
@@ -221,13 +259,13 @@ export default function ChatPage() {
             <div className="live-pill">
               <span className="dot" /> LIVE SESSION
             </div>
-            <button className="topbar-btn">
-              <LayoutGrid size={16} /> <span>Panel</span>
+            <button className="topbar-btn" onClick={handleClearChat} title="Clear chat history">
+              <LayoutGrid size={16} /> <span>Clear</span>
             </button>
-            <button className="topbar-btn">
+            <button className="topbar-btn" onClick={() => setShowCommandPalette(true)} title="Command palette (⌘K)">
               <Command size={16} /> <span>⌘ K</span>
             </button>
-            <button className="topbar-btn">
+            <button className="topbar-btn" onClick={handleExport} title="Export chat as text file">
               <Upload size={16} /> <span>Export</span>
             </button>
           </div>
@@ -254,12 +292,42 @@ export default function ChatPage() {
           </button>
         )}
 
+        {showCommandPalette && (
+          <div className="command-palette-overlay" onClick={() => setShowCommandPalette(false)}>
+            <div className="command-palette" onClick={(e) => e.stopPropagation()}>
+              <div className="command-palette-header">
+                <Command size={16} /> Quick Commands
+              </div>
+              {[
+                { label: "Status", cmd: "status" },
+                { label: "Vault List", cmd: "vault list" },
+                { label: "Help", cmd: "help" },
+                { label: "Summarize", cmd: "summarize" },
+                { label: "Who Am I?", cmd: "who am I?" },
+                { label: "Share All", cmd: "share all" },
+              ].map((item) => (
+                <button
+                  key={item.cmd}
+                  className="command-palette-item"
+                  onClick={() => {
+                    setShowCommandPalette(false);
+                    sendCommand(item.cmd);
+                  }}
+                >
+                  <ChevronRight size={14} /> {item.label}
+                  <span className="command-palette-hint">{item.cmd}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="console-input">
           <div className="input-bar">
-            <button type="button" className="ghost-btn" aria-label="Emoji picker">
+            <button type="button" className="ghost-btn" aria-label="Insert command" onClick={() => setShowCommandPalette(true)}>
               <Smile size={18} />
             </button>
-            <button type="button" className="ghost-btn" aria-label="Voice input">
+            <button type="button" className="ghost-btn" aria-label="Voice input (coming soon)" title="Voice input — coming soon">
               <Mic size={18} />
             </button>
             <textarea
