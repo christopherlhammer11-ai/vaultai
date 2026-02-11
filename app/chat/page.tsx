@@ -1,19 +1,24 @@
 "use client";
 
 import {
+  Calendar,
   ChevronDown,
   ChevronRight,
+  Clock,
   Command,
+  Copy,
   Download,
   FileText,
   FolderOpen,
   LayoutGrid,
+  Link,
   Lock,
   Mic,
   Paperclip,
   Search,
   Send,
   Settings,
+  Share2,
   Smile,
   Terminal,
   Trash2,
@@ -76,6 +81,13 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [showFileVault, setShowFileVault] = useState(false);
+  const [showReportPanel, setShowReportPanel] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [lastReport, setLastReport] = useState<string | null>(null);
+  const [showSharePanel, setShowSharePanel] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareMessages, setShareMessages] = useState<Set<string>>(new Set());
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -293,6 +305,97 @@ export default function ChatPage() {
 
   const vaultFiles = (vaultData?.settings?.files as any[]) || [];
 
+  // --- Scheduled Reports ---
+  const generateReport = async (reportType: "daily" | "weekly") => {
+    setReportLoading(true);
+    setLastReport(null);
+    try {
+      const nonPending = messages.filter((m) => !m.pending && m.role !== "error");
+      const response = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: nonPending,
+          reportType,
+          timeRange: reportType === "daily" ? "today" : "this week",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Report failed");
+      setLastReport(data.report);
+    } catch (error) {
+      setLastReport(`Error: ${(error as Error).message}`);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const downloadReport = () => {
+    if (!lastReport) return;
+    const blob = new Blob([lastReport], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vaultai-report-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // --- Team Sharing ---
+  const toggleShareMessage = (msgId: string) => {
+    setShareMessages((prev) => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  };
+
+  const selectAllForShare = () => {
+    const nonPending = messages.filter((m) => !m.pending && m.id !== "welcome");
+    setShareMessages(new Set(nonPending.map((m) => m.id)));
+  };
+
+  const createShareLink = async () => {
+    if (shareMessages.size === 0) {
+      alert("Select at least one message to share.");
+      return;
+    }
+    setShareLoading(true);
+    setShareUrl(null);
+    try {
+      const selectedMsgs = messages
+        .filter((m) => shareMessages.has(m.id))
+        .map((m) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp,
+        }));
+      const response = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entries: selectedMsgs,
+          expiresIn: 24,
+          sharedBy: "VaultAI User",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Share failed");
+      setShareUrl(data.shareUrl);
+    } catch (error) {
+      alert(`Share failed: ${(error as Error).message}`);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const copyShareUrl = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+    }
+  };
+
   const sendCommand = async (preset?: string) => {
     const text = (preset ?? input).trim();
     if (!text || sending || !isUnlocked) return;
@@ -438,6 +541,15 @@ export default function ChatPage() {
           </button>
         </div>
         <div className="sidebar-section">
+          <div className="sidebar-label">COLLABORATE</div>
+          <button className={`sidebar-item${showReportPanel ? " active" : ""}`} onClick={() => { setShowReportPanel(!showReportPanel); setShowSharePanel(false); }}>
+            <Calendar size={16} /> Reports
+          </button>
+          <button className={`sidebar-item${showSharePanel ? " active" : ""}`} onClick={() => { setShowSharePanel(!showSharePanel); setShowReportPanel(false); }}>
+            <Share2 size={16} /> Share
+          </button>
+        </div>
+        <div className="sidebar-section">
           <div className="sidebar-label">TOOLS</div>
           <button className={`sidebar-item${activePanel === "commands" ? " active" : ""}`} onClick={() => { setActivePanel("commands"); sendCommand("help"); }}>
             <Terminal size={16} /> Commands
@@ -529,6 +641,96 @@ export default function ChatPage() {
           <button className="scroll-indicator" onClick={scrollToBottom} type="button">
             <ChevronDown size={14} /> New messages
           </button>
+        )}
+
+        {showReportPanel && (
+          <div className="file-vault-panel report-panel">
+            <div className="file-vault-header">
+              <Calendar size={16} /> Scheduled Reports
+              <button className="ghost-btn" onClick={() => setShowReportPanel(false)}>&#10005;</button>
+            </div>
+            <div className="report-actions">
+              <button
+                className="report-btn"
+                onClick={() => generateReport("daily")}
+                disabled={reportLoading || messages.length <= 1}
+              >
+                <Clock size={14} /> Daily Digest
+              </button>
+              <button
+                className="report-btn"
+                onClick={() => generateReport("weekly")}
+                disabled={reportLoading || messages.length <= 1}
+              >
+                <Calendar size={14} /> Weekly Summary
+              </button>
+            </div>
+            {reportLoading && (
+              <div className="report-loading">
+                <span className="dot" /> Generating report...
+              </div>
+            )}
+            {lastReport && (
+              <div className="report-content">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{lastReport}</ReactMarkdown>
+                <div className="report-footer">
+                  <button className="ghost-btn" onClick={downloadReport} title="Download report">
+                    <Download size={14} /> Download .md
+                  </button>
+                </div>
+              </div>
+            )}
+            {!reportLoading && !lastReport && (
+              <div className="file-vault-empty">
+                Generate a daily or weekly AI summary of your conversations. Reports analyze topics, decisions, and action items.
+              </div>
+            )}
+          </div>
+        )}
+
+        {showSharePanel && (
+          <div className="file-vault-panel share-panel">
+            <div className="file-vault-header">
+              <Share2 size={16} /> Share Conversation
+              <button className="ghost-btn" onClick={() => { setShowSharePanel(false); setShareUrl(null); setShareMessages(new Set()); }}>&#10005;</button>
+            </div>
+            <div className="share-info">
+              Select messages to share. Links expire in 24 hours.
+            </div>
+            <div className="share-actions">
+              <button className="ghost-btn" onClick={selectAllForShare}>Select All</button>
+              <button className="ghost-btn" onClick={() => setShareMessages(new Set())}>Clear</button>
+              <span className="search-count">{shareMessages.size} selected</span>
+            </div>
+            <div className="share-message-list">
+              {messages.filter((m) => !m.pending && m.id !== "welcome").map((msg) => (
+                <label key={msg.id} className={`share-message-item${shareMessages.has(msg.id) ? " selected" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={shareMessages.has(msg.id)}
+                    onChange={() => toggleShareMessage(msg.id)}
+                  />
+                  <span className="share-msg-role">{messageLabel(msg.role)}</span>
+                  <span className="share-msg-preview">{msg.content.slice(0, 60)}{msg.content.length > 60 ? "..." : ""}</span>
+                </label>
+              ))}
+            </div>
+            <button
+              className="share-create-btn"
+              onClick={createShareLink}
+              disabled={shareLoading || shareMessages.size === 0}
+            >
+              {shareLoading ? "Creating..." : <><Link size={14} /> Create Share Link</>}
+            </button>
+            {shareUrl && (
+              <div className="share-url-box">
+                <code>{shareUrl}</code>
+                <button className="ghost-btn" onClick={copyShareUrl} title="Copy link">
+                  <Copy size={14} />
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         {showFileVault && (

@@ -11,3 +11,4 @@ vault.json
 *.db
 dist-electron/
 .vercel
+.shares/
