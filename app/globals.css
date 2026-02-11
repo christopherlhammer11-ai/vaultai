@@ -1803,6 +1803,256 @@ footer .logo-mark { font-size: 0.85rem; }
 }
 
 /* ============================================================
+   Voice Input (Mic listening state)
+   ============================================================ */
+
+.ghost-btn.listening {
+  color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+  animation: listeningPulse 1s ease-in-out infinite;
+}
+
+@keyframes listeningPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 82, 82, 0); }
+  50% { box-shadow: 0 0 16px rgba(255, 82, 82, 0.4); }
+}
+
+/* ============================================================
+   TTS Button
+   ============================================================ */
+
+.tts-btn {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-sm);
+  font-size: 0.75rem;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.tts-btn:hover {
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.tts-btn.speaking {
+  color: var(--accent);
+  background: var(--accent-subtle);
+  animation: pulse 1.5s infinite;
+}
+
+/* ============================================================
+   Search Bar (Chat)
+   ============================================================ */
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 16px;
+  background: #0d0d0d;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  animation: fadeIn 0.15s ease;
+}
+
+.search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.search-bar input:focus { outline: none; }
+
+.search-bar input::placeholder { color: var(--text-muted); }
+
+.search-bar svg { color: var(--text-muted); flex-shrink: 0; }
+
+.search-count {
+  font-family: var(--font-jetbrains);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Persona Dropdown
+   ============================================================ */
+
+.persona-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 4px 20px;
+}
+
+.persona-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.persona-option:hover {
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.persona-option.active {
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border-left: 2px solid var(--accent);
+}
+
+.persona-desc {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.persona-indicator {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 400;
+}
+
+/* ============================================================
+   File Vault Panel
+   ============================================================ */
+
+.file-vault-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  width: 360px;
+  max-width: 90vw;
+  max-height: 70vh;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleIn 0.15s ease;
+}
+
+.file-vault-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 14px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.file-vault-header .ghost-btn {
+  margin-left: auto;
+}
+
+.file-vault-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin: var(--space-md);
+  padding: var(--space-md);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.file-vault-upload:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.file-vault-empty {
+  padding: var(--space-lg) var(--space-md);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.file-vault-list {
+  overflow-y: auto;
+  padding: 0 var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.file-vault-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all var(--transition-fast);
+}
+
+.file-vault-item:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.file-vault-item > svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.file-vault-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-vault-name {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-vault-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-jetbrains);
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 

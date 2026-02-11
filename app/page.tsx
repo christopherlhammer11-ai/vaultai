@@ -6,14 +6,14 @@ import { useEffect, useState } from "react";
 
 const terminalLines = [
   { text: <><span className="prompt">vault &gt;</span> <span className="command">who am I?</span></>, delay: 0 },
-  { text: <>Loading persona... <span className="success">persona-chris.md</span></>, delay: 0.3 },
+  { text: <>Loading persona... <span className="success">persona-loaded.md</span></>, delay: 0.3 },
   {
     text: (
-      <>You&apos;re Chris. President of Hammer Enterprises. 25 years in cannabis. Building VaultAI.</>
+      <>You&apos;re a founder. 15 years in your industry. Building something that matters.</>
     ),
     delay: 0.6
   },
-  { text: <><span className="prompt">vault &gt;</span> <span className="command">search latest hemp regulations 2026</span></>, delay: 0.9 },
+  { text: <><span className="prompt">vault &gt;</span> <span className="command">search latest compliance updates 2026</span></>, delay: 0.9 },
   { text: <>Searching 4 sources... <span className="success">results encrypted locally ✓</span></>, delay: 1.2 }
 ];
 
@@ -261,7 +261,7 @@ export default function LandingPage() {
               headline: "Competitive intel without a paper trail",
               body:
                 "Research competitors, draft investor decks, plan acquisitions — without your queries living on someone else's server. Your strategy stays yours.",
-              prompt: '"summarize competitor landscape for CBD supplements in the EU"',
+              prompt: '"summarize competitor landscape for health supplements in the EU"',
               response: "3 sources analyzed. Report saved locally. ✓"
             },
             {
@@ -269,7 +269,7 @@ export default function LandingPage() {
               headline: "Privileged research stays privileged",
               body:
                 "Review regulations, draft compliance memos, research case law. Attorney-client privilege doesn't survive a third-party AI server. VaultAI keeps it local.",
-              prompt: '"summarize 2026 FDA guidance on hemp-derived supplements"',
+              prompt: '"summarize 2026 FDA guidance on dietary supplements"',
               response: "4 sources cited. Encrypted to device. ✓"
             },
             {

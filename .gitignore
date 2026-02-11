@@ -10,3 +10,4 @@ yarn-error.log*
 vault.json
 *.db
 dist-electron/
+.vercel
