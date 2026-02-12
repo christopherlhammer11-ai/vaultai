@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const stripe = new Stripe(STRIPE_SECRET, {
+      httpClient: Stripe.createFetchHttpClient(),
       maxNetworkRetries: 3,
       timeout: 20000,
     });
