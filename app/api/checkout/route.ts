@@ -3,7 +3,6 @@ import Stripe from "stripe";
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
 
-// Price IDs — set these in .env.local after creating products in Stripe Dashboard
 const PRICE_MAP: Record<string, string | undefined> = {
   "lite-monthly": process.env.STRIPE_PRICE_LITE_MONTHLY,
   "lite-annual": process.env.STRIPE_PRICE_LITE_ANNUAL,
@@ -14,12 +13,10 @@ const PRICE_MAP: Record<string, string | undefined> = {
 export async function POST(req: NextRequest) {
   if (!STRIPE_SECRET) {
     return NextResponse.json(
-      { error: "Stripe is not configured. Add STRIPE_SECRET_KEY to .env.local" },
+      { error: "STRIPE_SECRET_KEY is missing from environment." },
       { status: 500 }
     );
   }
-
-  const stripe = new Stripe(STRIPE_SECRET);
 
   try {
     const { plan } = await req.json();
@@ -27,29 +24,49 @@ export async function POST(req: NextRequest) {
 
     if (!priceId) {
       return NextResponse.json(
-        { error: `Unknown plan: ${plan}. Valid: ${Object.keys(PRICE_MAP).join(", ")}` },
+        { error: `Unknown plan: ${plan}. Loaded: ${JSON.stringify(Object.fromEntries(Object.entries(PRICE_MAP).map(([k, v]) => [k, v ? "SET" : "MISSING"])))}` },
         { status: 400 }
       );
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const stripe = new Stripe(STRIPE_SECRET, {
+      maxNetworkRetries: 3,
+      timeout: 20000,
+    });
+
+    const origin = req.headers.get("origin") || "https://personalvaultai.com";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: 7,
-      },
+      subscription_data: { trial_period_days: 7 },
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error) {
-    console.error("Stripe checkout error:", error);
+  } catch (error: unknown) {
+    const err = error as Error & { type?: string; statusCode?: number; code?: string };
+    console.error("Stripe error:", err.message, err.type, err.code);
     return NextResponse.json(
-      { error: (error as Error).message || "Checkout failed" },
+      {
+        error: err.message || "Checkout failed",
+        type: err.type || "unknown",
+        code: err.code || "none",
+        keyPrefix: STRIPE_SECRET?.substring(0, 8) || "not set",
+      },
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    status: "checkout api running",
+    secretKeySet: !!STRIPE_SECRET,
+    secretKeyPrefix: STRIPE_SECRET ? STRIPE_SECRET.substring(0, 8) + "..." : "NOT SET",
+    priceIds: Object.fromEntries(
+      Object.entries(PRICE_MAP).map(([k, v]) => [k, v ? v.substring(0, 12) + "..." : "MISSING"])
+    ),
+  });
 }
