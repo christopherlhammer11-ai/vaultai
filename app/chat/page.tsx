@@ -24,8 +24,10 @@ import {
   Trash2,
   Upload,
   User,
+  UserCheck,
   Users,
-  Volume2
+  Volume2,
+  X
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -88,6 +90,9 @@ export default function ChatPage() {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareMessages, setShareMessages] = useState<Set<string>>(new Set());
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: "", role: "", industry: "", context: "" });
+  const [showProfilePanel, setShowProfilePanel] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,6 +150,40 @@ export default function ChatPage() {
       ...prev,
       chatHistory: nextMessages
     }));
+  };
+
+  // --- Onboarding / Profile ---
+  useEffect(() => {
+    if (!isUnlocked || !vaultData) return;
+    const profile = vaultData.settings?.profile as any;
+    if (!profile) {
+      setShowOnboarding(true);
+    } else {
+      setProfileForm({
+        name: profile.name || "",
+        role: profile.role || "",
+        industry: profile.industry || "",
+        context: profile.context || "",
+      });
+    }
+  }, [isUnlocked, vaultData]);
+
+  const saveProfile = async (dismiss?: boolean) => {
+    const { name, role, industry, context } = profileForm;
+    if (!name.trim() && !dismiss) return;
+    await updateVaultData((prev) => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        profile: { name: name.trim(), role: role.trim(), industry: industry.trim(), context: context.trim(), updatedAt: new Date().toISOString() },
+      },
+    }));
+    setShowOnboarding(false);
+    setShowProfilePanel(false);
+    if (name.trim() && !dismiss) {
+      const intro = `The user just set up their profile: Name: ${name.trim()}${role.trim() ? `, Role: ${role.trim()}` : ""}${industry.trim() ? `, Industry: ${industry.trim()}` : ""}${context.trim() ? `. Additional context: ${context.trim()}` : ""}. Welcome them briefly.`;
+      sendCommand(intro);
+    }
   };
 
   // --- Voice Input ---
@@ -425,7 +464,7 @@ export default function ChatPage() {
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: text, persona: activePersona })
+        body: JSON.stringify({ command: text, persona: activePersona, userProfile: (vaultData?.settings?.profile as any) || null })
       });
       const data = await response.json();
       const replyText = data?.reply || data?.response || "(no response)";
@@ -515,6 +554,9 @@ export default function ChatPage() {
           <div className="sidebar-label">CONSOLE</div>
           <button className={`sidebar-item${activePanel === "console" ? " active" : ""}`} onClick={() => setActivePanel("console")}>
             <ChevronRight size={16} /> Operator Console
+          </button>
+          <button className={`sidebar-item${showProfilePanel ? " active" : ""}`} onClick={() => { setShowProfilePanel(!showProfilePanel); }}>
+            <UserCheck size={16} /> Profile
           </button>
           <button className={`sidebar-item${activePanel === "persona" ? " active" : ""}`} onClick={() => { setActivePanel("persona"); sendCommand("who am I?"); }}>
             <User size={16} /> Persona
@@ -788,6 +830,98 @@ export default function ChatPage() {
                   <span className="command-palette-hint">{item.cmd}</span>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Onboarding Modal */}
+        {showOnboarding && (
+          <div className="onboarding-overlay">
+            <div className="onboarding-modal">
+              <div className="onboarding-header">
+                <UserCheck size={20} />
+                <h3>Welcome to VaultAI</h3>
+                <button className="ghost-btn" onClick={() => { setShowOnboarding(false); saveProfile(true); }} title="Skip">
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="onboarding-subtitle">Tell me a little about yourself so I can personalize your experience. Everything stays encrypted in your vault.</p>
+              <div className="onboarding-form">
+                <label>
+                  <span>Your name</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Alex"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))}
+                    autoFocus
+                  />
+                </label>
+                <label>
+                  <span>Your role</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Founder, Engineer, Designer"
+                    value={profileForm.role}
+                    onChange={(e) => setProfileForm((p) => ({ ...p, role: e.target.value }))}
+                  />
+                </label>
+                <label>
+                  <span>Industry</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. SaaS, Healthcare, Finance"
+                    value={profileForm.industry}
+                    onChange={(e) => setProfileForm((p) => ({ ...p, industry: e.target.value }))}
+                  />
+                </label>
+                <label>
+                  <span>Anything else I should know?</span>
+                  <textarea
+                    placeholder="e.g. I prefer concise answers, I'm building a startup, I work with sensitive data..."
+                    value={profileForm.context}
+                    onChange={(e) => setProfileForm((p) => ({ ...p, context: e.target.value }))}
+                    rows={3}
+                  />
+                </label>
+              </div>
+              <div className="onboarding-actions">
+                <button className="ghost-btn" onClick={() => { setShowOnboarding(false); saveProfile(true); }}>Skip for now</button>
+                <button className="share-create-btn" onClick={() => saveProfile()} disabled={!profileForm.name.trim()}>
+                  <UserCheck size={14} /> Save & Start
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profile Edit Panel */}
+        {showProfilePanel && !showOnboarding && (
+          <div className="file-vault-panel" style={{ width: 380 }}>
+            <div className="file-vault-header">
+              <UserCheck size={16} /> Your Profile
+              <button className="ghost-btn" onClick={() => setShowProfilePanel(false)}>&#10005;</button>
+            </div>
+            <div className="onboarding-form" style={{ padding: "16px" }}>
+              <label>
+                <span>Name</span>
+                <input type="text" value={profileForm.name} onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))} />
+              </label>
+              <label>
+                <span>Role</span>
+                <input type="text" value={profileForm.role} onChange={(e) => setProfileForm((p) => ({ ...p, role: e.target.value }))} />
+              </label>
+              <label>
+                <span>Industry</span>
+                <input type="text" value={profileForm.industry} onChange={(e) => setProfileForm((p) => ({ ...p, industry: e.target.value }))} />
+              </label>
+              <label>
+                <span>Context</span>
+                <textarea value={profileForm.context} onChange={(e) => setProfileForm((p) => ({ ...p, context: e.target.value }))} rows={3} />
+              </label>
+              <button className="share-create-btn" onClick={() => saveProfile()} style={{ marginTop: 8 }}>
+                <UserCheck size={14} /> Save Profile
+              </button>
             </div>
           </div>
         )}

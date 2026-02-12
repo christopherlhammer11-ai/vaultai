@@ -159,11 +159,21 @@ async function callGateway(prompt: string): Promise<string> {
   }
 }
 
-async function routeToLLM(prompt: string, options?: { context?: string }) {
+async function routeToLLM(prompt: string, options?: { context?: string; userProfile?: { name?: string; role?: string; industry?: string; context?: string } | null }) {
   const persona = await loadPersonaText();
+  let profileSnippet = "";
+  if (options?.userProfile) {
+    const p = options.userProfile;
+    const parts: string[] = [];
+    if (p.name) parts.push(`Name: ${p.name}`);
+    if (p.role) parts.push(`Role: ${p.role}`);
+    if (p.industry) parts.push(`Industry: ${p.industry}`);
+    if (p.context) parts.push(`Notes: ${p.context}`);
+    if (parts.length > 0) profileSnippet = `\n\nUser Profile:\n${parts.join("\n")}`;
+  }
   const systemPrompt = persona
-    ? `Persona:\n${persona}\n\nYou are VaultAI, a local-first encrypted operator assistant. Be direct, cite actions, and keep data local.`
-    : "You are VaultAI, a local-first operator assistant. Be concise and actionable.";
+    ? `Persona:\n${persona}${profileSnippet}\n\nYou are VaultAI, a local-first encrypted operator assistant. Be direct, cite actions, and keep data local.`
+    : `You are VaultAI, a local-first operator assistant. Be concise and actionable.${profileSnippet}`;
 
   const userPrompt = options?.context ? `${options.context}\n\n${prompt}` : prompt;
 
@@ -256,7 +266,7 @@ function formatBraveResults(results: BraveResult[]) {
 }
 
 export async function POST(req: Request) {
-  const { command } = await req.json();
+  const { command, userProfile } = await req.json();
   if (!command || typeof command !== "string") {
     return NextResponse.json({ response: "No command received." }, { status: 400 });
   }
@@ -274,7 +284,7 @@ export async function POST(req: Request) {
       const context = `Use these web results to answer accurately and cite sources with markdown links like [1](URL):\n${formattedResults}\n\nEach citation should refer to the corresponding URL. Query: ${searchQuery}`;
       const reply = await routeToLLM(
         `Provide a concise answer to: ${searchQuery}. Mention the freshness of info if possible and cite sources inline.`,
-        { context }
+        { context, userProfile }
       );
       return NextResponse.json({ response: reply });
     }
@@ -304,7 +314,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ response: plan });
     }
 
-    const reply = await routeToLLM(normalized);
+    const reply = await routeToLLM(normalized, { userProfile });
     return NextResponse.json({ response: reply });
   } catch (error) {
     const message = (error as Error).message;
