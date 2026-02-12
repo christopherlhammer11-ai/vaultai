@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       { error: "STRIPE_SECRET_KEY is missing from environment." },
       { status: 500 }
     );
-  }
+  } 
 
   try {
     const { plan } = await req.json();
