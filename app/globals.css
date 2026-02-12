@@ -1588,43 +1588,19 @@ footer .logo-mark { font-size: 0.85rem; }
 }
 
 /* Email Capture */
-.email-capture {
-  display: flex;
-  gap: var(--space-sm);
-  max-width: 500px;
-  margin: var(--space-lg) auto 0;
-}
-
-.email-capture input {
-  flex: 1;
-  padding: 12px 18px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  transition: all var(--transition-fast);
-}
-
-.email-capture input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
-}
-
-.email-capture input::placeholder {
+.contact-line {
   color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: var(--space-lg);
 }
 
-.email-capture input:disabled {
-  opacity: 0.6;
-}
-
-.email-success {
+.contact-line a {
   color: var(--accent);
-  font-size: 0.85rem;
-  margin-top: var(--space-sm);
-  font-family: var(--font-jetbrains);
+  text-decoration: none;
+}
+
+.contact-line a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 700px) {

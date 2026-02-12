@@ -119,8 +119,6 @@ const plans = [
 export default function LandingPage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
-  const [email, setEmail] = useState('');
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [mobileUrl, setMobileUrl] = useState<string | null>(null);
 
@@ -157,20 +155,6 @@ export default function LandingPage() {
     }
   };
 
-  const handleEmailSubmit = async (evt: React.FormEvent) => {
-    evt.preventDefault();
-    if (!email.trim() || emailStatus === 'sending') return;
-    setEmailStatus('sending');
-    try {
-      const existing = JSON.parse(localStorage.getItem('vaultai_waitlist') || '[]');
-      existing.push({ email: email.trim(), timestamp: new Date().toISOString() });
-      localStorage.setItem('vaultai_waitlist', JSON.stringify(existing));
-      setEmailStatus('sent');
-      setEmail('');
-    } catch {
-      setEmailStatus('error');
-    }
-  };
 
   return (
     <div className="page-wrapper">
@@ -473,28 +457,13 @@ export default function LandingPage() {
         <div className="final-cta-card">
           <h2>Ready to own your AI?</h2>
           <p className="section-subtitle">
-            Start your 7-day free trial or join the waitlist for updates.
+            Start your 7-day free trial. Your data stays yours.
           </p>
           <div className="cta-buttons">
             <a href="#pricing" className="btn-primary">Start Free Trial</a>
             <a href="https://github.com/christopherlhammer11-ai/vaultai" target="_blank" rel="noreferrer" className="btn-secondary">View on GitHub</a>
           </div>
-          <form className="email-capture" onSubmit={handleEmailSubmit}>
-            <input
-              type="email"
-              placeholder="Enter your email for updates"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={emailStatus === 'sending' || emailStatus === 'sent'}
-            />
-            <button type="submit" className="btn-primary" disabled={emailStatus === 'sending' || emailStatus === 'sent'}>
-              {emailStatus === 'sent' ? 'Subscribed ✓' : emailStatus === 'sending' ? 'Joining...' : 'Join Waitlist'}
-            </button>
-          </form>
-          {emailStatus === 'sent' && (
-            <p className="email-success">You&apos;re on the list. We&apos;ll be in touch.</p>
-          )}
+          <p className="contact-line">Questions? Reach us at <a href="mailto:info@personalvaultai.com">info@personalvaultai.com</a></p>
         </div>
       </section>
 
@@ -502,7 +471,7 @@ export default function LandingPage() {
         <div className="logo-mark">
           <Lock size={16} /> VaultAI
         </div>
-        <div>Your data stays yours.</div>
+        <div>Your data stays yours. &middot; <a href="mailto:info@personalvaultai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@personalvaultai.com</a></div>
       </footer>
     </div>
   );

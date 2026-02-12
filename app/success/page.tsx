@@ -100,7 +100,7 @@ function SuccessContent() {
       </div>
 
       <div className="success-footer">
-        <p>Questions? Reach us at <strong>support@personalvaultai.com</strong></p>
+        <p>Questions? Reach us at <strong>info@personalvaultai.com</strong></p>
         <Link href="/" className="success-home-link">Back to Home</Link>
       </div>
     </div>
