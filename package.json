@@ -68,6 +68,7 @@
     ],
     "mac": {
       "target": "dmg",
+      "artifactName": "VaultAI.${ext}",
       "icon": "public/vaultai-logo.png",
       "category": "public.app-category.productivity"
     },

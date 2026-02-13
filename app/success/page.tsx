@@ -55,7 +55,7 @@ function SuccessContent() {
             <div className="download-card-icon"><Monitor size={28} /></div>
             <h3>Desktop App</h3>
             <p>Full offline capability with local AI. Your data never leaves your machine.</p>
-            <a href="https://github.com/christopherlhammer11-ai/vaultai/releases/latest/download/VaultAI-0.1.0-arm64.dmg" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/christopherlhammer11-ai/vaultai/releases/latest/download/VaultAI.dmg" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer">
               <Download size={16} /> Download for Mac
             </a>
             <span className="download-meta">macOS 12+ · Apple Silicon & Intel</span>
