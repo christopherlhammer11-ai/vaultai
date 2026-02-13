@@ -50,6 +50,7 @@
   "build": {
     "appId": "com.vaultai.app",
     "productName": "VaultAI",
+    "asar": false,
     "directories": {
       "output": "dist-electron"
     },

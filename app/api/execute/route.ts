@@ -150,6 +150,14 @@ async function callAnthropic(systemPrompt: string, prompt: string) {
 }
 
 async function callGateway(prompt: string): Promise<string> {
+  // Skip CLI gateway in serverless environments (it doesn't exist there)
+  const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+  if (isServerless) {
+    throw new Error(
+      "No LLM provider configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in your environment variables."
+    );
+  }
+
   try {
     const escaped = prompt.replace(/'/g, "'\\''");
     const { stdout } = await execAsync(
@@ -332,6 +340,7 @@ export async function POST(req: Request) {
       "Add BRAVE_API_KEY to .env.local",
       "Access denied: file reads are restricted to ~/.vaultai/",
       "Provide a file path after 'read file'.",
+      "No LLM provider configured",
     ];
     const friendly = SAFE_ERRORS.find((e) => message.includes(e)) || "Something went wrong. Please try again.";
     return NextResponse.json({ error: friendly }, { status: 500 });

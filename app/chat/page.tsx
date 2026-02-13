@@ -68,7 +68,7 @@ export default function ChatPage() {
         const res = await fetch("/api/health", { signal: AbortSignal.timeout(5000) });
         const data = await res.json();
         if (!mounted) return;
-        setGatewayStatus(data.status === "ready" ? "connected" : "connecting");
+        setGatewayStatus(data.status === "ready" ? "connected" : data.status === "no_provider" ? "offline" : "connecting");
       } catch {
         if (mounted) setGatewayStatus("offline");
       }
