@@ -7,6 +7,9 @@ import fs from "fs/promises";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 
+// Allow longer execution for LLM calls on Vercel (default 10s is too short)
+export const maxDuration = 30;
+
 const execAsync = promisify(exec);
 const personaPath = path.join(os.homedir(), ".vaultai", "persona.md");
 const planPath = path.join(os.homedir(), ".vaultai", "plan.md");
@@ -123,8 +126,12 @@ async function callOllama(systemPrompt: string, prompt: string) {
 
 async function callOpenAI(systemPrompt: string, prompt: string) {
   const openaiClient = getOpenAIClient();
-  if (!openaiClient) return null;
+  if (!openaiClient) {
+    console.log("[execute] OpenAI client not created — no API key");
+    return null;
+  }
   try {
+    console.log("[execute] Calling OpenAI...");
     const response = await openaiClient.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       messages: [
@@ -132,7 +139,14 @@ async function callOpenAI(systemPrompt: string, prompt: string) {
         { role: "user", content: prompt }
       ]
     });
-    return response.choices?.[0]?.message?.content?.trim() || null;
+    const content = response.choices?.[0]?.message?.content?.trim();
+    if (!content) {
+      lastLLMError = "OpenAI returned empty response";
+      console.error("[execute] OpenAI returned empty content");
+      return null;
+    }
+    console.log("[execute] OpenAI success");
+    return content;
   } catch (error) {
     lastLLMError = `OpenAI: ${(error as Error).message}`;
     console.error("OpenAI call failed, falling back:", (error as Error).message);
