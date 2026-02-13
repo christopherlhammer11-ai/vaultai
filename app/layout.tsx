@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Outfit, JetBrains_Mono } from "next/font/google";
 import { VaultProvider } from "@/lib/vault-store";
+import { SubscriptionProvider } from "@/lib/subscription-store";
 import Script from "next/script";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -38,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${jetbrains.variable}`}>
-        <VaultProvider>{children}</VaultProvider>
+        <SubscriptionProvider>
+          <VaultProvider>{children}</VaultProvider>
+        </SubscriptionProvider>
         <Script
           id="sw-register"
           strategy="afterInteractive"

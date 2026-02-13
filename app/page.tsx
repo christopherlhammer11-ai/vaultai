@@ -309,7 +309,7 @@ export default function LandingPage() {
         <div className="section-label">Pricing</div>
         <h2>7 days free. Cancel anytime.</h2>
         <p className="section-subtitle">
-          Try VaultAI for a full week. No credit card to start. Your data never leaves your device — even if you cancel.
+          Try VaultAI free for 7 days. Cancel anytime — no questions asked. Your data never leaves your device, even if you cancel.
         </p>
 
         <div className="billing-toggle">
@@ -444,12 +444,24 @@ export default function LandingPage() {
 
       <section className="openclaw">
         <div className="section-label">Under The Hood</div>
-        <h2>Built with OpenClaw.</h2>
-        <div className="openclaw-card">
-          VaultAI was built from the ground up using OpenClaw — an AI-native development environment that turns natural
-          language into production code. The entire UI, architecture, and deployment pipeline were generated, iterated,
-          and shipped through OpenClaw&apos;s agentic workflow. This isn&apos;t a mockup. It&apos;s a real product built by an operator
-          who described what he needed and let the machine build it.
+        <h2>Powered by OpenClaw.</h2>
+        <p className="section-subtitle">
+          VaultAI is built on a fork of OpenClaw — an open-source agentic AI framework.
+          That means VaultAI inherits a battle-tested runtime for LLM routing, tool execution,
+          and plugin management, while adding AES-256 encryption and local-first storage as a core layer.
+        </p>
+        <div className="openclaw-pills">
+          {[
+            { label: "MULTI-MODEL", desc: "Switch between OpenAI, Anthropic, Google, or local LLMs" },
+            { label: "PLUGIN READY", desc: "32+ skills with a growing open-source ecosystem" },
+            { label: "SELF-HOSTABLE", desc: "Deploy on your own infrastructure — no cloud required" },
+            { label: "AUDITABLE", desc: "Open-source runtime. Inspect every line." },
+          ].map((pill) => (
+            <div key={pill.label} className="openclaw-pill">
+              <span className="openclaw-pill-label">{pill.label}</span>
+              <span>{pill.desc}</span>
+            </div>
+          ))}
         </div>
       </section>
 

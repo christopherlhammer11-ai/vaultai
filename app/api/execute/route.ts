@@ -8,8 +8,8 @@ import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 
 const execAsync = promisify(exec);
-const personaPath = path.join(os.homedir(), "vault", "persona-chris.md");
-const planPath = path.join(os.homedir(), "vault", "vaultai-plan.md");
+const personaPath = path.join(os.homedir(), ".vaultai", "persona.md");
+const planPath = path.join(os.homedir(), ".vaultai", "plan.md");
 const vaultJsonPath = path.join(process.cwd(), "vault.json");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -123,7 +123,7 @@ async function callAnthropic(systemPrompt: string, prompt: string) {
   if (!anthropicClient) return null;
   try {
     const response = await anthropicClient.messages.create({
-      model: process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20240620",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
       max_tokens: 800,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }]
@@ -177,7 +177,6 @@ async function routeToLLM(prompt: string, options?: { context?: string; userProf
 
   const userPrompt = options?.context ? `${options.context}\n\n${prompt}` : prompt;
 
-  // Local-first: try Ollama, then cloud APIs, then OpenClaw gateway
   const reply =
     (await callOllama(systemPrompt, userPrompt)) ??
     (await callOpenAI(systemPrompt, userPrompt)) ??
@@ -185,7 +184,6 @@ async function routeToLLM(prompt: string, options?: { context?: string; userProf
 
   if (reply) return reply;
 
-  // Last resort: route through OpenClaw gateway
   return await callGateway(userPrompt);
 }
 

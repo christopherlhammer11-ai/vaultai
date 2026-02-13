@@ -3,7 +3,7 @@
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { useVault } from "@/lib/vault-store";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 
 function getPasswordStrength(pw: string): "weak" | "medium" | "strong" {
   if (!pw || pw.length < 6) return "weak";
@@ -18,6 +18,9 @@ function getPasswordStrength(pw: string): "weak" | "medium" | "strong" {
   return "weak";
 }
 
+const MAX_ATTEMPTS = 5;
+const COOLDOWN_MS = 30000;
+
 export default function VaultPage() {
   const { hasVault, isUnlocked, initializeVault, unlockVault, clearVault } = useVault();
   const router = useRouter();
@@ -27,9 +30,32 @@ export default function VaultPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const attemptsRef = useRef(0);
   const mode: "create" | "unlock" = hasVault ? "unlock" : "create";
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      attemptsRef.current = parseInt(sessionStorage.getItem("vault_attempts") || "0", 10);
+      const lockUntil = parseInt(sessionStorage.getItem("vault_lock_until") || "0", 10);
+      if (lockUntil > Date.now()) {
+        setCooldownRemaining(lockUntil - Date.now());
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownRemaining((prev) => {
+        if (prev <= 1000) return 0;
+        return prev - 1000;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownRemaining]);
 
   useEffect(() => {
     if (isUnlocked) {
@@ -39,6 +65,10 @@ export default function VaultPage() {
 
   const handleSubmit = async () => {
     setError(null);
+    if (cooldownRemaining > 0) {
+      setError(`Too many attempts. Wait ${Math.ceil(cooldownRemaining / 1000)}s.`);
+      return;
+    }
     if (mode === "create" && password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -54,9 +84,27 @@ export default function VaultPage() {
       } else {
         await unlockVault(password);
       }
+      attemptsRef.current = 0;
+      sessionStorage.removeItem("vault_attempts");
+      sessionStorage.removeItem("vault_lock_until");
       router.replace("/chat");
     } catch (err) {
-      setError((err as Error).message || "Unable to unlock vault.");
+      if (mode === "unlock") {
+        attemptsRef.current += 1;
+        sessionStorage.setItem("vault_attempts", String(attemptsRef.current));
+        if (attemptsRef.current >= MAX_ATTEMPTS) {
+          const lockUntil = Date.now() + COOLDOWN_MS;
+          sessionStorage.setItem("vault_lock_until", String(lockUntil));
+          setCooldownRemaining(COOLDOWN_MS);
+          attemptsRef.current = 0;
+          sessionStorage.setItem("vault_attempts", "0");
+          setError(`Too many failed attempts. Locked for ${COOLDOWN_MS / 1000}s.`);
+        } else {
+          setError(`${(err as Error).message}. ${MAX_ATTEMPTS - attemptsRef.current} attempts remaining.`);
+        }
+      } else {
+        setError((err as Error).message || "Unable to create vault.");
+      }
     } finally {
       setLoading(false);
       setPassword("");
@@ -150,8 +198,14 @@ export default function VaultPage() {
           {error && <p className="vault-error">{error}</p>}
         </div>
 
-        <button className="vault-submit" onClick={handleSubmit} disabled={loading}>
-          {loading ? "Processing..." : mode === "create" ? "Create Vault" : "Unlock"}
+        <button className="vault-submit" onClick={handleSubmit} disabled={loading || cooldownRemaining > 0}>
+          {cooldownRemaining > 0
+            ? `Locked (${Math.ceil(cooldownRemaining / 1000)}s)`
+            : loading
+              ? "Processing..."
+              : mode === "create"
+                ? "Create Vault"
+                : "Unlock"}
         </button>
 
         {mode === "unlock" && (

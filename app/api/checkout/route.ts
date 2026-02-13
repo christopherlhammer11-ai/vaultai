@@ -10,21 +10,30 @@ const PRICE_MAP: Record<string, string | undefined> = {
   "premium-annual": process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
 };
 
+const VALID_PLANS = new Set(Object.keys(PRICE_MAP));
+
 export async function POST(req: NextRequest) {
   if (!STRIPE_SECRET) {
     return NextResponse.json(
-      { error: "STRIPE_SECRET_KEY is missing from environment." },
+      { error: "Payment system is not configured." },
       { status: 500 }
     );
   }
 
   try {
     const { plan } = await req.json();
-    const priceId = PRICE_MAP[plan];
 
+    if (!plan || !VALID_PLANS.has(plan)) {
+      return NextResponse.json(
+        { error: "Invalid plan selected." },
+        { status: 400 }
+      );
+    }
+
+    const priceId = PRICE_MAP[plan];
     if (!priceId) {
       return NextResponse.json(
-        { error: `Unknown plan: ${plan}. Loaded: ${JSON.stringify(Object.fromEntries(Object.entries(PRICE_MAP).map(([k, v]) => [k, v ? "SET" : "MISSING"])))}` },
+        { error: "This plan is not available yet." },
         { status: 400 }
       );
     }
@@ -41,21 +50,16 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: { trial_period_days: 7 },
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${encodeURIComponent(plan)}`,
       cancel_url: `${origin}/#pricing`,
     });
 
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
-    const err = error as Error & { type?: string; statusCode?: number; code?: string };
-    console.error("Stripe error:", err.message, err.type, err.code);
+    const err = error as Error;
+    console.error("Stripe checkout error:", err.message);
     return NextResponse.json(
-      {
-        error: err.message || "Checkout failed",
-        type: err.type || "unknown",
-        code: err.code || "none",
-        keyPrefix: STRIPE_SECRET?.substring(0, 8) || "not set",
-      },
+      { error: "Unable to create checkout session. Please try again." },
       { status: 500 }
     );
   }
@@ -63,12 +67,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    status: "checkout api running",
-    secretKeySet: !!STRIPE_SECRET,
-    secretKeyPrefix: STRIPE_SECRET ? STRIPE_SECRET.substring(0, 8) + "..." : "NOT SET",
-    priceIds: Object.fromEntries(
-      Object.entries(PRICE_MAP).map(([k, v]) => [k, v ? v.substring(0, 12) + "..." : "MISSING"])
-    ),
+    status: "checkout api active",
+    configured: !!STRIPE_SECRET,
   });
 }
-  

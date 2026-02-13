@@ -48,7 +48,7 @@
     "typescript": "^5.4.2"
   },
   "build": {
-    "appId": "ai.vaultai.app",
+    "appId": "com.vaultai.app",
     "productName": "VaultAI",
     "directories": {
       "output": "dist-electron"
