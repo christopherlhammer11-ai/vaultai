@@ -123,6 +123,7 @@ async function callOpenAI(systemPrompt: string, prompt: string) {
     });
     return response.choices?.[0]?.message?.content?.trim() || null;
   } catch (error) {
+    lastLLMError = `OpenAI: ${(error as Error).message}`;
     console.error("OpenAI call failed, falling back:", (error as Error).message);
     return null;
   }
@@ -144,17 +145,22 @@ async function callAnthropic(systemPrompt: string, prompt: string) {
         .trim() || null
     );
   } catch (error) {
+    lastLLMError = `Anthropic: ${(error as Error).message}`;
     console.error("Anthropic call failed, falling back:", (error as Error).message);
     return null;
   }
 }
 
+// Track the last LLM error for better diagnostics in serverless
+let lastLLMError: string | null = null;
+
 async function callGateway(prompt: string): Promise<string> {
   // Skip CLI gateway in serverless environments (it doesn't exist there)
   const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
   if (isServerless) {
+    const detail = lastLLMError ? ` Last error: ${lastLLMError}` : "";
     throw new Error(
-      "No LLM provider configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in your environment variables."
+      `No LLM provider responded.${detail} Check that your API key is valid.`
     );
   }
 
@@ -341,6 +347,7 @@ export async function POST(req: Request) {
       "Access denied: file reads are restricted to ~/.vaultai/",
       "Provide a file path after 'read file'.",
       "No LLM provider configured",
+      "No LLM provider responded",
     ];
     const friendly = SAFE_ERRORS.find((e) => message.includes(e)) || "Something went wrong. Please try again.";
     return NextResponse.json({ error: friendly }, { status: 500 });
