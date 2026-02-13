@@ -91,22 +91,28 @@ async function startGateway() {
     return;
   }
 
-  console.log(`[vaultai] Starting OpenClaw gateway on port ${GATEWAY_PORT}...`);
-  gatewayProcess = spawn("openclaw", ["--profile", GATEWAY_PROFILE, "gateway", "--port", String(GATEWAY_PORT)], {
-    cwd: ROOT,
-    stdio: "pipe",
-    env: { ...process.env, FORCE_COLOR: "0" },
-  });
+  try {
+    console.log(`[vaultai] Starting OpenClaw gateway on port ${GATEWAY_PORT}...`);
+    gatewayProcess = spawn("openclaw", ["--profile", GATEWAY_PROFILE, "gateway", "--port", String(GATEWAY_PORT)], {
+      cwd: ROOT,
+      stdio: "pipe",
+      env: { ...process.env, FORCE_COLOR: "0" },
+    });
 
-  gatewayProcess.stdout?.on("data", (d) => console.log(`[gateway] ${d.toString().trim()}`));
-  gatewayProcess.stderr?.on("data", (d) => console.error(`[gateway] ${d.toString().trim()}`));
-  gatewayProcess.on("exit", (code) => {
-    console.log(`[gateway] exited with code ${code}`);
+    gatewayProcess.stdout?.on("data", (d) => console.log(`[gateway] ${d.toString().trim()}`));
+    gatewayProcess.stderr?.on("data", (d) => console.error(`[gateway] ${d.toString().trim()}`));
+    gatewayProcess.on("exit", (code) => {
+      console.log(`[gateway] exited with code ${code}`);
+      gatewayProcess = null;
+    });
+
+    await waitForPort(GATEWAY_PORT);
+    console.log("[vaultai] Gateway ready.");
+  } catch (err) {
+    console.warn("[vaultai] Gateway failed to start (optional):", err.message);
+    console.warn("[vaultai] App will still work with cloud LLM providers.");
     gatewayProcess = null;
-  });
-
-  await waitForPort(GATEWAY_PORT);
-  console.log("[vaultai] Gateway ready.");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +127,14 @@ async function startNext() {
 
   const cmd = IS_DEV ? "dev" : "start";
   console.log(`[vaultai] Starting Next.js (${cmd}) on port ${NEXT_PORT}...`);
-  nextProcess = spawn("npx", ["next", cmd, "-p", String(NEXT_PORT)], {
+  // Use node_modules/.bin/next directly — npx may not be on PATH in packaged app
+  const nextBin = IS_DEV
+    ? "npx"
+    : path.join(ROOT, "node_modules", ".bin", "next");
+  const nextArgs = IS_DEV
+    ? ["next", cmd, "-p", String(NEXT_PORT)]
+    : [cmd, "-p", String(NEXT_PORT)];
+  nextProcess = spawn(nextBin, nextArgs, {
     cwd: ROOT,
     stdio: "pipe",
     env: { ...process.env, PORT: String(NEXT_PORT) },
@@ -173,11 +186,18 @@ function createWindow() {
 // ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
+let appReady = false;
+
+async function ensureServersAndCreateWindow() {
+  await startGateway();
+  await startNext();
+  appReady = true;
+  createWindow();
+}
+
 app.whenReady().then(async () => {
   try {
-    await startGateway();
-    await startNext();
-    createWindow();
+    await ensureServersAndCreateWindow();
   } catch (err) {
     console.error("[vaultai] Startup failed:", err);
     app.quit();
@@ -188,8 +208,18 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+app.on("activate", async () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    if (!appReady) {
+      try {
+        await ensureServersAndCreateWindow();
+      } catch (err) {
+        console.error("[vaultai] Re-launch failed:", err);
+      }
+    } else {
+      createWindow();
+    }
+  }
 });
 
 app.on("before-quit", () => {
