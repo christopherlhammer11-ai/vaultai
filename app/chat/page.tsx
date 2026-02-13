@@ -18,7 +18,7 @@ const PROMPT_PILLS = [
 
 export default function ChatPage() {
   const router = useRouter();
-  const { lockVault } = useVault();
+  const { lockVault, vaultData, updateVaultData, isUnlocked } = useVault();
   const { subscription, messageCount, canSendMessage, incrementMessageCount, isFeatureAvailable } = useSubscription();
   const [messages, setMessages] = useState<VaultMessage[]>([]);
   const [input, setInput] = useState("");
@@ -31,6 +31,31 @@ export default function ChatPage() {
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
+
+  // Load persisted chat history from encrypted vault on unlock
+  const historyLoadedRef = useRef(false);
+  useEffect(() => {
+    if (isUnlocked && vaultData?.chatHistory?.length && !historyLoadedRef.current) {
+      historyLoadedRef.current = true;
+      setMessages(vaultData.chatHistory);
+    }
+  }, [isUnlocked, vaultData]);
+
+  // Persist chat history to encrypted vault whenever messages change (skip pending/empty)
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!isUnlocked || messages.length === 0) return;
+    // Debounce persistence to avoid encrypting on every keystroke
+    if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+    persistTimeoutRef.current = setTimeout(() => {
+      const completed = messages.filter(m => !m.pending);
+      if (completed.length === 0) return;
+      updateVaultData(prev => ({ ...prev, chatHistory: completed })).catch(() => {
+        // Vault may be locked during navigation — silently ignore
+      });
+    }, 500);
+    return () => { if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current); };
+  }, [messages, isUnlocked, updateVaultData]);
 
   // Derived from React state — no hydration mismatch (Bug 8 fix)
   const freeLeft = FREE_MESSAGE_LIMIT - messageCount;

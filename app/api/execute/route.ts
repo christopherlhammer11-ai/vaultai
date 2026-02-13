@@ -47,10 +47,19 @@ async function runStatus() {
   return lines.join("\n");
 }
 
-function sanitizePath(raw: string) {
+const SAFE_BASE_DIR = path.join(os.homedir(), ".vaultai");
+
+function sanitizePath(raw: string): string {
   const trimmed = raw.replace(/^['" ]+|['" ]+$/g, "");
-  if (path.isAbsolute(trimmed)) return trimmed;
-  return path.join(process.cwd(), trimmed);
+  // Resolve relative paths against the safe directory
+  const resolved = path.isAbsolute(trimmed)
+    ? path.resolve(trimmed)
+    : path.resolve(SAFE_BASE_DIR, trimmed);
+  // Block path traversal — resolved path must stay inside ~/.vaultai/
+  if (!resolved.startsWith(SAFE_BASE_DIR + path.sep) && resolved !== SAFE_BASE_DIR) {
+    throw new Error("Access denied: file reads are restricted to ~/.vaultai/");
+  }
+  return resolved;
 }
 
 
@@ -316,11 +325,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ response: reply });
   } catch (error) {
     const message = (error as Error).message;
-    const friendly = message.includes("Search timed out")
-      ? "Search timed out"
-      : message === "Add BRAVE_API_KEY to .env.local"
-        ? message
-        : `Error: ${message}`;
-    return NextResponse.json({ response: friendly }, { status: 500 });
+    console.error("[execute] Error:", message);
+    // Only surface safe, known error messages to the client
+    const SAFE_ERRORS = [
+      "Search timed out",
+      "Add BRAVE_API_KEY to .env.local",
+      "Access denied: file reads are restricted to ~/.vaultai/",
+      "Provide a file path after 'read file'.",
+    ];
+    const friendly = SAFE_ERRORS.find((e) => message.includes(e)) || "Something went wrong. Please try again.";
+    return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }
