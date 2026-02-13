@@ -12,14 +12,20 @@ const personaPath = path.join(os.homedir(), ".vaultai", "persona.md");
 const planPath = path.join(os.homedir(), ".vaultai", "plan.md");
 const vaultJsonPath = path.join(process.cwd(), "vault.json");
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "phi3";
 
-const openaiClient = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
-const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
+// Read API keys at request time to support serverless env injection
+function getOpenAIClient() {
+  const key = process.env.OPENAI_API_KEY;
+  return key ? new OpenAI({ apiKey: key }) : null;
+}
+
+function getAnthropicClient() {
+  const key = process.env.ANTHROPIC_API_KEY;
+  return key ? new Anthropic({ apiKey: key }) : null;
+}
 
 let cachedPersona = "";
 
@@ -112,6 +118,7 @@ async function callOllama(systemPrompt: string, prompt: string) {
 }
 
 async function callOpenAI(systemPrompt: string, prompt: string) {
+  const openaiClient = getOpenAIClient();
   if (!openaiClient) return null;
   try {
     const response = await openaiClient.chat.completions.create({
@@ -130,6 +137,7 @@ async function callOpenAI(systemPrompt: string, prompt: string) {
 }
 
 async function callAnthropic(systemPrompt: string, prompt: string) {
+  const anthropicClient = getAnthropicClient();
   if (!anthropicClient) return null;
   try {
     const response = await anthropicClient.messages.create({
