@@ -551,8 +551,8 @@ export default function ChatPage() {
       const res = await fetch("/api/execute", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:fullText,persona:"operator",agentSystemPrompt:currentAgent?.systemPrompt})});
       const data = await res.json();
       if (!res.ok) {
-        showError(`Gateway error: ${data.response || data.error || "Unknown error"}`);
-        setMessages(prev => prev.map(m => m.id===pid ? {...m,role:"error",content:data.response || data.error || "Request failed",pending:false} : m));
+        showError(`Gateway error: ${data.response || data.error || t.error_unknown}`);
+        setMessages(prev => prev.map(m => m.id===pid ? {...m,role:"error",content:data.response || data.error || t.error_request_failed,pending:false} : m));
         return;
       }
       // Handle credit exhaustion
@@ -622,7 +622,7 @@ export default function ChatPage() {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         audioChunksRef.current = [];
         if (audioBlob.size < 500) return;
-        setInput("Transcribing...");
+        setInput(t.chat_transcribing);
         try {
           const formData = new FormData();
           const ext = mimeType.includes("mp4") ? "mp4" : "webm";
@@ -633,11 +633,11 @@ export default function ChatPage() {
             setInput(data.text);
             setTimeout(() => inputRef.current?.focus(), 50);
           } else {
-            showError(data.error || "Transcription failed");
+            showError(data.error || t.error_transcription_failed);
             setInput("");
           }
         } catch (err) {
-          showError("Transcription error: " + String(err));
+          showError(t.error_transcription_error + ": " + String(err));
           setInput("");
         }
       };
@@ -678,12 +678,12 @@ export default function ChatPage() {
       formData.append("file", file);
       const res = await fetch("/api/pdf-parse", { method: "POST", body: formData });
       const data = await res.json();
-      if (!res.ok) { showError(data.error || "Failed to parse PDF."); return; }
+      if (!res.ok) { showError(data.error || t.error_pdf_parse_failed); return; }
       setUploadedPdf({ name: file.name, text: data.text });
-      setInput(prev => prev || "Summarize this PDF");
+      setInput(prev => prev || t.chat_summarize_pdf);
       inputRef.current?.focus();
     } catch (err) {
-      showError("Failed to upload PDF: " + String(err));
+      showError(t.error_pdf_upload_failed + ": " + String(err));
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -697,8 +697,8 @@ export default function ChatPage() {
     const uid = Date.now().toString();
     const pid = String(Date.now()+1);
     setMessages(prev => [...prev,
-      {id:uid,role:"user",content:"Generate a report from this conversation",timestamp:ts},
-      {id:pid,role:"ai",content:"Generating report...",timestamp:ts,pending:true}
+      {id:uid,role:"user",content:t.chat_generate_report,timestamp:ts},
+      {id:pid,role:"ai",content:t.chat_generating_report,timestamp:ts,pending:true}
     ]);
     try {
       const completed = messages.filter(m => !m.pending && m.role !== "error");
@@ -710,7 +710,7 @@ export default function ChatPage() {
       if (res.ok && data.report) {
         setMessages(prev => prev.map(m => m.id===pid ? {...m,content:data.report,pending:false,timestamp:new Date().toISOString()} : m));
       } else {
-        setMessages(prev => prev.map(m => m.id===pid ? {...m,role:"error",content:data.error || "Report generation failed",pending:false} : m));
+        setMessages(prev => prev.map(m => m.id===pid ? {...m,role:"error",content:data.error || t.error_report_failed,pending:false} : m));
       }
     } catch(e) {
       setMessages(prev => prev.map(m => m.id===pid ? {...m,role:"error",content:String(e),pending:false} : m));
@@ -787,11 +787,11 @@ export default function ChatPage() {
         {/* Conversation list */}
         <div className="sidebar-section" style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <div className="sidebar-label" style={{ marginBottom: 0 }}>CHATS</div>
+            <div className="sidebar-label" style={{ marginBottom: 0 }}>{t.sidebar_chats}</div>
             <button
               className="ghost-btn"
               onClick={() => setShowNewGroup(true)}
-              title="New group"
+              title={t.sidebar_new_group}
               style={{ padding: 2 }}
             >
               <FolderPlus size={14} />
@@ -804,7 +804,7 @@ export default function ChatPage() {
               <input
                 autoFocus
                 type="text"
-                placeholder="Group name..."
+                placeholder={t.sidebar_group_placeholder}
                 value={newGroupName}
                 onChange={e => setNewGroupName(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") createGroup(); if (e.key === "Escape") setShowNewGroup(false); }}
@@ -980,12 +980,12 @@ export default function ChatPage() {
                 }}>{item.icon} {item.label}</button>
               ))}
               <div style={{ height: 8 }} />
-              <div className="sidebar-label">TOOLS</div>
+              <div className="sidebar-label">{t.sidebar_tools_label}</div>
               <button className="sidebar-item" onClick={() => sendCommand("status")}><Settings size={14} /> {t.sidebar_system_status}</button>
               <button className="sidebar-item" onClick={() => sendCommand("Tell me about myself")}><User size={14} /> {t.sidebar_my_persona}</button>
               <button className="sidebar-item" onClick={handleGenerateReport}><BarChart3 size={14} /> {t.sidebar_generate_report}</button>
               <button className="sidebar-item" onClick={handleShare}><Share2 size={14} /> {t.sidebar_share_chat}</button>
-              <button className="sidebar-item" onClick={handleExportChat}><Download size={14} /> Export Chat</button>
+              <button className="sidebar-item" onClick={handleExportChat}><Download size={14} /> {t.sidebar_export_chat}</button>
               <button className="sidebar-item" onClick={handleUpload}><Paperclip size={14} /> {t.sidebar_upload_pdf}</button>
               <button className="sidebar-item" onClick={() => setShowApiKeyModal(true)}><Key size={14} /> {t.sidebar_api_keys}</button>
             </>
@@ -993,7 +993,7 @@ export default function ChatPage() {
 
           {sidebarSection === "agents" && (
             <>
-              <div className="sidebar-label">AGENTS</div>
+              <div className="sidebar-label">{t.sidebar_agents_label}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 320, overflowY: "auto" }}>
                 {[...BUILT_IN_AGENTS, ...customAgents].map(agent => (
                   <div
@@ -1043,10 +1043,10 @@ export default function ChatPage() {
                 onClick={() => setShowCreateAgent(true)}
                 style={{ marginTop: 8, color: "var(--accent)", fontSize: "0.78rem" }}
               >
-                <Plus size={14} /> Create Custom Agent
+                <Plus size={14} /> {t.sidebar_create_agent}
               </button>
               <div style={{ marginTop: 12, padding: "8px 10px", background: "var(--bg-tertiary)", borderRadius: 8, fontSize: "0.7rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                <strong style={{ color: "var(--text-secondary)" }}>How agents work:</strong> Each agent has specialized knowledge and style. Switch agents anytime — your conversation history stays. The agent shapes how VaultAI responds, not what it can access.
+                <strong style={{ color: "var(--text-secondary)" }}>{t.sidebar_agents_help_title}</strong> {t.sidebar_agents_help_text}
               </div>
             </>
           )}
@@ -1293,11 +1293,11 @@ export default function ChatPage() {
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                   <Lock size={36} strokeWidth={1.5} style={{ color: "var(--accent)", marginBottom: 12 }} />
                   <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 6px" }}>
-                    Welcome to VaultAI Premium
+                    {t.apikeys_welcome_title}
                   </h2>
                   <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
-                    One quick step — connect your AI providers so everything works.
-                    <br />Your keys are encrypted locally and never leave this device.
+                    {t.apikeys_welcome_subtitle}
+                    <br />{t.apikeys_welcome_keys_note}
                   </p>
                 </div>
               )}
@@ -1380,7 +1380,7 @@ export default function ChatPage() {
               <div style={{display:"flex",gap:12,marginTop:18}}>
                 <button className="share-create-btn" onClick={handleSaveApiKeys} style={{flex:1, padding: needsApiKeys ? "12px 0" : undefined, fontSize: needsApiKeys ? "0.95rem" : undefined}}
                   disabled={!apiKeys.openai.trim() && !apiKeys.anthropic.trim() && !apiKeys.gemini.trim() && !apiKeys.groq.trim() && !apiKeys.mistral.trim() && !apiKeys.deepseek.trim()}>
-                  {needsApiKeys ? "Connect & Get Started" : t.apikeys_save}
+                  {needsApiKeys ? t.apikeys_connect_start : t.apikeys_save}
                 </button>
                 {!needsApiKeys && (
                   <button className="ghost-btn" onClick={() => setShowApiKeyModal(false)} style={{flex:1}}>
@@ -1396,7 +1396,7 @@ export default function ChatPage() {
                     color: "var(--text-secondary)", fontSize: "0.75rem", cursor: "pointer", textDecoration: "underline",
                   }}
                 >
-                  skip for now — I'll add keys later
+                  {t.apikeys_skip_later}
                 </button>
               )}
               <p style={{fontSize:"0.7rem",color:"var(--text-secondary)",marginTop:12,textAlign:"center"}}>
@@ -1428,19 +1428,19 @@ export default function ChatPage() {
             <div className="onboarding-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
               <div className="onboarding-header">
                 <Bot size={20} />
-                <h3>Create Custom Agent</h3>
+                <h3>{t.agent_create_title}</h3>
                 <button className="ghost-btn" onClick={() => setShowCreateAgent(false)}><X size={16} /></button>
               </div>
               <p className="onboarding-subtitle" style={{ marginBottom: 16 }}>
-                Build a specialized agent for your workflow. It will use your persona and vault context.
+                {t.agent_create_subtitle}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>
-                    Agent Name <span style={{ color: "var(--accent)", fontSize: "0.7rem" }}>(required)</span>
+                    {t.agent_name_label} <span style={{ color: "var(--accent)", fontSize: "0.7rem" }}>{t.agent_required}</span>
                   </label>
                   <input
-                    type="text" placeholder="e.g. Deal Reviewer, Content Strategist..."
+                    type="text" placeholder={t.agent_name_placeholder}
                     value={newAgent.name}
                     onChange={e => setNewAgent(prev => ({ ...prev, name: e.target.value }))}
                     style={{ width: "100%", padding: "10px 12px", background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", color: "var(--text-primary)", fontSize: "0.85rem" }}
@@ -1448,10 +1448,10 @@ export default function ChatPage() {
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>
-                    Tagline
+                    {t.agent_tagline_label}
                   </label>
                   <input
-                    type="text" placeholder="Short description shown in sidebar..."
+                    type="text" placeholder={t.agent_tagline_placeholder}
                     value={newAgent.tagline}
                     onChange={e => setNewAgent(prev => ({ ...prev, tagline: e.target.value }))}
                     style={{ width: "100%", padding: "10px 12px", background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", color: "var(--text-primary)", fontSize: "0.85rem" }}
@@ -1459,10 +1459,10 @@ export default function ChatPage() {
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>
-                    Expertise <span style={{ color: "var(--accent)", fontSize: "0.7rem" }}>(required)</span>
+                    {t.agent_expertise_label} <span style={{ color: "var(--accent)", fontSize: "0.7rem" }}>{t.agent_required}</span>
                   </label>
                   <textarea
-                    placeholder="What this agent specializes in... e.g. 'M&A deal evaluation, term sheet analysis, due diligence checklists'"
+                    placeholder={t.agent_expertise_placeholder}
                     value={newAgent.expertise}
                     onChange={e => setNewAgent(prev => ({ ...prev, expertise: e.target.value }))}
                     rows={2}
@@ -1471,10 +1471,10 @@ export default function ChatPage() {
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>
-                    Personality
+                    {t.agent_personality_label}
                   </label>
                   <input
-                    type="text" placeholder="e.g. Direct and analytical, casual and creative..."
+                    type="text" placeholder={t.agent_personality_placeholder}
                     value={newAgent.personality}
                     onChange={e => setNewAgent(prev => ({ ...prev, personality: e.target.value }))}
                     style={{ width: "100%", padding: "10px 12px", background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", color: "var(--text-primary)", fontSize: "0.85rem" }}
@@ -1482,10 +1482,10 @@ export default function ChatPage() {
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>
-                    Special Instructions
+                    {t.agent_instructions_label}
                   </label>
                   <textarea
-                    placeholder="Any specific rules or behaviors... e.g. 'Always ask clarifying questions before giving advice' or 'Use bullet points for every response'"
+                    placeholder={t.agent_instructions_placeholder}
                     value={newAgent.instructions}
                     onChange={e => setNewAgent(prev => ({ ...prev, instructions: e.target.value }))}
                     rows={2}
@@ -1495,7 +1495,7 @@ export default function ChatPage() {
                 {/* Icon + Color picker */}
                 <div style={{ display: "flex", gap: 16 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>Icon</label>
+                    <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>{t.agent_icon_label}</label>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {CUSTOM_AGENT_ICONS.map(iconName => (
                         <button
@@ -1514,7 +1514,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>Color</label>
+                    <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4, fontWeight: 600 }}>{t.agent_color_label}</label>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {CUSTOM_AGENT_COLORS.map(c => (
                         <button
@@ -1537,10 +1537,10 @@ export default function ChatPage() {
                   disabled={!newAgent.name.trim() || !newAgent.expertise.trim()}
                   style={{ flex: 1 }}
                 >
-                  Create Agent
+                  {t.agent_create_btn}
                 </button>
                 <button className="ghost-btn" onClick={() => setShowCreateAgent(false)} style={{ flex: 1 }}>
-                  Cancel
+                  {t.agent_cancel}
                 </button>
               </div>
             </div>
@@ -1566,7 +1566,7 @@ export default function ChatPage() {
           )}
           <div className="input-bar">
             <button type="button" className={`ghost-btn${isListening ? " listening" : ""}`}
-              onClick={handleVoice} title={isListening ? "Stop recording" : "Voice input (Whisper)"}
+              onClick={handleVoice} title={isListening ? t.voice_stop : t.voice_start}
               style={isListening ? { color: "var(--danger)", animation: "pulse 1s infinite" } : undefined}>
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
             </button>
@@ -1591,13 +1591,13 @@ export default function ChatPage() {
                       marginLeft: 12,
                       color: computeUnits.remaining <= 50 ? "var(--danger, #ff4444)" : "var(--text-secondary)",
                     }}>
-                      {computeUnits.remaining} units
-                      {computeUnits.remaining <= 50 && computeUnits.remaining > 0 && " — running low"}
-                      {computeUnits.remaining <= 0 && " — add key or get more"}
+                      {computeUnits.remaining} {t.compute_units}
+                      {computeUnits.remaining <= 50 && computeUnits.remaining > 0 && ` — ${t.compute_running_low}`}
+                      {computeUnits.remaining <= 0 && ` — ${t.compute_add_key}`}
                     </span>
                   )}
                   {computeUnits?.usingOwnKey && (
-                    <span style={{ marginLeft: 12, color: "var(--text-secondary)" }}>own key</span>
+                    <span style={{ marginLeft: 12, color: "var(--text-secondary)" }}>{t.compute_own_key}</span>
                   )}
                 </>
               : subscription.active
