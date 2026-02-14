@@ -1,8 +1,9 @@
 'use client';
 
-import { Check, Lock, Menu, Smartphone, X } from "lucide-react";
+import { Check, Globe, Lock, Menu, Smartphone, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useI18n, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 
 const terminalLines = [
   { text: <><span className="prompt">vault &gt;</span> <span className="command">who am I?</span></>, delay: 0 },
@@ -146,6 +147,20 @@ export default function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [mobileUrl, setMobileUrl] = useState<string | null>(null);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+  const { t, locale, setLocale } = useI18n();
+
+  // Close language picker on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Desktop app: skip marketing page, go straight to vault
   useEffect(() => {
@@ -226,16 +241,56 @@ export default function LandingPage() {
           VaultAI
         </a>
         <ul>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#agents">Agents</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#how">How It Works</a></li>
-          <li><a href="#why">Why Vault</a></li>
+          <li><a href="#features">{t.site_nav_features}</a></li>
+          <li><a href="#agents">{t.site_nav_agents}</a></li>
+          <li><a href="#pricing">{t.site_nav_pricing}</a></li>
+          <li><a href="#how">{t.site_nav_how}</a></li>
+          <li><a href="#why">{t.site_nav_why}</a></li>
         </ul>
+        <div className="lang-picker" ref={langRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setLangOpen(!langOpen)}
+            aria-label="Change language"
+            style={{
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8, padding: '6px 10px', color: 'var(--text-secondary)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+              fontSize: '0.8rem', transition: 'border-color 0.2s',
+            }}
+          >
+            <Globe size={14} /> {LOCALE_LABELS[locale]}
+          </button>
+          {langOpen && (
+            <div style={{
+              position: 'absolute', top: '110%', right: 0, background: 'rgba(20,20,20,0.95)',
+              backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 10, padding: 6, zIndex: 1000, minWidth: 140,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            }}>
+              {(Object.keys(LOCALE_LABELS) as Locale[]).map(loc => (
+                <button
+                  key={loc}
+                  onClick={() => { setLocale(loc); setLangOpen(false); }}
+                  style={{
+                    display: 'block', width: '100%', padding: '7px 12px',
+                    background: loc === locale ? 'rgba(0,255,136,0.1)' : 'transparent',
+                    border: 'none', color: loc === locale ? 'var(--accent)' : 'var(--text-secondary)',
+                    fontSize: '0.8rem', textAlign: 'left', borderRadius: 6, cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { if (loc !== locale) (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
+                  onMouseLeave={e => { if (loc !== locale) (e.target as HTMLElement).style.background = 'transparent'; }}
+                >
+                  {LOCALE_LABELS[loc]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button className="nav-hamburger" onClick={() => setMobileNavOpen(true)} aria-label="Open menu">
           <Menu size={20} />
         </button>
-        <a href="#pricing" className="btn-primary">Start Free Trial</a>
+        <a href="#pricing" className="btn-primary">{t.site_cta}</a>
       </nav>
 
       {mobileNavOpen && (
@@ -245,31 +300,31 @@ export default function LandingPage() {
             <button className="mobile-nav-close" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
               <X size={24} />
             </button>
-            <a href="#features" onClick={() => setMobileNavOpen(false)}>Features</a>
-            <a href="#agents" onClick={() => setMobileNavOpen(false)}>Agents</a>
-            <a href="#pricing" onClick={() => setMobileNavOpen(false)}>Pricing</a>
-            <a href="#how" onClick={() => setMobileNavOpen(false)}>How It Works</a>
-            <a href="#why" onClick={() => setMobileNavOpen(false)}>Why Vault</a>
-            <a href="#pricing" className="btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileNavOpen(false)}>Start Free Trial</a>
+            <a href="#features" onClick={() => setMobileNavOpen(false)}>{t.site_nav_features}</a>
+            <a href="#agents" onClick={() => setMobileNavOpen(false)}>{t.site_nav_agents}</a>
+            <a href="#pricing" onClick={() => setMobileNavOpen(false)}>{t.site_nav_pricing}</a>
+            <a href="#how" onClick={() => setMobileNavOpen(false)}>{t.site_nav_how}</a>
+            <a href="#why" onClick={() => setMobileNavOpen(false)}>{t.site_nav_why}</a>
+            <a href="#pricing" className="btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileNavOpen(false)}>{t.site_cta}</a>
           </div>
         </>
       )}
 
       <main className="hero">
         <div className="badge">
-          <span className="badge-dot" /> ENCRYPTED · LOCAL-FIRST · OPERATOR-GRADE
+          <span className="badge-dot" /> {t.site_hero_badge}
         </div>
         <h1>
-          <span className="gradient">Your AI.</span><br />
-          Your Data.<br />
-          <span className="gradient">Your Rules.</span>
+          <span className="gradient">{t.site_hero_h1_1}</span><br />
+          {t.site_hero_h1_2}<br />
+          <span className="gradient">{t.site_hero_h1_3}</span>
         </h1>
         <p className="subhead">
-          An AI assistant that lives on your device. Encrypted memory, PII-scrubbed queries, real-time search.
+          {t.site_hero_sub}
         </p>
         <div className="hero-cta">
-          <a href="#pricing" className="btn-primary">Start 7-Day Free Trial</a>
-          <a href="#how" className="btn-secondary">See How It Works</a>
+          <a href="#pricing" className="btn-primary">{t.site_cta_trial}</a>
+          <a href="#how" className="btn-secondary">{t.site_cta_how}</a>
         </div>
       </main>
 
@@ -296,8 +351,8 @@ export default function LandingPage() {
       </section>
 
       <section className="usecases fade-in-section">
-        <div className="section-label">USE CASES</div>
-        <h2>Built for people with something to protect.</h2>
+        <div className="section-label">{t.site_section_usecases}</div>
+        <h2>{t.site_usecases_h2}</h2>
         <p className="section-subtitle">
           If your conversations, research, or strategy would hurt you in the wrong hands — VaultAI was built for you.
         </p>
@@ -350,8 +405,8 @@ export default function LandingPage() {
       </section>
 
       <section id="features" className="features fade-in-section">
-        <div className="section-label">What You Get</div>
-        <h2>Everything an AI should be. Nothing it shouldn&apos;t.</h2>
+        <div className="section-label">{t.site_section_features}</div>
+        <h2>{t.site_features_h2}</h2>
         <p className="section-subtitle">
           No cloud storage. No training on your data. No subscriptions that own your history. Just a fast,
           private, intelligent assistant that works for you.
@@ -369,8 +424,8 @@ export default function LandingPage() {
 
       {/* AGENTS */}
       <section id="agents" className="features fade-in-section" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <div className="section-label">Specialized Agents</div>
-        <h2>Six agents. One vault. Zero data leakage.</h2>
+        <div className="section-label">{t.site_section_agents}</div>
+        <h2>{t.site_agents_h2}</h2>
         <p className="section-subtitle">
           Switch between specialized AI agents built for how professionals actually work.
           Each agent has domain-specific knowledge, a tailored communication style, and privacy guardrails.
@@ -418,15 +473,15 @@ export default function LandingPage() {
         </div>
         <div style={{ textAlign: 'center', marginTop: 32 }}>
           <a href="/agents" className="btn-secondary" style={{ textDecoration: 'none' }}>
-            Read the Agent Guide &rarr;
+            {t.site_agent_guide} &rarr;
           </a>
         </div>
       </section>
 
       {/* PRICING */}
       <section id="pricing" className="pricing-section">
-        <div className="section-label">Pricing</div>
-        <h2>7 days free. Cancel anytime.</h2>
+        <div className="section-label">{t.site_section_pricing}</div>
+        <h2>{t.site_pricing_h2}</h2>
         <p className="section-subtitle">
           Try VaultAI free for 7 days. Cancel anytime — no questions asked. Your data never leaves your device, even if you cancel.
         </p>
@@ -436,13 +491,13 @@ export default function LandingPage() {
             className={billingCycle === 'monthly' ? 'active' : ''}
             onClick={() => setBillingCycle('monthly')}
           >
-            Monthly
+            {t.site_billing_monthly}
           </button>
           <button
             className={billingCycle === 'annual' ? 'active' : ''}
             onClick={() => setBillingCycle('annual')}
           >
-            Annual <span className="toggle-badge">Save up to 28%</span>
+            {t.site_billing_annual} <span className="toggle-badge">{t.site_billing_save}</span>
           </button>
         </div>
 
@@ -463,7 +518,7 @@ export default function LandingPage() {
               {billingCycle === 'annual' && (
                 <div className="pricing-savings">Save {plan.annualSavings}</div>
               )}
-              <div className="pricing-trial">7-day free trial included</div>
+              <div className="pricing-trial">{t.site_trial_included}</div>
               <button
                 className="btn-primary pricing-cta"
                 onClick={() => handleCheckout(billingCycle === 'monthly' ? plan.monthlyPlan : plan.annualPlan)}
@@ -471,7 +526,7 @@ export default function LandingPage() {
               >
                 {checkoutLoading === (billingCycle === 'monthly' ? plan.monthlyPlan : plan.annualPlan)
                   ? 'Loading...'
-                  : 'Start Free Trial'}
+                  : t.site_cta}
               </button>
               <ul className="pricing-features">
                 {plan.features.map((f) => (
@@ -485,8 +540,8 @@ export default function LandingPage() {
 
       <section id="how" className="timeline-section fade-in-section">
         <div className="timeline-header">
-          <div className="section-label">How It Works</div>
-          <h2>Three steps. Full control.</h2>
+          <div className="section-label">{t.site_section_how}</div>
+          <h2>{t.site_how_h2}</h2>
           <p className="section-subtitle">
             No accounts. No onboarding funnels. No data consent forms that take your consent anyway.
           </p>
@@ -507,7 +562,7 @@ export default function LandingPage() {
           <div className="qr-card">
             <div className="qr-text">
               <div className="section-label">Mobile Access</div>
-              <h2>Use VaultAI on your phone.</h2>
+              <h2>{t.site_mobile_title}</h2>
               <p className="section-subtitle">
                 Scan this QR code from your phone to open VaultAI as a PWA.
                 Same WiFi network required. Your data stays on this machine.
@@ -533,8 +588,8 @@ export default function LandingPage() {
       )}
 
       <section id="why" className="comparison fade-in-section">
-        <div className="section-label">Why Vault</div>
-        <h2>Not another chatbot.</h2>
+        <div className="section-label">{t.site_section_why}</div>
+        <h2>{t.site_why_h2}</h2>
         <p className="section-subtitle">
           Most AI tools store your data on their servers, train on your conversations, and sell your patterns.
           VaultAI does not.
@@ -543,9 +598,9 @@ export default function LandingPage() {
           <table className="comparison-table">
             <thead>
               <tr>
-                <th>Feature</th>
-                <th>Typical AI</th>
-                <th>VaultAI</th>
+                <th>{t.site_comparison_feature}</th>
+                <th>{t.site_comparison_typical}</th>
+                <th>{t.site_comparison_vault}</th>
               </tr>
             </thead>
             <tbody>
@@ -562,8 +617,8 @@ export default function LandingPage() {
       </section>
 
       <section className="openclaw fade-in-section">
-        <div className="section-label">Under The Hood</div>
-        <h2>Powered by OpenClaw.</h2>
+        <div className="section-label">{t.site_section_openclaw}</div>
+        <h2>{t.site_openclaw_h2}</h2>
         <p className="section-subtitle">
           VaultAI is built on a fork of OpenClaw — an open-source agentic AI framework.
           That means VaultAI inherits a battle-tested runtime for LLM routing, tool execution,
@@ -586,15 +641,15 @@ export default function LandingPage() {
 
       <section id="cta" className="final-cta fade-in-section">
         <div className="final-cta-card">
-          <h2>Ready to own your AI?</h2>
+          <h2>{t.site_cta_final}</h2>
           <p className="section-subtitle">
-            Start your 7-day free trial. Your data stays yours.
+            {t.site_cta_final_sub}
           </p>
           <div className="cta-buttons">
-            <a href="#pricing" className="btn-primary">Start Free Trial</a>
-            <a href="https://github.com/christopherlhammer11-ai/vaultai" target="_blank" rel="noreferrer" className="btn-secondary">View on GitHub</a>
+            <a href="#pricing" className="btn-primary">{t.site_cta}</a>
+            <a href="https://github.com/christopherlhammer11-ai/vaultai" target="_blank" rel="noreferrer" className="btn-secondary">{t.site_github}</a>
           </div>
-          <p className="contact-line">Questions? Reach us at <a href="mailto:info@personalvaultai.com">info@personalvaultai.com</a></p>
+          <p className="contact-line">{t.site_footer_contact} <a href="mailto:info@personalvaultai.com">info@personalvaultai.com</a></p>
         </div>
       </section>
 
