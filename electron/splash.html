@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultAI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050505;
+    color: #e8e8e8;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    -webkit-app-region: drag;
+    user-select: none;
+  }
+
+  /* Ambient background glow */
+  .bg-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-glow::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,255,136,0.08) 0%, transparent 70%);
+    animation: breathe 3s ease-in-out infinite;
+  }
+  .bg-glow::after {
+    content: "";
+    position: absolute;
+    bottom: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%);
+    animation: breathe 3s ease-in-out 1.5s infinite;
+  }
+
+  /* Grid overlay */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    animation: gridFade 1.5s ease 0.3s forwards;
+  }
+
+  /* Main content */
+  .splash-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* Lock icon container */
+  .lock-wrap {
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
+    background: rgba(0,255,136,0.06);
+    border: 1px solid rgba(0,255,136,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.6);
+    animation: lockReveal 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.2s forwards;
+    position: relative;
+  }
+
+  .lock-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 30px;
+    background: conic-gradient(from 0deg, rgba(0,255,136,0.3), transparent 40%, transparent 60%, rgba(0,255,136,0.3));
+    animation: lockSpin 4s linear infinite;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  .lock-wrap.active::before {
+    opacity: 1;
+  }
+
+  /* SVG lock */
+  .lock-svg {
+    width: 44px;
+    height: 44px;
+    fill: none;
+    stroke: #00ff88;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .lock-body {
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+    animation: drawIn 1s ease 0.5s forwards;
+  }
+
+  .lock-shackle {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    animation: drawIn 0.8s ease 0.8s forwards;
+  }
+
+  /* Brand text */
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.7s ease 1s forwards;
+  }
+
+  .brand-name {
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #00ff88;
+  }
+
+  .brand-tagline {
+    font-size: 0.82rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #555;
+    font-weight: 400;
+  }
+
+  /* Progress area */
+  .progress-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 1.4s forwards;
+  }
+
+  .progress-track {
+    width: 200px;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 30%;
+    background: linear-gradient(90deg, #00ff88, #00cc6a);
+    border-radius: 3px;
+    animation: progressSweep 2.5s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(0,255,136,0.4);
+  }
+
+  .progress-status {
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: #444;
+  }
+
+  .progress-status span {
+    color: #00ff88;
+    animation: blink 1s step-end infinite;
+  }
+
+  /* Version tag */
+  .version {
+    position: fixed;
+    bottom: 24px;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    color: #333;
+    opacity: 0;
+    animation: fadeIn 0.5s ease 1.8s forwards;
+  }
+
+  /* Keyframes */
+  @keyframes breathe {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    50% { transform: translateX(-50%) scale(1.1); opacity: 0.7; }
+  }
+
+  @keyframes gridFade {
+    to { opacity: 1; }
+  }
+
+  @keyframes lockReveal {
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes lockSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes drawIn {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  @keyframes progressSweep {
+    0% { left: -30%; width: 30%; }
+    50% { width: 40%; }
+    100% { left: 100%; width: 30%; }
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="splash-content">
+    <div class="lock-wrap" id="lockWrap">
+      <svg class="lock-svg" viewBox="0 0 24 24">
+        <!-- Lock body -->
+        <rect class="lock-body" x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <!-- Shackle -->
+        <path class="lock-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <!-- Keyhole -->
+        <circle cx="12" cy="16.5" r="1.5" fill="#00ff88" opacity="0" style="animation: fadeIn 0.4s ease 1.5s forwards"/>
+      </svg>
+    </div>
+
+    <div class="brand">
+      <div class="brand-name">VaultAI</div>
+      <div class="brand-tagline">Private Intelligence</div>
+    </div>
+
+    <div class="progress-area">
+      <div class="progress-track">
+        <div class="progress-fill"></div>
+      </div>
+      <div class="progress-status">initializing<span>_</span></div>
+    </div>
+  </div>
+
+  <div class="version">v1.0</div>
+
+  <script>
+    // Activate the spinning border after lock draws in
+    setTimeout(() => {
+      document.getElementById('lockWrap').classList.add('active');
+    }, 1600);
+
+    // Cycle status text
+    const statuses = [
+      'initializing',
+      'loading runtime',
+      'preparing vault',
+      'starting services',
+      'almost ready',
+    ];
+    let idx = 0;
+    const statusEl = document.querySelector('.progress-status');
+    setInterval(() => {
+      idx = (idx + 1) % statuses.length;
+      statusEl.innerHTML = statuses[idx] + '<span>_</span>';
+    }, 2200);
+  </script>
+</body>
+</html>

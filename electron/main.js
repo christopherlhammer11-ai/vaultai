@@ -2,10 +2,11 @@
  * VaultAI — Electron main process
  *
  * Lifecycle:
- *   1. Start the OpenClaw gateway as a child process (localhost-only)
- *   2. Start the Next.js dev/production server
- *   3. Open a BrowserWindow pointing at the Next.js URL
- *   4. On quit: kill both child processes
+ *   1. Show cinematic splash screen instantly (no server dependency)
+ *   2. Start the OpenClaw gateway as a child process (localhost-only)
+ *   3. Start the Next.js dev/production server
+ *   4. Crossfade from splash to vault once Next.js is ready
+ *   5. On quit: kill both child processes
  *
  * Security hardening:
  *   - Gateway bound to 127.0.0.1 only (no remote exposure)
@@ -186,7 +187,7 @@ async function startNext() {
 }
 
 // ---------------------------------------------------------------------------
-// Create window
+// Create window — show splash instantly, then transition to vault
 // ---------------------------------------------------------------------------
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -197,6 +198,7 @@ function createWindow() {
     title: "VaultAI",
     titleBarStyle: "hiddenInset",
     backgroundColor: "#050505",
+    show: false, // Don't show until splash is painted
     webPreferences: {
       contextIsolation: true,
       sandbox: true,
@@ -204,8 +206,14 @@ function createWindow() {
     },
   });
 
-  // Load vault directly — skip marketing landing page
-  mainWindow.loadURL(`http://127.0.0.1:${NEXT_PORT}/vault`);
+  // Load the splash screen instantly (static HTML, no server needed)
+  const splashPath = path.join(__dirname, "splash.html");
+  mainWindow.loadFile(splashPath);
+
+  // Show window as soon as splash is painted — feels instant
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.show();
+  });
 
   // Open external links in system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -219,18 +227,54 @@ function createWindow() {
 }
 
 // ---------------------------------------------------------------------------
+// Transition from splash to vault with a smooth crossfade
+// ---------------------------------------------------------------------------
+async function transitionToVault() {
+  if (!mainWindow) return;
+
+  const vaultURL = `http://127.0.0.1:${NEXT_PORT}/vault`;
+
+  // Inject fade-out animation on the splash, then navigate
+  await mainWindow.webContents.executeJavaScript(`
+    document.body.style.transition = 'opacity 0.4s ease';
+    document.body.style.opacity = '0';
+    new Promise(r => setTimeout(r, 400));
+  `);
+
+  // Navigate to vault
+  mainWindow.loadURL(vaultURL);
+}
+
+// ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
 let appReady = false;
 
 async function ensureServersAndCreateWindow() {
+  // 1. Show splash screen immediately
+  createWindow();
+
+  // 2. Start servers in background while user sees splash
   await startGateway();
   await startNext();
   appReady = true;
-  createWindow();
+
+  // 3. Minimum splash duration (let the animation play)
+  // The splash animations take ~2s, and servers may start faster
+  const MIN_SPLASH_MS = 2400;
+  const elapsed = Date.now() - splashStart;
+  if (elapsed < MIN_SPLASH_MS) {
+    await new Promise((r) => setTimeout(r, MIN_SPLASH_MS - elapsed));
+  }
+
+  // 4. Crossfade to vault
+  await transitionToVault();
 }
 
+let splashStart = 0;
+
 app.whenReady().then(async () => {
+  splashStart = Date.now();
   try {
     await ensureServersAndCreateWindow();
   } catch (err) {
@@ -246,13 +290,34 @@ app.on("window-all-closed", () => {
 app.on("activate", async () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     if (!appReady) {
+      splashStart = Date.now();
       try {
         await ensureServersAndCreateWindow();
       } catch (err) {
         console.error("[vaultai] Re-launch failed:", err);
       }
     } else {
-      createWindow();
+      // App is ready, go straight to vault (no splash needed for re-activate)
+      mainWindow = new BrowserWindow({
+        width: 1280,
+        height: 860,
+        minWidth: 800,
+        minHeight: 600,
+        title: "VaultAI",
+        titleBarStyle: "hiddenInset",
+        backgroundColor: "#050505",
+        webPreferences: {
+          contextIsolation: true,
+          sandbox: true,
+          nodeIntegration: false,
+        },
+      });
+      mainWindow.loadURL(`http://127.0.0.1:${NEXT_PORT}/vault`);
+      mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: "deny" };
+      });
+      mainWindow.on("closed", () => { mainWindow = null; });
     }
   }
 });

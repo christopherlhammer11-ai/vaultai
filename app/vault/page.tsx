@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff, Lock, Shield } from "lucide-react";
 import { useVault } from "@/lib/vault-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useMemo, useState } from "react";
@@ -33,11 +33,14 @@ export default function VaultPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const attemptsRef = useRef(0);
   const mode: "create" | "unlock" = hasVault ? "unlock" : "create";
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const strengthLabel = strength === "weak" ? t.vault_weak : strength === "medium" ? t.vault_medium : t.vault_strong;
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -126,12 +129,29 @@ export default function VaultPage() {
 
   return (
     <div className="vault-page">
-      <div className="vault-card">
-        {mode === "unlock" && (
-          <div className="lock-icon">
-            <Lock size={32} />
-          </div>
-        )}
+      {/* Ambient animated rings */}
+      <div className="vault-ambient">
+        <div className="vault-ring vault-ring-1" />
+        <div className="vault-ring vault-ring-2" />
+        <div className="vault-ring vault-ring-3" />
+      </div>
+
+      <div className={`vault-card${mounted ? " vault-card-enter" : ""}`}>
+        {/* Brand header */}
+        <div className="vault-brand">
+          <Lock size={14} />
+          <span>VaultAI</span>
+        </div>
+
+        {/* Animated lock/shield icon */}
+        <div className={`vault-hero-icon ${mode === "create" ? "vault-hero-create" : ""}`}>
+          {mode === "create" ? (
+            <Shield size={36} strokeWidth={1.5} />
+          ) : (
+            <Lock size={36} strokeWidth={1.5} />
+          )}
+        </div>
+
         <h1>{mode === "create" ? t.vault_create_title : t.vault_unlock_title}</h1>
         <p className="vault-subtext">
           {mode === "create" ? t.vault_create_subtitle : t.vault_unlock_subtitle}
@@ -141,6 +161,7 @@ export default function VaultPage() {
           <label>{t.vault_password}</label>
           <div className="vault-input-wrap">
             <input
+              autoFocus
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(evt) => setPassword(evt.target.value)}
@@ -214,6 +235,15 @@ export default function VaultPage() {
             {t.vault_reset}
           </button>
         )}
+
+        {/* Trust footer */}
+        <div className="vault-trust">
+          <span>AES-256</span>
+          <span className="vault-trust-sep" />
+          <span>Local-Only</span>
+          <span className="vault-trust-sep" />
+          <span>Zero-Knowledge</span>
+        </div>
       </div>
     </div>
   );

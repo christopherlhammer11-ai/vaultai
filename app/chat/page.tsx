@@ -1095,32 +1095,64 @@ export default function ChatPage() {
           </div>
         )}
         <div className="console-feed" ref={feedRef}>
-          {/* Onboarding flow */}
+          {/* Onboarding flow — premium first-run experience */}
           {onboardingStep >= 0 && (
-            <div className="empty-state" style={{ gap: 0, paddingTop: 48 }}>
-              <Lock size={48} strokeWidth={1} style={{ color: "var(--accent)", opacity: 0.5, marginBottom: 16 }} />
-              <h2 className="empty-title" style={{ marginBottom: 4 }}>{t.onboarding_title}</h2>
-              <p className="empty-subtitle" style={{ marginBottom: 32, opacity: 0.6 }}>
-                {onboardingStep + 1} of {ONBOARDING_STEPS.length}
-              </p>
+            <div className="empty-state" style={{ gap: 0, paddingTop: 40 }}>
+              {/* Animated lock with glow ring */}
+              <div style={{
+                width: 72, height: 72, borderRadius: 20,
+                background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.12)",
+                display: "grid", placeItems: "center", marginBottom: 20,
+                position: "relative",
+                animation: "lockBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
+              }}>
+                <Lock size={32} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
+                <div style={{
+                  position: "absolute", inset: -6, borderRadius: 24,
+                  background: "radial-gradient(circle, rgba(0,255,136,0.08), transparent 70%)",
+                  animation: "vaultIconGlow 3s ease-in-out infinite",
+                  zIndex: -1,
+                }} />
+              </div>
 
-              <div style={{ width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-                {ONBOARDING_STEPS.slice(0, onboardingStep).map(step => (
-                  <div key={step.key}>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 4 }}>{step.q}</div>
-                    <div style={{
-                      padding: "8px 14px", background: "var(--bg-tertiary)",
-                      borderRadius: 12, fontSize: "0.85rem", color: "var(--text-primary)",
-                      display: "inline-block",
-                    }}>
-                      {onboardingAnswers[step.key]}
-                    </div>
-                  </div>
+              <h2 className="empty-title" style={{ marginBottom: 6, fontSize: "1.4rem" }}>{t.onboarding_title}</h2>
+
+              {/* Progress dots */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
+                {ONBOARDING_STEPS.map((_, i) => (
+                  <div key={i} style={{
+                    width: i <= onboardingStep ? 20 : 8, height: 4,
+                    borderRadius: 4,
+                    background: i < onboardingStep ? "var(--accent)" : i === onboardingStep ? "rgba(0,255,136,0.5)" : "rgba(255,255,255,0.08)",
+                    transition: "all 0.3s ease",
+                  }} />
                 ))}
               </div>
 
-              <div style={{ width: "100%", maxWidth: 440 }}>
-                <p style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
+              {/* Previous answers shown as compact chips */}
+              {onboardingStep > 0 && (
+                <div style={{ width: "100%", maxWidth: 460, display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20, justifyContent: "center" }}>
+                  {ONBOARDING_STEPS.slice(0, onboardingStep).map(step => (
+                    <div key={step.key} style={{
+                      padding: "6px 14px",
+                      background: "rgba(0,255,136,0.04)",
+                      border: "1px solid rgba(0,255,136,0.08)",
+                      borderRadius: 20, fontSize: "0.8rem", color: "var(--accent-muted)",
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                    }}>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>{step.key}:</span>
+                      {onboardingAnswers[step.key]}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Current question */}
+              <div style={{ width: "100%", maxWidth: 460 }}>
+                <p style={{
+                  fontSize: "1.15rem", fontWeight: 600, color: "var(--text-primary)",
+                  marginBottom: 14, lineHeight: 1.4,
+                }}>
                   {ONBOARDING_STEPS[onboardingStep].q}
                 </p>
                 <div style={{ display: "flex", gap: 8 }}>
@@ -1132,19 +1164,33 @@ export default function ChatPage() {
                     onChange={e => setOnboardingInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter") handleOnboardingSubmit(); }}
                     style={{
-                      flex: 1, padding: "10px 14px", background: "var(--bg-tertiary)",
-                      border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)", fontSize: "0.9rem",
+                      flex: 1, padding: "12px 16px",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 12,
+                      color: "var(--text-primary)", fontSize: "0.92rem",
+                      transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                      outline: "none",
+                    }}
+                    onFocus={e => {
+                      e.target.style.borderColor = "rgba(0,255,136,0.3)";
+                      e.target.style.boxShadow = "0 0 0 2px rgba(0,255,136,0.08)";
+                    }}
+                    onBlur={e => {
+                      e.target.style.borderColor = "rgba(255,255,255,0.08)";
+                      e.target.style.boxShadow = "none";
                     }}
                   />
                   <button
                     onClick={handleOnboardingSubmit}
                     disabled={!onboardingInput.trim()}
                     style={{
-                      padding: "10px 16px", background: "var(--accent)", color: "#000",
-                      border: "none", borderRadius: "var(--radius-md)", fontWeight: 600,
+                      padding: "12px 18px", background: "var(--accent)", color: "#000",
+                      border: "none", borderRadius: 12, fontWeight: 600,
                       cursor: onboardingInput.trim() ? "pointer" : "not-allowed",
-                      opacity: onboardingInput.trim() ? 1 : 0.4,
+                      opacity: onboardingInput.trim() ? 1 : 0.3,
+                      transition: "all 0.2s ease",
+                      boxShadow: onboardingInput.trim() ? "0 2px 12px rgba(0,255,136,0.2)" : "none",
                     }}
                   >
                     <Send size={16} />
@@ -1154,10 +1200,13 @@ export default function ChatPage() {
                   <button
                     onClick={() => setOnboardingStep(-1)}
                     style={{
-                      marginTop: 16, background: "none", border: "none",
-                      color: "var(--text-secondary)", fontSize: "0.75rem",
-                      cursor: "pointer", textDecoration: "underline",
+                      marginTop: 18, background: "none", border: "none",
+                      color: "var(--text-muted)", fontSize: "0.75rem",
+                      cursor: "pointer", letterSpacing: "0.05em",
+                      transition: "color 0.2s ease",
                     }}
+                    onMouseEnter={e => (e.target as HTMLElement).style.color = "var(--text-secondary)"}
+                    onMouseLeave={e => (e.target as HTMLElement).style.color = "var(--text-muted)"}
                   >
                     {t.onboarding_skip}
                   </button>
