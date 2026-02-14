@@ -5,6 +5,7 @@ import path from "path";
 import os from "os";
 import fs from "fs/promises";
 import { hasCredit, deductCredit, getRemainingUnits } from "@/lib/compute-credits";
+import { createAnonymizer } from "@/lib/anonymize";
 // Allow longer execution for LLM calls on Vercel (default 10s is too short)
 export const maxDuration = 30;
 
@@ -263,12 +264,28 @@ async function routeToLLM(prompt: string, options?: { context?: string; userProf
 
   const userPrompt = options?.context ? `${options.context}\n\n${prompt}` : prompt;
 
-  const reply =
-    (await callOllama(systemPrompt, userPrompt)) ??
-    (await callOpenAI(systemPrompt, userPrompt)) ??
-    (await callAnthropic(systemPrompt, userPrompt));
+  // ---- Anonymization layer ----
+  // For local providers (Ollama), skip anonymization — data stays on-device.
+  // For cloud providers (OpenAI, Anthropic), scrub PII before sending.
+  const anon = createAnonymizer(persona, options?.userProfile);
 
-  if (reply) return reply;
+  // Try local first (no anonymization needed)
+  const localReply = await callOllama(systemPrompt, userPrompt);
+  if (localReply) return localReply;
+
+  // Cloud providers: anonymize outbound, de-anonymize response
+  const scrubbedSystem = anon.scrub(systemPrompt);
+  const scrubbedUser = anon.scrub(userPrompt);
+
+  if (anon.detectedCount > 0) {
+    console.log(`[anonymize] Scrubbed ${anon.detectedCount} PII items (${anon.summary})`);
+  }
+
+  const cloudReply =
+    (await callOpenAI(scrubbedSystem, scrubbedUser)) ??
+    (await callAnthropic(scrubbedSystem, scrubbedUser));
+
+  if (cloudReply) return anon.restore(cloudReply);
 
   return await callGateway(userPrompt);
 }
@@ -378,7 +395,12 @@ export async function POST(req: Request) {
   try {
     const searchQuery = extractSearchQuery(normalized);
     if (searchQuery) {
-      const results = await fetchBraveResults(searchQuery);
+      // Anonymize the search query before sending to Brave
+      const persona = await loadPersonaText();
+      const searchAnon = createAnonymizer(persona, userProfile);
+      const scrubbedQuery = searchAnon.scrub(searchQuery);
+
+      const results = await fetchBraveResults(scrubbedQuery);
       if (!results.length) {
         return NextResponse.json({ response: "No search results found." });
       }
@@ -389,7 +411,8 @@ export async function POST(req: Request) {
         { context, userProfile, agentSystemPrompt }
       );
       if (!isServerless) await deductCredit("search");
-      return NextResponse.json({ response: reply });
+      // De-anonymize the response in case any placeholders leaked through
+      return NextResponse.json({ response: searchAnon.restore(reply) });
     }
 
     const lowered = normalized.toLowerCase();

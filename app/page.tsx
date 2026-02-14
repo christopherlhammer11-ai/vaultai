@@ -21,12 +21,12 @@ const features = [
   {
     icon: '🔐',
     title: 'Encrypted Local Storage',
-    body: 'Your conversations, personas, and files are AES-encrypted and stored on your device. Nothing leaves your machine unless you say so.'
+    body: 'Your conversations, personas, and files are AES-encrypted at rest on your device. When queries reach cloud LLMs, a built-in anonymizer scrubs personal details before they leave.'
   },
   {
     icon: '🌐',
     title: 'Brave-Powered Search',
-    body: 'Live Brave Search with inline citations. Pull the latest filings, news, and regs without leaking your query history.'
+    body: 'Live Brave Search with inline citations. Queries are PII-scrubbed before they leave your device, so search providers never see your name or company.'
   },
   {
     icon: '🧠',
@@ -35,8 +35,8 @@ const features = [
   },
   {
     icon: '🎙️',
-    title: 'Voice In / Voice Out',
-    body: "Speak naturally, get spoken responses. Hands-free operation when you're moving fast and need answers faster."
+    title: 'Voice Input',
+    body: "Speak naturally and VaultAI transcribes on the fly. Hands-free dictation when you're moving fast and need answers faster."
   },
   {
     icon: '🌍',
@@ -50,8 +50,8 @@ const features = [
   },
   {
     icon: '📄',
-    title: 'PDF & File Export',
-    body: 'Export any conversation, research summary, or generated document as a clean PDF. Ready for partners, investors, or your own archive.'
+    title: 'PDF Upload & Markdown Export',
+    body: 'Upload PDFs for instant analysis. Export conversations and reports as clean markdown. All files stay encrypted in your local vault.'
   },
   {
     icon: '🤖',
@@ -79,18 +79,19 @@ const steps = [
   {
     label: '03',
     title: 'Ask. Search. Build.',
-    body: 'Chat naturally, run web searches, generate documents, export PDFs. Everything stays encrypted on your device. Close it and it is locked. Open it and you are right where you left off.'
+    body: 'Chat naturally, run web searches, upload PDFs, generate reports. Personal details are scrubbed before they reach any cloud API. Close it and it is locked. Open it and you are right where you left off.'
   }
 ];
 
 const comparisonRows = [
   ['Data stored on your device', '✕', '✓'],
-  ['End-to-end encryption', '✕', '✓'],
+  ['AES-256 encryption at rest', '✕', '✓'],
+  ['PII scrubbed before cloud queries', '✕', '✓'],
   ['Never trains on your data', '✕', '✓'],
   ['Specialized AI agents', '✕', '6 built-in + custom'],
   ['Persistent memory across sessions', '✕', '✓'],
   ['Web search with cited sources', 'Limited', '✓'],
-  ['Voice input & output', 'Some', '✓'],
+  ['Voice input', 'Some', '✓'],
   ['No account required', '✕', '✓']
 ];
 
@@ -122,9 +123,9 @@ const plans = [
       'Everything in Lite',
       '6 specialized AI agents + custom agents',
       'Live web search (Brave)',
-      'Cloud LLM fallback (GPT-4o, Claude)',
-      'Voice input & output',
-      'PDF export',
+      'Cloud LLM fallback (GPT-4o, Claude) — PII-scrubbed',
+      'Voice input (Whisper)',
+      'PDF upload & analysis',
       'Persona files',
       'Priority support',
     ],
@@ -264,7 +265,7 @@ export default function LandingPage() {
           <span className="gradient">Your Rules.</span>
         </h1>
         <p className="subhead">
-          An AI assistant that lives on your device. Encrypted memory, real-time search, zero data harvesting.
+          An AI assistant that lives on your device. Encrypted memory, PII-scrubbed queries, real-time search.
         </p>
         <div className="hero-cta">
           <a href="#pricing" className="btn-primary">Start 7-Day Free Trial</a>
@@ -570,8 +571,8 @@ export default function LandingPage() {
         </p>
         <div className="openclaw-pills">
           {[
-            { label: "MULTI-MODEL", desc: "Switch between OpenAI, Anthropic, Google, or local LLMs" },
-            { label: "PLUGIN READY", desc: "32+ skills with a growing open-source ecosystem" },
+            { label: "MULTI-MODEL", desc: "Switch between OpenAI, Anthropic, or local LLMs (Ollama)" },
+            { label: "PLUGIN READY", desc: "Extensible skill framework with a growing open-source ecosystem" },
             { label: "SELF-HOSTABLE", desc: "Deploy on your own infrastructure — no cloud required" },
             { label: "AUDITABLE", desc: "Open-source runtime. Inspect every line." },
           ].map((pill) => (
@@ -604,7 +605,7 @@ export default function LandingPage() {
         <div className="trust-badges">
           <span className="trust-badge">🔐 AES-256</span>
           <span className="trust-badge">🖥️ Local-First</span>
-          <span className="trust-badge">🚫 Zero Data Harvesting</span>
+          <span className="trust-badge">🛡️ PII-Scrubbed Queries</span>
         </div>
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           <a href="mailto:info@personalvaultai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@personalvaultai.com</a>

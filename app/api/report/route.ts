@@ -1,57 +1,82 @@
 import { NextResponse } from "next/server";
+import { Anonymizer } from "@/lib/anonymize";
 
 /**
  * POST /api/report
  * Generates a scheduled report summary from provided chat history.
  * The client sends its encrypted chat history (already decrypted client-side)
  * and this endpoint asks the LLM to create a digest.
+ *
+ * PII is scrubbed before hitting cloud LLMs and restored in the response.
  */
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "phi3";
 
 async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
-  // Try Ollama first
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        stream: false,
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      const data = await res.json();
-      const text = data.message?.content?.trim();
-      if (text) return text;
+  // Create anonymizer from the chat content to scrub PII for cloud providers
+  const anon = new Anonymizer();
+
+  // Try Ollama first (local — no anonymization needed)
+  const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+  if (!isServerless) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.message?.content?.trim();
+        if (text) return text;
+      }
+    } catch {
+      /* fall through to cloud */
     }
-  } catch {
-    /* fall through */
   }
 
-  // Try OpenAI
+  // Cloud providers: anonymize before sending
+  const scrubbedSystem = anon.scrub(systemPrompt);
+  const scrubbedUser = anon.scrub(userPrompt);
+
+  // Try OpenAI (anonymized)
   if (process.env.OPENAI_API_KEY) {
     try {
-      const OpenAI = (await import("openai")).default;
-      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      const res = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+          messages: [
+            { role: "system", content: scrubbedSystem },
+            { role: "user", content: scrubbedUser },
+          ],
+        }),
+        signal: controller.signal,
       });
-      const text = res.choices?.[0]?.message?.content?.trim();
-      if (text) return text;
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (text) return anon.restore(text);
+      }
     } catch {
       /* fall through */
     }
