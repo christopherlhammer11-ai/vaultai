@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Lock, Shield, Zap, Globe, Brain, Mic } from "lucide-react";
+import { Eye, EyeOff, Lock, Shield, Globe, Brain, Mic } from "lucide-react";
 import { useVault } from "@/lib/vault-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
@@ -99,6 +99,15 @@ export default function VaultPage() {
     setWelcomeDone(true);
     setTimeout(() => setCardVisible(true), 50);
   }, [welcomeDone]);
+
+  useEffect(() => {
+    if (welcomeDone) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") skipWelcome();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [welcomeDone, skipWelcome]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

@@ -254,9 +254,8 @@ async function ensureServersAndCreateWindow() {
   // 1. Show splash screen immediately
   createWindow();
 
-  // 2. Start servers in background while user sees splash
-  await startGateway();
-  await startNext();
+  // 2. Start servers in parallel while user sees splash
+  await Promise.all([startGateway(), startNext()]);
   appReady = true;
 
   // 3. Minimum splash duration (let the animation play)
@@ -306,6 +305,7 @@ app.on("activate", async () => {
         title: "VaultAI",
         titleBarStyle: "hiddenInset",
         backgroundColor: "#050505",
+        show: false,
         webPreferences: {
           contextIsolation: true,
           sandbox: true,
@@ -313,6 +313,7 @@ app.on("activate", async () => {
         },
       });
       mainWindow.loadURL(`http://127.0.0.1:${NEXT_PORT}/vault`);
+      mainWindow.once("ready-to-show", () => { mainWindow.show(); });
       mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: "deny" };

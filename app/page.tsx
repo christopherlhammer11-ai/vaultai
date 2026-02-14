@@ -75,7 +75,7 @@ const steps = [
   {
     label: '02',
     title: 'Load Your Persona',
-    body: 'Drop in a persona file with your background, your business context, your preferences. VaultAI reads it once and remembers it forever — locally.'
+    body: 'Answer a few quick questions and VaultAI builds your persona — your background, your context, your preferences. Tell it to "remember" anything new and it updates instantly. Encrypted locally, loaded every session.'
   },
   {
     label: '03',
@@ -124,7 +124,7 @@ const plans = [
       'Everything in Lite',
       '6 specialized AI agents + custom agents',
       'Live web search (Brave)',
-      'Cloud LLM fallback (GPT-4o, Claude, Gemini, Groq, Mistral, DeepSeek) — PII-scrubbed',
+      'Cloud LLM fallback (GPT-4o-mini, Claude, Gemini, Groq, Mistral, DeepSeek) — PII-scrubbed',
       'Voice input (Whisper)',
       'PDF upload & analysis',
       'Persona files',
@@ -543,7 +543,7 @@ export default function LandingPage() {
           <div className="section-label">{t.site_section_how}</div>
           <h2>{t.site_how_h2}</h2>
           <p className="section-subtitle">
-            No accounts. No onboarding funnels. No data consent forms that take your consent anyway.
+            No cloud accounts. No data consent forms. A 60-second setup and you are operational.
           </p>
         </div>
         <div className="timeline-steps">
@@ -626,8 +626,8 @@ export default function LandingPage() {
         </p>
         <div className="openclaw-pills">
           {[
-            { label: "MULTI-MODEL", desc: "Switch between OpenAI, Anthropic, Gemini, Groq, Mistral, DeepSeek, or local LLMs (Ollama)" },
-            { label: "PLUGIN READY", desc: "Extensible skill framework with a growing open-source ecosystem" },
+            { label: "MULTI-MODEL", desc: "Automatic failover across OpenAI, Anthropic, Gemini, Groq, Mistral, DeepSeek, and local Ollama" },
+            { label: "BYOK", desc: "Bring your own API keys — every provider is optional, mix and match as you like" },
             { label: "SELF-HOSTABLE", desc: "Deploy on your own infrastructure — no cloud required" },
             { label: "AUDITABLE", desc: "Open-source runtime. Inspect every line." },
           ].map((pill) => (

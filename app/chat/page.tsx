@@ -2,7 +2,7 @@
 import {
   Lock, Mic, MicOff, Paperclip, Send, Terminal, X, ChevronRight, Trash2,
   FileText, Share2, User, Search, BarChart3, Bot, Zap, Globe, Settings, Key,
-  Plus, FolderPlus, MessageSquare, ChevronDown, Edit3, Check,
+  Plus, FolderPlus, MessageSquare, ChevronDown, Edit3, Check, Download,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -740,6 +740,24 @@ export default function ChatPage() {
     } catch(e) { showError("Share failed: " + String(e)); }
   }, [messages, isFeatureAvailable, showError, t]);
 
+  // ---- EXPORT CHAT ----
+  const handleExportChat = useCallback(() => {
+    if (messages.length === 0) { showError(t.error_no_share); return; }
+    const lines = messages.filter(m => !m.pending).map(m => {
+      const who = m.role === "user" ? "You" : "VaultAI";
+      const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : "";
+      return `[${who}] ${time}\n${m.content}\n`;
+    });
+    const text = `VaultAI Chat Export\n${"=".repeat(40)}\n\n${lines.join("\n")}`;
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vaultai-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [messages, showError, t]);
+
   // ---- CLEAR / NEW CHAT ----
   const handleClearChat = useCallback(() => {
     createNewConversation(null);
@@ -967,6 +985,7 @@ export default function ChatPage() {
               <button className="sidebar-item" onClick={() => sendCommand("Tell me about myself")}><User size={14} /> {t.sidebar_my_persona}</button>
               <button className="sidebar-item" onClick={handleGenerateReport}><BarChart3 size={14} /> {t.sidebar_generate_report}</button>
               <button className="sidebar-item" onClick={handleShare}><Share2 size={14} /> {t.sidebar_share_chat}</button>
+              <button className="sidebar-item" onClick={handleExportChat}><Download size={14} /> Export Chat</button>
               <button className="sidebar-item" onClick={handleUpload}><Paperclip size={14} /> {t.sidebar_upload_pdf}</button>
               <button className="sidebar-item" onClick={() => setShowApiKeyModal(true)}><Key size={14} /> {t.sidebar_api_keys}</button>
             </>
