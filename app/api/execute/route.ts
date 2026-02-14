@@ -39,6 +39,9 @@ async function runStatus() {
   const ollamaUp = await callOllama("test", "ping").then(() => true).catch(() => false);
   const hasOpenAI = !!process.env.OPENAI_API_KEY;
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasGemini = !!process.env.GEMINI_API_KEY;
+  const hasGroq = !!process.env.GROQ_API_KEY;
+  const hasMistral = !!process.env.MISTRAL_API_KEY;
   const hasBrave = !!BRAVE_API_KEY;
 
   const lines = [
@@ -51,6 +54,9 @@ async function runStatus() {
     `Ollama: ${ollamaUp ? "connected" : "offline"}`,
     `OpenAI: ${hasOpenAI ? "configured" : "not set"}`,
     `Anthropic: ${hasAnthropic ? "configured" : "not set"}`,
+    `Gemini: ${hasGemini ? "configured" : "not set"}`,
+    `Groq: ${hasGroq ? "configured" : "not set"}`,
+    `Mistral: ${hasMistral ? "configured" : "not set"}`,
     `Brave Search: ${hasBrave ? "configured" : "not set"}`,
   ];
   return lines.join("\n");
@@ -208,6 +214,131 @@ async function callAnthropic(systemPrompt: string, prompt: string) {
   }
 }
 
+async function callGemini(systemPrompt: string, prompt: string) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+        }),
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      const errBody = await response.text();
+      lastLLMError = `Gemini ${response.status}: ${errBody.slice(0, 200)}`;
+      console.error("[execute] Gemini API error:", response.status, errBody.slice(0, 300));
+      return null;
+    }
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) {
+      lastLLMError = "Gemini returned empty response";
+      return null;
+    }
+    return text;
+  } catch (error) {
+    lastLLMError = `Gemini: ${(error as Error).message}`;
+    console.error("Gemini call failed, falling back:", (error as Error).message);
+    return null;
+  }
+}
+
+async function callGroq(systemPrompt: string, prompt: string) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    // Groq uses OpenAI-compatible API
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      const errBody = await response.text();
+      lastLLMError = `Groq ${response.status}: ${errBody.slice(0, 200)}`;
+      console.error("[execute] Groq API error:", response.status, errBody.slice(0, 300));
+      return null;
+    }
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) {
+      lastLLMError = "Groq returned empty response";
+      return null;
+    }
+    return content;
+  } catch (error) {
+    lastLLMError = `Groq: ${(error as Error).message}`;
+    console.error("Groq call failed, falling back:", (error as Error).message);
+    return null;
+  }
+}
+
+async function callMistral(systemPrompt: string, prompt: string) {
+  const apiKey = process.env.MISTRAL_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: process.env.MISTRAL_MODEL || "mistral-small-latest",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      const errBody = await response.text();
+      lastLLMError = `Mistral ${response.status}: ${errBody.slice(0, 200)}`;
+      console.error("[execute] Mistral API error:", response.status, errBody.slice(0, 300));
+      return null;
+    }
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) {
+      lastLLMError = "Mistral returned empty response";
+      return null;
+    }
+    return content;
+  } catch (error) {
+    lastLLMError = `Mistral: ${(error as Error).message}`;
+    console.error("Mistral call failed, falling back:", (error as Error).message);
+    return null;
+  }
+}
+
 // Track the last LLM error for better diagnostics in serverless
 let lastLLMError: string | null = null;
 
@@ -283,7 +414,10 @@ async function routeToLLM(prompt: string, options?: { context?: string; userProf
 
   const cloudReply =
     (await callOpenAI(scrubbedSystem, scrubbedUser)) ??
-    (await callAnthropic(scrubbedSystem, scrubbedUser));
+    (await callAnthropic(scrubbedSystem, scrubbedUser)) ??
+    (await callGemini(scrubbedSystem, scrubbedUser)) ??
+    (await callGroq(scrubbedSystem, scrubbedUser)) ??
+    (await callMistral(scrubbedSystem, scrubbedUser));
 
   if (cloudReply) return anon.restore(cloudReply);
 

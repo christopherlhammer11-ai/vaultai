@@ -82,7 +82,121 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
     }
   }
 
-  return "Unable to generate report — no LLM provider available. Ensure Ollama is running or set OPENAI_API_KEY.";
+  // Try Anthropic (anonymized)
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+          max_tokens: 800,
+          system: scrubbedSystem,
+          messages: [{ role: "user", content: scrubbedUser }],
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.content?.map((p: { type: string; text?: string }) => p.type === "text" ? p.text : "").join("\n").trim();
+        if (text) return anon.restore(text);
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Try Gemini (anonymized)
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: scrubbedSystem }] },
+            contents: [{ role: "user", parts: [{ text: scrubbedUser }] }],
+          }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) return anon.restore(text);
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Try Groq (anonymized, OpenAI-compatible)
+  if (process.env.GROQ_API_KEY) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: scrubbedSystem },
+            { role: "user", content: scrubbedUser },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (text) return anon.restore(text);
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Try Mistral (anonymized)
+  if (process.env.MISTRAL_API_KEY) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.MISTRAL_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.MISTRAL_MODEL || "mistral-small-latest",
+          messages: [
+            { role: "system", content: scrubbedSystem },
+            { role: "user", content: scrubbedUser },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (text) return anon.restore(text);
+      }
+    } catch { /* fall through */ }
+  }
+
+  return "Unable to generate report — no LLM provider available. Ensure Ollama is running or set an API key (OpenAI, Anthropic, Gemini, Groq, or Mistral).";
 }
 
 export async function POST(req: Request) {

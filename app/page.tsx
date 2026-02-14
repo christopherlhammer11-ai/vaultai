@@ -124,7 +124,7 @@ const plans = [
       'Everything in Lite',
       '6 specialized AI agents + custom agents',
       'Live web search (Brave)',
-      'Cloud LLM fallback (GPT-4o, Claude) — PII-scrubbed',
+      'Cloud LLM fallback (GPT-4o, Claude, Gemini, Groq, Mistral) — PII-scrubbed',
       'Voice input (Whisper)',
       'PDF upload & analysis',
       'Persona files',
@@ -626,7 +626,7 @@ export default function LandingPage() {
         </p>
         <div className="openclaw-pills">
           {[
-            { label: "MULTI-MODEL", desc: "Switch between OpenAI, Anthropic, or local LLMs (Ollama)" },
+            { label: "MULTI-MODEL", desc: "Switch between OpenAI, Anthropic, Gemini, Groq, Mistral, or local LLMs (Ollama)" },
             { label: "PLUGIN READY", desc: "Extensible skill framework with a growing open-source ecosystem" },
             { label: "SELF-HOSTABLE", desc: "Deploy on your own infrastructure — no cloud required" },
             { label: "AUDITABLE", desc: "Open-source runtime. Inspect every line." },
