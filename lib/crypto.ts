@@ -59,17 +59,14 @@ export async function deriveKey(
 async function deriveArgon2Key(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const crypto = ensureCrypto();
   const passwordBytes = textEncoder.encode(password);
-  const keyMaterial = argon2id({
-    password: passwordBytes,
-    salt,
-    iterations: ARGON2_PARAMS.iterations,
-    memorySize: ARGON2_PARAMS.memory,
-    parallelism: ARGON2_PARAMS.parallelism,
-    hashLength: ARGON2_PARAMS.hashLength,
-    version: 0x13
+  const keyMaterial = argon2id(passwordBytes, salt, {
+    t: ARGON2_PARAMS.iterations,
+    m: ARGON2_PARAMS.memory,
+    p: ARGON2_PARAMS.parallelism,
+    dkLen: ARGON2_PARAMS.hashLength,
   });
 
-  return crypto.subtle.importKey("raw", keyMaterial, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.importKey("raw", new Uint8Array(keyMaterial) as unknown as ArrayBuffer, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
 async function derivePbkdf2Key(password: string, salt: Uint8Array): Promise<CryptoKey> {
