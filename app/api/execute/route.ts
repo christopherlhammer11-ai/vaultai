@@ -430,12 +430,13 @@ async function routeToLLM(prompt: string, options?: { context?: string; userProf
 
   // Use agent-specific system prompt if provided, otherwise default
   let systemPrompt: string;
+  const brevityRule = "\n\nRESPONSE RULES: Keep replies SHORT (2-4 sentences for simple questions). Match your response length to the complexity of the question. For a greeting like 'hello', reply with a single friendly sentence. Never over-explain. Never list capabilities unless explicitly asked. Be warm and natural, not robotic.";
   if (options?.agentSystemPrompt) {
-    systemPrompt = options.agentSystemPrompt + (persona ? `\n\nUser Persona:\n${persona}` : "") + profileSnippet;
+    systemPrompt = options.agentSystemPrompt + (persona ? `\n\nUser Persona:\n${persona}` : "") + profileSnippet + brevityRule;
   } else {
     systemPrompt = persona
-      ? `Persona:\n${persona}${profileSnippet}\n\nYou are VaultAI, a local-first encrypted operator assistant. Be direct, cite actions, and keep data local.`
-      : `You are VaultAI, a local-first operator assistant. Be concise and actionable.${profileSnippet}`;
+      ? `Persona:\n${persona}${profileSnippet}\n\nYou are VaultAI, a local-first encrypted assistant. Be helpful, concise, and natural.${brevityRule}`
+      : `You are VaultAI, a local-first assistant. Be helpful, concise, and natural.${profileSnippet}${brevityRule}`;
   }
 
   // Inject language instruction if user selected a non-English locale

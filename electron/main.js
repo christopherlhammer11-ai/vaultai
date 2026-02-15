@@ -19,10 +19,15 @@ import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 import net from "net";
+import { config as dotenvConfig } from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
+
+// Load .env.local so API keys are available in production mode
+dotenvConfig({ path: path.join(ROOT, ".env.local") });
+dotenvConfig({ path: path.join(ROOT, ".env") });
 const IS_DEV = !app.isPackaged;
 
 const NEXT_PORT = 3100; // Use a different port from dev to avoid conflicts

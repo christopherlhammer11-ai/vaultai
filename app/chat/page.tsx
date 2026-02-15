@@ -416,6 +416,7 @@ export default function ChatPage() {
       };
       setActiveConvoId(newConvo.id);
       setMessages([]);
+      setActiveAgentId(DEFAULT_AGENT_ID); // Reset to general agent on new chat
       setTimeout(() => inputRef.current?.focus(), 50);
       return [...updated, newConvo];
     });
