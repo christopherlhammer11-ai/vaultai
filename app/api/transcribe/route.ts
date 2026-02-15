@@ -1,4 +1,10 @@
 import { NextResponse } from "next/server";
+import path from "path";
+import os from "os";
+import { config as dotenvConfig } from "dotenv";
+
+// Load user env from ~/.vaultai/.env (for Electron packaged builds)
+dotenvConfig({ path: path.join(os.homedir(), ".vaultai", ".env") });
 
 /**
  * POST /api/transcribe

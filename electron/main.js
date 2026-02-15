@@ -14,18 +14,23 @@
  *   - No nodeIntegration in renderer
  */
 
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, shell, Menu } from "electron";
 import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 import net from "net";
+import os from "os";
 import { config as dotenvConfig } from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 
-// Load .env.local so API keys are available in production mode
+// Load .env.local from multiple locations (first found wins per key)
+// 1. ~/.vaultai/.env — user's own config (highest priority)
+// 2. App bundle root — for dev mode
+// 3. Source checkout — fallback for local dev
+dotenvConfig({ path: path.join(os.homedir(), ".vaultai", ".env") });
 dotenvConfig({ path: path.join(ROOT, ".env.local") });
 dotenvConfig({ path: path.join(ROOT, ".env") });
 const IS_DEV = !app.isPackaged;
@@ -275,9 +280,194 @@ async function ensureServersAndCreateWindow() {
   await transitionToVault();
 }
 
+// ---------------------------------------------------------------------------
+// Create a new window pointing at the vault (for "New Window" menu item)
+// ---------------------------------------------------------------------------
+function createNewWindow() {
+  const win = new BrowserWindow({
+    width: 1280,
+    height: 860,
+    minWidth: 800,
+    minHeight: 600,
+    title: "VaultAI",
+    titleBarStyle: "hiddenInset",
+    backgroundColor: "#050505",
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  });
+  win.loadURL(`http://127.0.0.1:${NEXT_PORT}/vault`);
+  win.once("ready-to-show", () => { win.show(); });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
+  return win;
+}
+
+// ---------------------------------------------------------------------------
+// Application menu
+// ---------------------------------------------------------------------------
+function buildAppMenu() {
+  const isMac = process.platform === "darwin";
+
+  const template = [
+    // macOS app menu
+    ...(isMac
+      ? [{
+          label: app.name,
+          submenu: [
+            { role: "about" },
+            { type: "separator" },
+            { role: "services" },
+            { type: "separator" },
+            { role: "hide" },
+            { role: "hideOthers" },
+            { role: "unhide" },
+            { type: "separator" },
+            { role: "quit" },
+          ],
+        }]
+      : []),
+    // File menu
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "New Window",
+          accelerator: "CmdOrCtrl+N",
+          click: () => {
+            if (appReady) {
+              createNewWindow();
+            }
+          },
+        },
+        {
+          label: "New Chat",
+          accelerator: "CmdOrCtrl+Shift+N",
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.executeJavaScript(
+                `window.dispatchEvent(new CustomEvent("vaultai:new-chat"));`
+              );
+            }
+          },
+        },
+        { type: "separator" },
+        {
+          label: "Settings",
+          accelerator: "CmdOrCtrl+,",
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.executeJavaScript(
+                `window.dispatchEvent(new CustomEvent("vaultai:open-settings"));`
+              );
+            }
+          },
+        },
+        { type: "separator" },
+        isMac ? { role: "close" } : { role: "quit" },
+      ],
+    },
+    // Edit menu
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    // View menu
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Toggle Sidebar",
+          accelerator: "CmdOrCtrl+B",
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.executeJavaScript(
+                `window.dispatchEvent(new CustomEvent("vaultai:toggle-sidebar"));`
+              );
+            }
+          },
+        },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+        ...(IS_DEV
+          ? [
+              { type: "separator" },
+              { role: "reload" },
+              { role: "forceReload" },
+              { role: "toggleDevTools" },
+            ]
+          : []),
+      ],
+    },
+    // Window menu
+    {
+      label: "Window",
+      submenu: [
+        { role: "minimize" },
+        { role: "zoom" },
+        ...(isMac
+          ? [
+              { type: "separator" },
+              { role: "front" },
+              { type: "separator" },
+              { role: "window" },
+            ]
+          : [{ role: "close" }]),
+      ],
+    },
+    // Help menu
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "VaultAI Documentation",
+          click: () => {
+            shell.openExternal("https://vaultai.app/docs");
+          },
+        },
+        {
+          label: "Report an Issue",
+          click: () => {
+            shell.openExternal("https://github.com/nicholasychua/vaultai/issues");
+          },
+        },
+        { type: "separator" },
+        {
+          label: `Version ${app.getVersion()}`,
+          enabled: false,
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 let splashStart = 0;
 
 app.whenReady().then(async () => {
+  buildAppMenu();
   splashStart = Date.now();
   try {
     await ensureServersAndCreateWindow();

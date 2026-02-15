@@ -6,6 +6,11 @@ import os from "os";
 import fs from "fs/promises";
 import { hasCredit, deductCredit, getRemainingUnits } from "@/lib/compute-credits";
 import { createAnonymizer } from "@/lib/anonymize";
+import { config as dotenvConfig } from "dotenv";
+
+// Load user env from ~/.vaultai/.env (for Electron packaged builds)
+dotenvConfig({ path: path.join(os.homedir(), ".vaultai", ".env") });
+
 // Allow longer execution for LLM calls on Vercel (default 10s is too short)
 export const maxDuration = 30;
 
@@ -14,7 +19,8 @@ const personaPath = path.join(os.homedir(), ".vaultai", "persona.md");
 const planPath = path.join(os.homedir(), ".vaultai", "plan.md");
 const vaultJsonPath = path.join(process.cwd(), "vault.json");
 
-const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
+// Read at runtime to pick up keys configured after module init
+function getBraveKey() { return process.env.BRAVE_API_KEY || ""; }
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "phi3";
 
@@ -43,7 +49,7 @@ async function runStatus() {
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasMistral = !!process.env.MISTRAL_API_KEY;
   const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
-  const hasBrave = !!BRAVE_API_KEY;
+  const hasBrave = !!getBraveKey();
 
   const lines = [
     `**VaultAI Status**`,
@@ -506,7 +512,8 @@ type BraveResult = {
 };
 
 async function fetchBraveResults(query: string): Promise<BraveResult[]> {
-  if (!BRAVE_API_KEY) {
+  const braveKey = getBraveKey();
+  if (!braveKey) {
     throw new Error("Add BRAVE_API_KEY to .env.local");
   }
   const controller = new AbortController();
@@ -517,7 +524,7 @@ async function fetchBraveResults(query: string): Promise<BraveResult[]> {
       {
         headers: {
           Accept: "application/json",
-          "X-Subscription-Token": BRAVE_API_KEY
+          "X-Subscription-Token": braveKey
         },
         signal: controller.signal
       }
@@ -630,6 +637,13 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Handle bare "search" with no query
+    if (/^(web\s+)?search\s*$/i.test(normalized)) {
+      return NextResponse.json({
+        response: "🔍 What would you like to search for? Type `search` followed by your query.\n\nExamples:\n- `search latest AI news`\n- `search weather in San Francisco`\n- `search how to make pasta`"
+      });
+    }
+
     const searchQuery = extractSearchQuery(normalized);
     if (searchQuery) {
       // Anonymize the search query before sending to Brave

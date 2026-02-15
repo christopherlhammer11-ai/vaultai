@@ -133,6 +133,22 @@ export default function ChatPage() {
 
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
+  // Listen for Electron menu bar events (refs for stable callbacks)
+  const createNewConversationRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const onNewChat = () => createNewConversationRef.current?.();
+    const onToggleSidebar = () => setSidebarOpen(prev => !prev);
+    const onOpenSettings = () => setShowApiKeyModal(true);
+    window.addEventListener("vaultai:new-chat", onNewChat);
+    window.addEventListener("vaultai:toggle-sidebar", onToggleSidebar);
+    window.addEventListener("vaultai:open-settings", onOpenSettings);
+    return () => {
+      window.removeEventListener("vaultai:new-chat", onNewChat);
+      window.removeEventListener("vaultai:toggle-sidebar", onToggleSidebar);
+      window.removeEventListener("vaultai:open-settings", onOpenSettings);
+    };
+  }, []);
+
   // ---- Load conversations from vault ----
   const historyLoadedRef = useRef(false);
   useEffect(() => {
@@ -421,6 +437,9 @@ export default function ChatPage() {
       return [...updated, newConvo];
     });
   }, [activeConvoId, messages]);
+
+  // Keep ref in sync for Electron menu events
+  createNewConversationRef.current = createNewConversation;
 
   const deleteConversation = useCallback((id: string) => {
     setConversations(prev => {
@@ -1072,7 +1091,11 @@ export default function ChatPage() {
               ].map(item => (
                 <button key={item.label} className="sidebar-item" onClick={() => {
                   if (item.cmd) { sendCommand(item.cmd); }
-                  else { setInput("search "); inputRef.current?.focus(); }
+                  else {
+                    setInput("search ");
+                    inputRef.current?.focus();
+                    inputRef.current?.setSelectionRange(7, 7);
+                  }
                 }}>{item.icon} {item.label}</button>
               ))}
               <div style={{ height: 8 }} />
