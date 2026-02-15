@@ -13,10 +13,24 @@ dotenvConfig({ path: path.join(os.homedir(), ".vaultai", ".env") });
  */
 export const maxDuration = 30;
 
+// Known Whisper hallucinations when receiving near-silence or very short audio
+const WHISPER_HALLUCINATIONS = new Set([
+  "you", "thank you", "thanks", "bye", "the end", "thanks for watching",
+  "thank you for watching", "subscribe", "like and subscribe",
+  "please subscribe", "see you next time", "goodbye",
+]);
+
+// Map locale codes to Whisper language codes
+const LOCALE_TO_WHISPER: Record<string, string> = {
+  en: "en", pt: "pt", es: "es", fr: "fr", de: "de",
+  zh: "zh", ja: "ja", ko: "ko", ar: "ar", hi: "hi", ru: "ru",
+};
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData() as unknown as globalThis.FormData;
     const audio = formData.get("audio") as File | null;
+    const locale = (formData.get("locale") as string) || "en";
 
     if (!audio) {
       return NextResponse.json({ error: "No audio provided" }, { status: 400 });
@@ -25,6 +39,11 @@ export async function POST(req: Request) {
     // 25MB limit (Whisper API limit)
     if (audio.size > 25 * 1024 * 1024) {
       return NextResponse.json({ error: "Audio too large (max 25MB)" }, { status: 400 });
+    }
+
+    // Reject very small audio (likely silence or <1 second)
+    if (audio.size < 2000) {
+      return NextResponse.json({ error: "Recording too short. Please speak for at least 1-2 seconds." }, { status: 400 });
     }
 
     // Try OpenAI Whisper first
@@ -40,11 +59,18 @@ export async function POST(req: Request) {
         else if (mimeType.includes("ogg")) ext = "ogg";
         else if (mimeType.includes("mpeg") || mimeType.includes("mp3")) ext = "mp3";
 
-        console.log(`[transcribe] Audio: type=${mimeType}, size=${audio.size}, ext=${ext}`);
+        console.log(`[transcribe] Audio: type=${mimeType}, size=${audio.size}, ext=${ext}, locale=${locale}`);
 
         const audioBlob = new Blob([await audio.arrayBuffer()], { type: mimeType });
         whisperForm.append("file", audioBlob, `recording.${ext}`);
         whisperForm.append("model", "whisper-1");
+        // Language hint prevents wrong-language hallucinations
+        const whisperLang = LOCALE_TO_WHISPER[locale] || "en";
+        whisperForm.append("language", whisperLang);
+        // Temperature 0 = more deterministic, fewer hallucinations
+        whisperForm.append("temperature", "0");
+        // Prompt gives Whisper context about expected content
+        whisperForm.append("prompt", "The user is speaking a command or question to an AI assistant called VaultAI.");
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 25000);
@@ -60,6 +86,14 @@ export async function POST(req: Request) {
           const data = await res.json();
           const text = data.text?.trim();
           if (text) {
+            // Filter known Whisper hallucinations
+            if (WHISPER_HALLUCINATIONS.has(text.toLowerCase().replace(/[.,!?]/g, ""))) {
+              console.log(`[transcribe] Filtered Whisper hallucination: "${text}"`);
+              return NextResponse.json(
+                { error: "Could not understand the recording. Please speak clearly and try again." },
+                { status: 422 }
+              );
+            }
             return NextResponse.json({ text, provider: "whisper" });
           }
           console.log("[transcribe] Whisper returned empty text");

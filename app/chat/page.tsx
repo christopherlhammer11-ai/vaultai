@@ -670,18 +670,26 @@ export default function ChatPage() {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
 
+      const recordingStartTime = Date.now();
+
       recorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
         setIsListening(false);
         mediaRecorderRef.current = null;
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         audioChunksRef.current = [];
-        if (audioBlob.size < 500) return;
+        const recordingDuration = Date.now() - recordingStartTime;
+        // Minimum 1 second of recording to avoid Whisper hallucinations
+        if (audioBlob.size < 2000 || recordingDuration < 1000) {
+          showError("Recording too short — hold the mic button for at least 1 second");
+          return;
+        }
         setInput(t.chat_transcribing);
         try {
           const formData = new FormData();
           const ext = mimeType.includes("mp4") ? "mp4" : "webm";
           formData.append("audio", audioBlob, `recording.${ext}`);
+          formData.append("locale", locale);
           const res = await fetch("/api/transcribe", { method: "POST", body: formData });
           const data = await res.json();
           if (res.ok && data.text) {
