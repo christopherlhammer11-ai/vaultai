@@ -5,135 +5,15 @@ import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { useI18n, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 
-const terminalLines = [
-  { text: <><span className="prompt">vault &gt;</span> <span className="command">who am I?</span></>, delay: 0 },
-  { text: <>Loading persona... <span className="success">persona-loaded.md</span></>, delay: 0.3 },
-  {
-    text: (
-      <>You&apos;re a founder. 15 years in your industry. Building something that matters.</>
-    ),
-    delay: 0.6
-  },
-  { text: <><span className="prompt">vault &gt;</span> <span className="command">search latest compliance updates 2026</span></>, delay: 0.9 },
-  { text: <>Searching 4 sources... <span className="success">results encrypted locally ✓</span></>, delay: 1.2 }
-];
+// Terminal lines are built inside the component to access i18n
 
-const features = [
-  {
-    icon: '🔐',
-    title: 'Encrypted Local Storage',
-    body: 'Your conversations, personas, and files are AES-encrypted at rest on your device. When queries reach cloud LLMs, a built-in anonymizer scrubs personal details before they leave.'
-  },
-  {
-    icon: '🌐',
-    title: 'Brave-Powered Search',
-    body: 'Live Brave Search with inline citations. Queries are PII-scrubbed before they leave your device, so search providers never see your name or company.'
-  },
-  {
-    icon: '🧠',
-    title: 'Persistent Memory',
-    body: 'VaultAI remembers personas, plans, and preferences locally. Load it once and it stays encrypted in your vault.'
-  },
-  {
-    icon: '🎙️',
-    title: 'Voice Input',
-    body: "Speak naturally and VaultAI transcribes on the fly. Hands-free dictation when you're moving fast and need answers faster."
-  },
-  {
-    icon: '🌍',
-    title: 'Multilingual Console',
-    body: 'Switch the entire operator console between English, Spanish, Portuguese, German, French, Chinese, Japanese, Korean, Arabic, Hindi, and Russian.'
-  },
-  {
-    icon: '💳',
-    title: 'Transparent Compute Credits',
-    body: 'Built-in meter that tracks bundled usage, Brave/API key overrides, and on-device fallbacks so you always know what runs where.'
-  },
-  {
-    icon: '📄',
-    title: 'PDF Upload & Markdown Export',
-    body: 'Upload PDFs for instant analysis. Export conversations and reports as clean markdown. All files stay encrypted in your local vault.'
-  },
-  {
-    icon: '🤖',
-    title: 'Specialized Agents',
-    body: 'Six built-in operators (strategy, research, legal, finance, ops, writing) plus the ability to spin up custom agents in seconds.'
-  },
-  {
-    icon: '⚡',
-    title: 'Feather-Light Performance',
-    body: 'Instant chat. Instant rendering. No bloat. Built on a stripped-down stack that prioritizes speed over feature creep.'
-  }
-];
+// Features array is built inside the component to access i18n
 
-const steps = [
-  {
-    label: '01',
-    title: 'Open the Vault',
-    body: "Launch VaultAI on your device. Set a password. That's your encryption key — we never see it, store it, or recover it. Your vault, your lock."
-  },
-  {
-    label: '02',
-    title: 'Load Your Persona',
-    body: 'Answer a few quick questions and VaultAI builds your persona — your background, your context, your preferences. Tell it to "remember" anything new and it updates instantly. Encrypted locally, loaded every session.'
-  },
-  {
-    label: '03',
-    title: 'Ask. Search. Build.',
-    body: 'Chat naturally, run web searches, upload PDFs, generate reports. Personal details are scrubbed before they reach any cloud API. Close it and it is locked. Open it and you are right where you left off.'
-  }
-];
+// Steps array is built inside the component to access i18n
 
-const comparisonRows = [
-  ['Data stored on your device', '✕', '✓'],
-  ['AES-256 encryption at rest', '✕', '✓'],
-  ['PII scrubbed before cloud queries', '✕', '✓'],
-  ['Never trains on your data', '✕', '✓'],
-  ['Specialized AI agents', '✕', '6 built-in + custom'],
-  ['Persistent memory across sessions', '✕', '✓'],
-  ['Web search with cited sources', 'Limited', '✓'],
-  ['Voice input', 'Some', '✓'],
-  ['No account required', '✕', '✓']
-];
+// Comparison rows are built inside the component to access i18n
 
-const plans = [
-  {
-    name: 'Lite',
-    description: 'For personal use and light research',
-    monthlyPrice: 5,
-    annualPrice: 49,
-    annualSavings: '18%',
-    features: [
-      'AES-256 encrypted vault',
-      'Local LLM (Ollama)',
-      'Persistent memory',
-      'Chat export (text)',
-      'Mobile PWA access',
-    ],
-    monthlyPlan: 'lite-monthly',
-    annualPlan: 'lite-annual',
-  },
-  {
-    name: 'Premium',
-    description: 'For operators, founders, and teams',
-    monthlyPrice: 29,
-    annualPrice: 249,
-    annualSavings: '28%',
-    popular: true,
-    features: [
-      'Everything in Lite',
-      '6 specialized AI agents + custom agents',
-      'Live web search (Brave)',
-      'Cloud LLM fallback (GPT-4o-mini, Claude, Gemini, Groq, Mistral, DeepSeek) — PII-scrubbed',
-      'Voice input (Whisper)',
-      'PDF upload & analysis',
-      'Persona files',
-      'Priority support',
-    ],
-    monthlyPlan: 'premium-monthly',
-    annualPlan: 'premium-annual',
-  },
-];
+// Plans array is built inside the component to access i18n
 
 /** Detect if running inside Electron desktop app */
 function isElectron(): boolean {
@@ -150,6 +30,59 @@ export default function LandingPage() {
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const { t, locale, setLocale } = useI18n();
+
+  const terminalLines = [
+    { text: <><span className="prompt">vault &gt;</span> <span className="command">{t.site_term_who}</span></>, delay: 0 },
+    { text: <>{t.site_term_loading} <span className="success">{t.site_term_persona_file}</span></>, delay: 0.3 },
+    { text: <>{t.site_term_persona_desc}</>, delay: 0.6 },
+    { text: <><span className="prompt">vault &gt;</span> <span className="command">{t.site_term_search_cmd}</span></>, delay: 0.9 },
+    { text: <>{t.site_term_search_result} <span className="success">{t.site_term_search_done}</span></>, delay: 1.2 },
+  ];
+
+  const features = [
+    { icon: '🔐', title: t.site_feat_encrypt_title, body: t.site_feat_encrypt_body },
+    { icon: '🌐', title: t.site_feat_search_title, body: t.site_feat_search_body },
+    { icon: '🧠', title: t.site_feat_memory_title, body: t.site_feat_memory_body },
+    { icon: '🎙️', title: t.site_feat_voice_title, body: t.site_feat_voice_body },
+    { icon: '🌍', title: t.site_feat_lang_title, body: t.site_feat_lang_body },
+    { icon: '💳', title: t.site_feat_credits_title, body: t.site_feat_credits_body },
+    { icon: '📄', title: t.site_feat_pdf_title, body: t.site_feat_pdf_body },
+    { icon: '🤖', title: t.site_feat_agents_title, body: t.site_feat_agents_body },
+    { icon: '⚡', title: t.site_feat_perf_title, body: t.site_feat_perf_body },
+  ];
+
+  const steps = [
+    { label: '01', title: t.site_step1_title, body: t.site_step1_body },
+    { label: '02', title: t.site_step2_title, body: t.site_step2_body },
+    { label: '03', title: t.site_step3_title, body: t.site_step3_body },
+  ];
+
+  const comparisonRows = [
+    [t.site_cmp_local_storage, '✕', '✓'],
+    [t.site_cmp_aes, '✕', '✓'],
+    [t.site_cmp_pii, '✕', '✓'],
+    [t.site_cmp_no_train, '✕', '✓'],
+    [t.site_cmp_agents, '✕', t.site_cmp_agents_val],
+    [t.site_cmp_memory, '✕', '✓'],
+    [t.site_cmp_search, t.site_cmp_search_typical, '✓'],
+    [t.site_cmp_voice, t.site_cmp_voice_typical, '✓'],
+    [t.site_cmp_no_account, '✕', '✓'],
+  ];
+
+  const plans = [
+    {
+      name: t.site_plan_lite, description: t.site_plan_lite_desc,
+      monthlyPrice: 5, annualPrice: 49, annualSavings: '18%',
+      features: [t.site_plan_lite_f1, t.site_plan_lite_f2, t.site_plan_lite_f3, t.site_plan_lite_f4, t.site_plan_lite_f5],
+      monthlyPlan: 'lite-monthly', annualPlan: 'lite-annual',
+    },
+    {
+      name: t.site_plan_premium, description: t.site_plan_premium_desc,
+      monthlyPrice: 29, annualPrice: 249, annualSavings: '28%', popular: true,
+      features: [t.site_plan_prem_f1, t.site_plan_prem_f2, t.site_plan_prem_f3, t.site_plan_prem_f4, t.site_plan_prem_f5, t.site_plan_prem_f6, t.site_plan_prem_f7, t.site_plan_prem_f8],
+      monthlyPlan: 'premium-monthly', annualPlan: 'premium-annual',
+    },
+  ];
 
   // Close language picker on outside click
   useEffect(() => {
@@ -223,10 +156,10 @@ export default function LandingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || 'Checkout unavailable. Try again later.');
+        alert(data.error || t.site_checkout_error);
       }
     } catch {
-      alert('Checkout unavailable. Try again later.');
+      alert(t.site_checkout_error);
     } finally {
       setCheckoutLoading(null);
     }
@@ -334,7 +267,7 @@ export default function LandingPage() {
             <span className="window-dot red" />
             <span className="window-dot yellow" />
             <span className="window-dot green" />
-            <span style={{ marginLeft: 12 }}>vaultai — session active</span>
+            <span style={{ marginLeft: 12 }}>{t.site_term_session}</span>
           </div>
           <div className="terminal-body">
             {terminalLines.map((line, idx) => (
@@ -354,42 +287,38 @@ export default function LandingPage() {
         <div className="section-label">{t.site_section_usecases}</div>
         <h2>{t.site_usecases_h2}</h2>
         <p className="section-subtitle">
-          If your conversations, research, or strategy would hurt you in the wrong hands — VaultAI was built for you.
+          {t.site_sub_usecases}
         </p>
         <div className="usecases-grid">
           {[
             {
-              label: "FOUNDERS & CEOs",
-              headline: "Competitive intel without a paper trail",
-              body:
-                "Research competitors, draft investor decks, plan acquisitions — without your queries living on someone else's server. Your strategy stays yours.",
-              prompt: '"summarize competitor landscape for health supplements in the EU"',
-              response: "3 sources analyzed. Report saved locally. ✓"
+              label: t.site_uc_founders_label,
+              headline: t.site_uc_founders_headline,
+              body: t.site_uc_founders_body,
+              prompt: `"${t.site_uc_founders_prompt}"`,
+              response: t.site_uc_founders_response,
             },
             {
-              label: "LEGAL & COMPLIANCE",
-              headline: "Privileged research stays privileged",
-              body:
-                "Review regulations, draft compliance memos, research case law. Attorney-client privilege doesn't survive a third-party AI server. VaultAI keeps it local.",
-              prompt: '"summarize 2026 FDA guidance on dietary supplements"',
-              response: "4 sources cited. Encrypted to device. ✓"
+              label: t.site_uc_legal_label,
+              headline: t.site_uc_legal_headline,
+              body: t.site_uc_legal_body,
+              prompt: `"${t.site_uc_legal_prompt}"`,
+              response: t.site_uc_legal_response,
             },
             {
-              label: "FINANCE & ADVISORY",
-              headline: "Client data never touches the cloud",
-              body:
-                "Model scenarios, summarize earnings, draft client reports. Fiduciary duty means your clients' data doesn't belong on an AI company's training set.",
-              prompt: '"analyze Q4 portfolio exposure to semiconductor tariffs"',
-              response: "Analysis complete. Stored locally. ✓"
+              label: t.site_uc_finance_label,
+              headline: t.site_uc_finance_headline,
+              body: t.site_uc_finance_body,
+              prompt: `"${t.site_uc_finance_prompt}"`,
+              response: t.site_uc_finance_response,
             },
             {
-              label: "OPERATORS & BUILDERS",
-              headline: "Your playbook, your machine",
-              body:
-                "Load your persona, your SOPs, your market research. VaultAI remembers how you think and what you're building — without broadcasting it to the world.",
-              prompt: '"load persona and draft distributor outreach for Japan market"',
-              response: "Persona loaded. Draft ready. Encrypted. ✓"
-            }
+              label: t.site_uc_ops_label,
+              headline: t.site_uc_ops_headline,
+              body: t.site_uc_ops_body,
+              prompt: `"${t.site_uc_ops_prompt}"`,
+              response: t.site_uc_ops_response,
+            },
           ].map((card) => (
             <article key={card.label} className="usecase-card">
               <div className="usecase-label">{card.label}</div>
@@ -408,8 +337,7 @@ export default function LandingPage() {
         <div className="section-label">{t.site_section_features}</div>
         <h2>{t.site_features_h2}</h2>
         <p className="section-subtitle">
-          No cloud storage. No training on your data. No subscriptions that own your history. Just a fast,
-          private, intelligent assistant that works for you.
+          {t.site_sub_features}
         </p>
         <div className="features-grid">
           {features.map((feature) => (
@@ -427,42 +355,16 @@ export default function LandingPage() {
         <div className="section-label">{t.site_section_agents}</div>
         <h2>{t.site_agents_h2}</h2>
         <p className="section-subtitle">
-          Switch between specialized AI agents built for how professionals actually work.
-          Each agent has domain-specific knowledge, a tailored communication style, and privacy guardrails.
-          Plus, build your own custom agents in seconds.
+          {t.site_sub_agents}
         </p>
         <div className="features-grid">
-                    {[
-            {
-              icon: '🎯',
-              title: 'Strategist',
-              body: 'Turns raw intel into board-ready plays—competitive teardowns, GTM roadmaps, and M&A sniff tests without leaking the thesis.',
-            },
-            {
-              icon: '⚖️',
-              title: 'Counsel',
-              body: 'IRAC-form briefs, clause redlines, and regulatory heat maps that keep privilege intact and citations airtight.',
-            },
-            {
-              icon: '📈',
-              title: 'Analyst',
-              body: 'Builds models on the fly, stress-tests scenarios, and distills earnings calls into next-step narratives.',
-            },
-            {
-              icon: '📚',
-              title: 'Researcher',
-              body: 'Cross-examines sources, synthesizes papers, and delivers evidence stacks you can drop straight into a memo.',
-            },
-            {
-              icon: '🔧',
-              title: 'Operator',
-              body: 'Breaks work into accountable steps, writes SOPs, and keeps execution ruthless and boring (the good kind).',
-            },
-            {
-              icon: '✍️',
-              title: 'Writer',
-              body: 'Spins up founder letters, legalese, or launch copy in your voice—tight, on-brief, and press-ready.',
-            },
+          {[
+            { icon: '🎯', title: t.site_agent_strategist_title, body: t.site_agent_strategist_body },
+            { icon: '⚖️', title: t.site_agent_counsel_title, body: t.site_agent_counsel_body },
+            { icon: '📈', title: t.site_agent_analyst_title, body: t.site_agent_analyst_body },
+            { icon: '📚', title: t.site_agent_researcher_title, body: t.site_agent_researcher_body },
+            { icon: '🔧', title: t.site_agent_operator_title, body: t.site_agent_operator_body },
+            { icon: '✍️', title: t.site_agent_writer_title, body: t.site_agent_writer_body },
           ].map((agent) => (
             <article key={agent.title} className="feature-card">
               <div style={{ fontSize: '1.75rem' }}>{agent.icon}</div>
@@ -483,7 +385,7 @@ export default function LandingPage() {
         <div className="section-label">{t.site_section_pricing}</div>
         <h2>{t.site_pricing_h2}</h2>
         <p className="section-subtitle">
-          Try VaultAI free for 7 days. Cancel anytime — no questions asked. Your data never leaves your device, even if you cancel.
+          {t.site_sub_pricing}
         </p>
 
         <div className="billing-toggle">
@@ -504,7 +406,7 @@ export default function LandingPage() {
         <div className="pricing-grid">
           {plans.map((plan) => (
             <div key={plan.name} className={`pricing-card${plan.popular ? ' popular' : ''}`}>
-              {plan.popular && <div className="pricing-badge">Most Popular</div>}
+              {plan.popular && <div className="pricing-badge">{t.site_plan_popular}</div>}
               <h3>{plan.name}</h3>
               <p className="pricing-description">{plan.description}</p>
               <div className="pricing-price">
@@ -512,11 +414,11 @@ export default function LandingPage() {
                   ${billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice}
                 </span>
                 <span className="price-period">
-                  /{billingCycle === 'monthly' ? 'mo' : 'yr'}
+                  /{billingCycle === 'monthly' ? t.site_plan_per_mo : t.site_plan_per_yr}
                 </span>
               </div>
               {billingCycle === 'annual' && (
-                <div className="pricing-savings">Save {plan.annualSavings}</div>
+                <div className="pricing-savings">{t.site_plan_save(plan.annualSavings)}</div>
               )}
               <div className="pricing-trial">{t.site_trial_included}</div>
               <button
@@ -525,7 +427,7 @@ export default function LandingPage() {
                 disabled={checkoutLoading !== null}
               >
                 {checkoutLoading === (billingCycle === 'monthly' ? plan.monthlyPlan : plan.annualPlan)
-                  ? 'Loading...'
+                  ? t.site_plan_loading
                   : t.site_cta}
               </button>
               <ul className="pricing-features">
@@ -543,7 +445,7 @@ export default function LandingPage() {
           <div className="section-label">{t.site_section_how}</div>
           <h2>{t.site_how_h2}</h2>
           <p className="section-subtitle">
-            No cloud accounts. No data consent forms. A 60-second setup and you are operational.
+            {t.site_sub_how}
           </p>
         </div>
         <div className="timeline-steps">
@@ -561,15 +463,14 @@ export default function LandingPage() {
         <section className="qr-section">
           <div className="qr-card">
             <div className="qr-text">
-              <div className="section-label">Mobile Access</div>
+              <div className="section-label">{t.site_mobile_label}</div>
               <h2>{t.site_mobile_title}</h2>
               <p className="section-subtitle">
-                Scan this QR code from your phone to open VaultAI as a PWA.
-                Same WiFi network required. Your data stays on this machine.
+                {t.site_mobile_sub}
               </p>
               <div className="qr-steps">
-                <div><Smartphone size={16} /> <strong>iPhone:</strong> Open in Safari → Share → Add to Home Screen</div>
-                <div><Smartphone size={16} /> <strong>Android:</strong> Open in Chrome → Menu → Install app</div>
+                <div><Smartphone size={16} /> <strong>iPhone:</strong> {t.site_mobile_iphone}</div>
+                <div><Smartphone size={16} /> <strong>Android:</strong> {t.site_mobile_android}</div>
               </div>
               <div className="qr-url">{mobileUrl}</div>
             </div>
@@ -591,8 +492,7 @@ export default function LandingPage() {
         <div className="section-label">{t.site_section_why}</div>
         <h2>{t.site_why_h2}</h2>
         <p className="section-subtitle">
-          Most AI tools store your data on their servers, train on your conversations, and sell your patterns.
-          VaultAI does not.
+          {t.site_sub_why}
         </p>
         <div className="comparison-table-wrap">
           <table className="comparison-table">
@@ -620,16 +520,14 @@ export default function LandingPage() {
         <div className="section-label">{t.site_section_openclaw}</div>
         <h2>{t.site_openclaw_h2}</h2>
         <p className="section-subtitle">
-          VaultAI is built on a fork of OpenClaw — an open-source agentic AI framework.
-          That means VaultAI inherits a battle-tested runtime for LLM routing, tool execution,
-          and plugin management, while adding AES-256 encryption and local-first storage as a core layer.
+          {t.site_sub_openclaw}
         </p>
         <div className="openclaw-pills">
           {[
-            { label: "MULTI-MODEL", desc: "Automatic failover across OpenAI, Anthropic, Gemini, Groq, Mistral, DeepSeek, and local Ollama" },
-            { label: "BYOK", desc: "Bring your own API keys — every provider is optional, mix and match as you like" },
-            { label: "SELF-HOSTABLE", desc: "Deploy on your own infrastructure — no cloud required" },
-            { label: "AUDITABLE", desc: "Open-source runtime. Inspect every line." },
+            { label: t.site_oc_multi, desc: t.site_oc_multi_desc },
+            { label: t.site_oc_byok, desc: t.site_oc_byok_desc },
+            { label: t.site_oc_self, desc: t.site_oc_self_desc },
+            { label: t.site_oc_audit, desc: t.site_oc_audit_desc },
           ].map((pill) => (
             <div key={pill.label} className="openclaw-pill">
               <span className="openclaw-pill-label">{pill.label}</span>
@@ -658,9 +556,9 @@ export default function LandingPage() {
           <Lock size={16} /> VaultAI
         </a>
         <div className="trust-badges">
-          <span className="trust-badge">🔐 AES-256</span>
-          <span className="trust-badge">🖥️ Local-First</span>
-          <span className="trust-badge">🛡️ PII-Scrubbed Queries</span>
+          <span className="trust-badge">🔐 {t.site_footer_aes}</span>
+          <span className="trust-badge">🖥️ {t.site_footer_local}</span>
+          <span className="trust-badge">🛡️ {t.site_footer_pii}</span>
         </div>
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           <a href="mailto:info@personalvaultai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@personalvaultai.com</a>
