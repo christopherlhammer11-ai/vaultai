@@ -1,5 +1,6 @@
 /**
- * HammerLock AI — Electron main process
+ * 🔨🔐 HammerLock AI — Electron main process
+ * Your AI. Your Data. Your Rules.
  *
  * Lifecycle:
  *   1. Show cinematic splash screen instantly (no server dependency)

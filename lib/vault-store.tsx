@@ -1,3 +1,5 @@
+// 🔨🔐 HammerLock AI — Vault Store
+// AES-256 encrypted state management. Your data never leaves this device.
 "use client";
 
 import {

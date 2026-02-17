@@ -61,7 +61,7 @@ banner
 
 echo -e "  ${DIM}Welcome! This guide walks you through everything you need"
 echo -e "  to get the most out of HammerLock AI — from first launch to"
-echo -e "  power-user features.${RESET}"
+echo -e "  power-user features. Let's hammer it out. 🔨${RESET}"
 
 wait_key
 
@@ -253,9 +253,9 @@ echo ""
 echo -e "${GREEN}${BOLD}"
 echo "  ╔══════════════════════════════════════════════════════╗"
 echo "  ║                                                      ║"
-echo "  ║              🎉  You're all set!                     ║"
+echo "  ║           🔨🎉  You're all set!                      ║"
 echo "  ║                                                      ║"
-echo "  ║   Open HammerLock AI and start with:                       ║"
+echo "  ║   Open HammerLock AI and start with:                 ║"
 echo "  ║     \"Tell me about yourself\"                         ║"
 echo "  ║     \"Search for [anything]\"                          ║"
 echo "  ║     \"Help me draft a [document]\"                     ║"

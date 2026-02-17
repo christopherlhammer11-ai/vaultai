@@ -1,5 +1,6 @@
 /* ============================================================
-   HammerLock AI Design System
+   🔨🔐 HammerLock AI Design System
+   Your AI. Your Data. Your Rules.
    ============================================================ */
 
 :root {
@@ -3461,11 +3462,11 @@ footer .logo-mark { font-size: 0.85rem; }
 }
 
 /* ============================================================
-   Pricing Section
+   💰 Pricing Section — fair pricing, no hidden fees
    ============================================================ */
 
 .pricing-section {
-  padding: var(--space-3xl) var(--space-xl);
+  padding: var(--space-3xl) var(--space-xl) var(--space-2xl);
   text-align: center;
   max-width: 1200px;
   margin: 0 auto;
@@ -3514,6 +3515,7 @@ footer .logo-mark { font-size: 0.85rem; }
   gap: var(--space-lg);
   max-width: 800px;
   margin: 0 auto;
+  align-items: start;
 }
 
 .pricing-card {

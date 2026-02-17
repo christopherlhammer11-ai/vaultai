@@ -1,3 +1,5 @@
+// 🔨🔐 HammerLock AI — Root Layout
+// Privacy-first intelligence. No cloud accounts. No data leakage.
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";

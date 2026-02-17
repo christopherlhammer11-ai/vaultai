@@ -1,3 +1,5 @@
+// 🔨🔐 HammerLock AI — Internationalization
+// 11 languages. One encrypted console. Zero excuses.
 "use client";
 
 import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -329,6 +331,8 @@ const en = {
   site_feat_pdf_body: "Upload PDFs for instant analysis. Export conversations and reports as clean markdown. All files stay encrypted on your device.",
   site_feat_agents_title: "Specialized Agents",
   site_feat_agents_body: "Six built-in operators (strategy, research, legal, finance, ops, writing) plus the ability to spin up custom agents in seconds.",
+  site_feat_vault_title: "Encrypted File Vault",
+  site_feat_vault_body: "Save chat responses, upload PDFs, and create private notes — all AES-256 encrypted on your device. Your vault is your personal knowledge base that only you can unlock.",
   site_feat_perf_title: "Feather-Light Performance",
   site_feat_perf_body: "Instant chat. Instant rendering. No bloat. Built on a stripped-down stack that prioritizes speed over feature creep.",
 
@@ -808,6 +812,8 @@ const ptBR: typeof en = {
   site_feat_pdf_body: "Faça upload de PDFs para análise instantânea. Exporte conversas e relatórios como Markdown limpo. Todos os arquivos permanecem criptografados no seu dispositivo.",
   site_feat_agents_title: "Agentes especializados",
   site_feat_agents_body: "Seis operadores integrados (estratégia, pesquisa, jurídico, finanças, operações, redação) mais a capacidade de criar agentes personalizados em segundos.",
+  site_feat_vault_title: "Vault de Arquivos Criptografado",
+  site_feat_vault_body: "Salve respostas de chat, faça upload de PDFs e crie notas privadas — tudo criptografado com AES-256 no seu dispositivo. Seu vault é sua base de conhecimento pessoal que só você pode desbloquear.",
   site_feat_perf_title: "Performance leve como pluma",
   site_feat_perf_body: "Chat instantâneo. Renderização instantânea. Zero inchaço. Construído em uma stack enxuta que prioriza velocidade sobre acúmulo de recursos.",
 
@@ -1279,6 +1285,8 @@ const es: typeof en = {
   site_feat_pdf_body: "Sube PDFs para análisis instantáneo. Exporta conversaciones e informes como Markdown limpio. Todos los archivos permanecen cifrados en tu dispositivo.",
   site_feat_agents_title: "Agentes especializados",
   site_feat_agents_body: "Seis operadores integrados (estrategia, investigación, legal, finanzas, operaciones, redacción) más la capacidad de crear agentes personalizados en segundos.",
+  site_feat_vault_title: "Vault de Archivos Cifrado",
+  site_feat_vault_body: "Guarda respuestas de chat, sube PDFs y crea notas privadas — todo cifrado con AES-256 en tu dispositivo. Tu vault es tu base de conocimiento personal que solo tú puedes desbloquear.",
   site_feat_perf_title: "Rendimiento ultraligero",
   site_feat_perf_body: "Chat instantáneo. Renderizado instantáneo. Cero hinchazón. Construido sobre un stack depurado que prioriza velocidad sobre acumulación de funciones.",
 
@@ -1744,6 +1752,8 @@ const fr: typeof en = {
   site_feat_pdf_body: "Importez des PDF pour une analyse instantanée. Exportez conversations et rapports en Markdown propre. Tous les fichiers restent chiffrés sur votre appareil.",
   site_feat_agents_title: "Agents spécialisés",
   site_feat_agents_body: "Six opérateurs intégrés (stratégie, recherche, juridique, finance, opérations, rédaction) plus la possibilité de créer des agents personnalisés en quelques secondes.",
+  site_feat_vault_title: "Vault de Fichiers Chiffré",
+  site_feat_vault_body: "Enregistrez des réponses de chat, importez des PDF et créez des notes privées — le tout chiffré en AES-256 sur votre appareil. Votre vault est votre base de connaissances personnelle que vous seul pouvez déverrouiller.",
   site_feat_perf_title: "Performance ultra-légère",
   site_feat_perf_body: "Chat instantané. Rendu instantané. Zéro superflu. Construit sur une stack épurée qui privilégie la vitesse à l'accumulation de fonctionnalités.",
 
@@ -2208,6 +2218,8 @@ const de: typeof en = {
   site_feat_pdf_body: "Lade PDFs für sofortige Analyse hoch. Exportiere Gespräche und Berichte als sauberes Markdown. Alle Dateien bleiben verschlüsselt auf deinem Gerät.",
   site_feat_agents_title: "Spezialisierte Agenten",
   site_feat_agents_body: "Sechs integrierte Operatoren (Strategie, Recherche, Recht, Finanzen, Operations, Redaktion) plus die Möglichkeit, eigene Agenten in Sekunden zu erstellen.",
+  site_feat_vault_title: "Verschlüsselter Datei-Vault",
+  site_feat_vault_body: "Speichere Chat-Antworten, lade PDFs hoch und erstelle private Notizen — alles AES-256-verschlüsselt auf deinem Gerät. Dein Vault ist deine persönliche Wissensdatenbank, die nur du entsperren kannst.",
   site_feat_perf_title: "Federleichte Performance",
   site_feat_perf_body: "Sofortiger Chat. Sofortiges Rendering. Kein Ballast. Auf einem schlanken Stack aufgebaut, der Geschwindigkeit über Feature-Überladung stellt.",
 
@@ -2672,6 +2684,8 @@ const zh: typeof en = {
   site_feat_pdf_body: "上传 PDF 进行即时分析。将对话和报告导出为整洁的 Markdown。所有文件都在你的设备上保持加密。",
   site_feat_agents_title: "专业智能体",
   site_feat_agents_body: "六个内置操作员（战略、研究、法律、财务、运营、写作）加上几秒钟内创建自定义智能体的能力。",
+  site_feat_vault_title: "加密文件 Vault",
+  site_feat_vault_body: "保存聊天回复、上传 PDF、创建私密笔记——全部在你的设备上进行 AES-256 加密。你的 vault 是只有你能解锁的个人知识库。",
   site_feat_perf_title: "轻如羽毛的性能",
   site_feat_perf_body: "即时聊天。即时渲染。零臃肿。基于精简技术栈构建，速度优先于功能堆砌。",
 
@@ -3136,6 +3150,8 @@ const ja: typeof en = {
   site_feat_pdf_body: "PDFをアップロードして即座に分析。会話やレポートをクリーンなMarkdownでエクスポート。すべてのファイルはデバイス上で暗号化されたまま保持されます。",
   site_feat_agents_title: "専門エージェント",
   site_feat_agents_body: "6つの内蔵オペレーター（戦略、リサーチ、法務、財務、オペレーション、ライティング）に加え、数秒でカスタムエージェントを作成可能。",
+  site_feat_vault_title: "暗号化ファイル Vault",
+  site_feat_vault_body: "チャットの回答を保存、PDFをアップロード、プライベートノートを作成——すべてデバイス上でAES-256暗号化。あなたのvaultは、あなただけがアクセスできる個人ナレッジベースです。",
   site_feat_perf_title: "羽のように軽いパフォーマンス",
   site_feat_perf_body: "即座にチャット。即座にレンダリング。無駄なし。スピードを最優先し、機能の肥大化を排除した軽量スタックで構築。",
 
@@ -3599,6 +3615,8 @@ const ko: typeof en = {
   site_feat_pdf_body: "즉시 분석을 위해 PDF를 업로드하세요. 대화와 보고서를 깔끔한 마크다운으로 내보내세요. 모든 파일은 기기에 암호화되어 유지됩니다.",
   site_feat_agents_title: "전문 에이전트",
   site_feat_agents_body: "6개의 내장 오퍼레이터(전략, 연구, 법률, 재무, 운영, 작문)와 몇 초 만에 커스텀 에이전트를 만들 수 있는 기능.",
+  site_feat_vault_title: "암호화 파일 Vault",
+  site_feat_vault_body: "채팅 응답 저장, PDF 업로드, 개인 노트 작성 — 모두 기기에서 AES-256으로 암호화됩니다. 당신의 vault는 오직 당신만 열 수 있는 개인 지식 저장소입니다.",
   site_feat_perf_title: "깃털처럼 가벼운 성능",
   site_feat_perf_body: "즉시 채팅. 즉시 렌더링. 군더더기 없음. 기능 과잉보다 속도를 우선시하는 간결한 스택으로 구축.",
   // ---- Landing page: how it works steps ----
@@ -4050,6 +4068,8 @@ const ar: typeof en = {
   site_feat_pdf_body: "ارفع ملفات PDF للتحليل الفوري. صدّر المحادثات والتقارير كملفات markdown نظيفة. جميع الملفات تبقى مشفرة على جهازك.",
   site_feat_agents_title: "وكلاء متخصصون",
   site_feat_agents_body: "ستة وكلاء مدمجين (استراتيجية، بحث، قانون، مالية، عمليات، كتابة) بالإضافة إلى القدرة على إنشاء وكلاء مخصصين في ثوانٍ.",
+  site_feat_vault_title: "Vault ملفات مشفّر",
+  site_feat_vault_body: "احفظ ردود الدردشة، ارفع ملفات PDF، وأنشئ ملاحظات خاصة — الكل مشفّر بتقنية AES-256 على جهازك. الـ vault الخاص بك هو قاعدة معرفتك الشخصية التي لا يستطيع فتحها سواك.",
   site_feat_perf_title: "أداء خفيف كالريشة",
   site_feat_perf_body: "دردشة فورية. عرض فوري. بدون انتفاخ. مبني على حزمة مبسطة تعطي الأولوية للسرعة على تضخم الميزات.",
   // ---- Landing page: how it works steps ----
@@ -4502,6 +4522,8 @@ const hi: typeof en = {
   site_feat_pdf_body: "तुरंत विश्लेषण के लिए PDF अपलोड करें। बातचीत और रिपोर्ट को साफ़ मार्कडाउन के रूप में एक्सपोर्ट करें। सभी फ़ाइलें आपके डिवाइस पर एन्क्रिप्टेड रहती हैं।",
   site_feat_agents_title: "विशेष एजेंट",
   site_feat_agents_body: "छह बिल्ट-इन ऑपरेटर (रणनीति, शोध, कानूनी, वित्त, संचालन, लेखन) और सेकंडों में कस्टम एजेंट बनाने की क्षमता।",
+  site_feat_vault_title: "एन्क्रिप्टेड फ़ाइल Vault",
+  site_feat_vault_body: "चैट उत्तर सहेजें, PDF अपलोड करें, और निजी नोट्स बनाएं — सब कुछ आपके डिवाइस पर AES-256 एन्क्रिप्टेड। आपका vault आपका व्यक्तिगत ज्ञान भंडार है जिसे केवल आप ही अनलॉक कर सकते हैं।",
   site_feat_perf_title: "पंख जैसा हल्का प्रदर्शन",
   site_feat_perf_body: "तुरंत चैट। तुरंत रेंडरिंग। कोई ब्लोट नहीं। फ़ीचर क्रीप पर गति को प्राथमिकता देने वाले स्ट्रिप-डाउन स्टैक पर बना।",
 
@@ -4967,6 +4989,8 @@ const ru: typeof en = {
   site_feat_pdf_body: "Загружайте PDF для мгновенного анализа. Экспортируйте разговоры и отчёты в чистый markdown. Все файлы остаются зашифрованными на вашем устройстве.",
   site_feat_agents_title: "Специализированные агенты",
   site_feat_agents_body: "Шесть встроенных операторов (стратегия, исследования, юриспруденция, финансы, операции, написание) плюс возможность создать кастомных агентов за секунды.",
+  site_feat_vault_title: "Зашифрованный файловый Vault",
+  site_feat_vault_body: "Сохраняйте ответы чата, загружайте PDF и создавайте приватные заметки — всё зашифровано AES-256 на вашем устройстве. Ваш vault — это персональная база знаний, доступ к которой есть только у вас.",
   site_feat_perf_title: "Легкая как пёрышко производительность",
   site_feat_perf_body: "Мгновенный чат. Мгновенный рендеринг. Без раздувания. Построен на минималистичном стеке, который приоритизирует скорость над избытком функций.",
 

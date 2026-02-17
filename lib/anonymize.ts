@@ -1,5 +1,6 @@
 /**
- * HammerLock AI Anonymization Layer — v2 (holistic rewrite)
+ * 🔨🛡️ HammerLock AI Anonymization Layer — v2 (holistic rewrite)
+ * Your personal data bodyguard. Strips PII before anything leaves your device.
  *
  * DESIGN PRINCIPLES:
  *   1. Only scrub OUTBOUND text (queries sent to Brave / OpenAI / Anthropic).

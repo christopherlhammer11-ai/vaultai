@@ -1,3 +1,5 @@
+// 🔨🔐 HammerLock AI — Chat Console
+// Where the magic happens. Privacy-first, personality-loaded.
 "use client";
 import {
   Lock, Mic, MicOff, Paperclip, Send, Terminal, X, ChevronRight, Trash2,
@@ -2566,6 +2568,9 @@ export default function ChatPage() {
               <span className="vault-count">{vaultFiles.length} items</span>
               <button className="ghost-btn" onClick={() => setShowVaultPanel(false)} style={{marginLeft:"auto"}}><X size={16} /></button>
             </div>
+            <p style={{fontSize:"0.75rem",color:"var(--text-muted)",padding:"0 16px 8px",margin:0,lineHeight:1.5}}>
+              Your encrypted vault — save chat responses, upload PDFs, and create notes. Everything is AES-256 encrypted on your device.
+            </p>
 
             {/* Search + Actions */}
             <div className="vault-panel-actions">

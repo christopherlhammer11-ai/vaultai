@@ -1,5 +1,8 @@
 'use client';
 
+// 🔨🔐 HammerLock AI — Landing Page
+// Your AI. Your Data. Your Rules.
+
 import { Check, Globe, Lock, Menu, Smartphone, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
@@ -47,6 +50,7 @@ export default function LandingPage() {
     { icon: '🌍', title: t.site_feat_lang_title, body: t.site_feat_lang_body },
     { icon: '💳', title: t.site_feat_credits_title, body: t.site_feat_credits_body },
     { icon: '📄', title: t.site_feat_pdf_title, body: t.site_feat_pdf_body },
+    { icon: '🗄️', title: t.site_feat_vault_title, body: t.site_feat_vault_body },
     { icon: '🤖', title: t.site_feat_agents_title, body: t.site_feat_agents_body },
     { icon: '⚡', title: t.site_feat_perf_title, body: t.site_feat_perf_body },
   ];

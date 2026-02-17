@@ -1,3 +1,7 @@
+// 🔨🔐 HammerLock AI — API Engine
+// The brain behind the operation. Routes queries, scrubs PII, fetches weather,
+// searches the web, and talks to LLMs — all while keeping your data locked down.
+
 import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -775,8 +779,8 @@ async function callGatewayAction(
 
 type ChatMessage = { role: string; content: string };
 
-// HammerLock AI core identity — this is what the LLM knows about itself
-const HAMMERLOCK_IDENTITY = `You are HammerLock AI — a personal AI assistant that lives on the user's desktop. You can do everything: answer questions, have conversations, search the web, analyze documents, remember user preferences, help with any task.
+// 🔨 HammerLock AI core identity — this is what the LLM knows about itself
+const HAMMERLOCK_IDENTITY = `You are HammerLock AI 🔨🔐 — a personal AI assistant that lives on the user's desktop. Privacy-first, personality-loaded, and ready for anything. You can do everything: answer questions, have conversations, search the web, analyze documents, remember user preferences, help with any task.
 
 ## YOUR TOOLS (these work right now, not hypothetically)
 1. **Web search** — Brave Search is wired in. When the user asks about weather, news, prices, events, or anything real-time, search results get injected into your prompt. USE THEM. Present the data directly. Never say "I can't access the web" — you literally just searched it.
@@ -1904,10 +1908,23 @@ export async function POST(req: Request) {
       const timeTag = now.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
 
       // For weather queries, fetch REAL weather data from Open-Meteo (free, no key needed)
+      // Try query-extracted city FIRST (more specific), then fall back to persona location
       let weatherData = "";
       if (isWeatherQuery) {
-        const userLoc = extractUserLocation(persona);
-        const coords = getCoordsForLocation(userLoc);
+        let coords: [number, number] | null = null;
+        // Extract city from query: "weather in san ramon" → "san ramon"
+        const qLower = searchQuery.toLowerCase();
+        const qCityMatch = qLower.match(/(?:in|near|around|for)\s+([a-z\s]+?)(?:\s*(?:ca|tx|ny|fl|wa|il|az|or|co|ga|ma|mi|mn|tn|nv|nc|oh|pa|md|dc|mo|in|wi|ut)\b)?(?:\s*(?:today|tonight|now|this week|tomorrow))?[,?!.\s]*$/)
+          || qLower.match(/weather\s+([a-z\s]+?)(?:\s*(?:ca|tx|ny|fl|wa|il|az|or|co|ga|ma|mi|mn|tn|nv|nc|oh|pa|md|dc|mo|in|wi|ut)\b)?(?:\s*(?:today|tonight|now|this week|tomorrow))?[,?!.\s]*$/);
+        if (qCityMatch) {
+          const cityName = qCityMatch[1].trim().replace(/\s+(ca|tx|ny|fl|wa|il|az|or|co|ga|ma|mi|mn|tn|nv|nc|oh|pa|md|dc|mo|in|wi|ut)$/i, "").trim();
+          coords = getCoordsForLocation(cityName);
+        }
+        // Fall back to persona location
+        if (!coords) {
+          const userLoc = extractUserLocation(persona);
+          coords = getCoordsForLocation(userLoc);
+        }
         if (coords) {
           const wd = await fetchWeatherData(coords[0], coords[1]);
           if (wd) weatherData = `\n\n${wd}`;
