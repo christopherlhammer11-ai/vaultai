@@ -1,16 +1,28 @@
+// 🔨🔐 HammerLock AI — Stripe Checkout
+// Mixed billing: one-time (Core), subscription (Pro), per-seat (Teams)
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
 
-const PRICE_MAP: Record<string, string | undefined> = {
-  "lite-monthly": process.env.STRIPE_PRICE_LITE_MONTHLY,
-  "lite-annual": process.env.STRIPE_PRICE_LITE_ANNUAL,
-  "premium-monthly": process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
-  "premium-annual": process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
+type PlanConfig = {
+  priceEnv: string;
+  mode: "payment" | "subscription";
+  trial?: number;          // trial days (subscriptions only)
+  perSeat?: boolean;       // per-user pricing (Teams)
 };
 
-const VALID_PLANS = new Set(Object.keys(PRICE_MAP));
+const PLAN_CONFIG: Record<string, PlanConfig> = {
+  // Core — $15 one-time
+  "core-onetime":     { priceEnv: "STRIPE_PRICE_CORE_ONETIME",     mode: "payment" },
+  // Pro — $29/mo or $249/yr
+  "pro-monthly":      { priceEnv: "STRIPE_PRICE_PRO_MONTHLY",      mode: "subscription", trial: 7 },
+  "pro-annual":       { priceEnv: "STRIPE_PRICE_PRO_ANNUAL",       mode: "subscription", trial: 7 },
+  // Teams — $49/user/mo
+  "teams-monthly":    { priceEnv: "STRIPE_PRICE_TEAMS_MONTHLY",    mode: "subscription", trial: 7, perSeat: true },
+};
+
+const VALID_PLANS = new Set(Object.keys(PLAN_CONFIG));
 
 export async function POST(req: NextRequest) {
   if (!STRIPE_SECRET) {
@@ -21,7 +33,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { plan } = await req.json();
+    const body = await req.json();
+    const { plan, seats } = body as { plan?: string; seats?: number };
 
     if (!plan || !VALID_PLANS.has(plan)) {
       return NextResponse.json(
@@ -30,7 +43,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const priceId = PRICE_MAP[plan];
+    const config = PLAN_CONFIG[plan];
+    const priceId = process.env[config.priceEnv];
     if (!priceId) {
       return NextResponse.json(
         { error: "This plan is not available yet." },
@@ -45,14 +59,30 @@ export async function POST(req: NextRequest) {
     });
 
     const origin = req.headers.get("origin") || "https://hammerlockai.com";
+    const quantity = config.perSeat ? Math.max(1, seats || 5) : 1;
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: { trial_period_days: 7 },
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      mode: config.mode,
+      line_items: [{ price: priceId, quantity }],
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${encodeURIComponent(plan)}`,
       cancel_url: `${origin}/#pricing`,
-    });
+    };
+
+    // Add trial for subscriptions
+    if (config.mode === "subscription" && config.trial) {
+      sessionParams.subscription_data = { trial_period_days: config.trial };
+    }
+
+    // Allow seat adjustment for Teams
+    if (config.perSeat) {
+      sessionParams.line_items![0].adjustable_quantity = {
+        enabled: true,
+        minimum: 1,
+        maximum: 500,
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {

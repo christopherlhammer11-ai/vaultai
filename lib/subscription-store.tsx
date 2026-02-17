@@ -10,7 +10,7 @@ import {
   useState
 } from "react";
 
-export type SubscriptionTier = "free" | "lite" | "premium";
+export type SubscriptionTier = "free" | "core" | "pro" | "teams" | "enterprise";
 
 export type SubscriptionStatus = {
   tier: SubscriptionTier;
@@ -34,7 +34,7 @@ const defaultSubscription = (): SubscriptionStatus => ({
   activatedAt: null,
 });
 
-/** Desktop Electron app = always premium (user already purchased) */
+/** Desktop Electron app = always pro (user already purchased Core or higher) */
 function isElectron(): boolean {
   if (typeof window === "undefined") return false;
   return !!(window as unknown as Record<string, unknown>).electron ||
@@ -76,22 +76,24 @@ export type PremiumFeature =
   | "share";
 
 const FEATURE_TIERS: Record<PremiumFeature, SubscriptionTier> = {
-  web_search: "premium",
-  cloud_llm: "premium",
-  voice_input: "premium",
-  voice_output: "premium",
-  pdf_export: "premium",
-  pdf_upload: "premium",
-  personas: "premium",
-  file_vault: "lite",
-  reports: "premium",
-  share: "lite",
+  web_search: "pro",
+  cloud_llm: "pro",
+  voice_input: "pro",
+  voice_output: "pro",
+  pdf_export: "pro",
+  pdf_upload: "pro",
+  personas: "core",
+  file_vault: "core",
+  reports: "pro",
+  share: "core",
 };
 
 const TIER_RANK: Record<SubscriptionTier, number> = {
   free: 0,
-  lite: 1,
-  premium: 2,
+  core: 1,
+  pro: 2,
+  teams: 3,
+  enterprise: 4,
 };
 
 const SubscriptionContext = createContext<SubscriptionContextValue | undefined>(undefined);

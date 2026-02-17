@@ -18,9 +18,13 @@ function SuccessContent() {
   useEffect(() => {
     if (!sessionId || activated) return;
     if (subscription.sessionId === sessionId) { setActivated(true); return; }
-    let tier: SubscriptionTier = "premium";
-    if (planParam?.includes("lite")) {
-      tier = "lite";
+    let tier: SubscriptionTier = "pro";
+    if (planParam?.includes("core")) {
+      tier = "core";
+    } else if (planParam?.includes("teams")) {
+      tier = "teams";
+    } else if (planParam?.includes("enterprise")) {
+      tier = "enterprise";
     }
     activateSubscription(tier, sessionId);
     setActivated(true);
@@ -39,7 +43,7 @@ function SuccessContent() {
         {subscription.active && (
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", background: "rgba(0, 255, 136, 0.1)", border: "1px solid rgba(0, 255, 136, 0.3)", borderRadius: 8, color: "var(--accent)", fontSize: "0.85rem", marginTop: 12 }}>
             <Shield size={14} />
-            {t.site_success_plan_activated(subscription.tier === "premium" ? "Premium" : "Lite")}
+            {t.site_success_plan_activated(subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1))}
           </div>
         )}
         {sessionId && (

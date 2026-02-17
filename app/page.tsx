@@ -75,16 +75,37 @@ export default function LandingPage() {
 
   const plans = [
     {
-      name: t.site_plan_lite, description: t.site_plan_lite_desc,
-      monthlyPrice: 5, annualPrice: 49, annualSavings: '18%',
-      features: [t.site_plan_lite_f1, t.site_plan_lite_f2, t.site_plan_lite_f3, t.site_plan_lite_f4, t.site_plan_lite_f5],
-      monthlyPlan: 'lite-monthly', annualPlan: 'lite-annual',
+      name: t.site_plan_free, tag: t.site_plan_free_tag, description: t.site_plan_free_desc,
+      price: 0, priceLabel: '$0', pricePeriod: '',
+      features: [t.site_plan_free_f1, t.site_plan_free_f2, t.site_plan_free_f3, t.site_plan_free_f4, t.site_plan_free_f5],
+      ctaLabel: t.site_cta_trial, ctaAction: 'github', // links to GitHub
     },
     {
-      name: t.site_plan_premium, description: t.site_plan_premium_desc,
-      monthlyPrice: 29, annualPrice: 249, annualSavings: '28%', popular: true,
-      features: [t.site_plan_prem_f1, t.site_plan_prem_f2, t.site_plan_prem_f3, t.site_plan_prem_f4, t.site_plan_prem_f5, t.site_plan_prem_f6, t.site_plan_prem_f7, t.site_plan_prem_f8],
-      monthlyPlan: 'premium-monthly', annualPlan: 'premium-annual',
+      name: t.site_plan_core, description: t.site_plan_core_desc,
+      price: 15, priceLabel: '$15', pricePeriod: t.site_plan_one_time,
+      features: [t.site_plan_core_f1, t.site_plan_core_f2, t.site_plan_core_f3, t.site_plan_core_f4, t.site_plan_core_f5],
+      ctaAction: 'core-onetime',
+    },
+    {
+      name: t.site_plan_pro, description: t.site_plan_pro_desc, popular: true,
+      price: billingCycle === 'monthly' ? 29 : 249,
+      priceLabel: billingCycle === 'monthly' ? '$29' : '$249',
+      pricePeriod: billingCycle === 'monthly' ? t.site_plan_per_mo : t.site_plan_per_yr,
+      annualSavings: '28%',
+      features: [t.site_plan_pro_f1, t.site_plan_pro_f2, t.site_plan_pro_f3, t.site_plan_pro_f4, t.site_plan_pro_f5, t.site_plan_pro_f6, t.site_plan_pro_f7],
+      ctaAction: billingCycle === 'monthly' ? 'pro-monthly' : 'pro-annual',
+    },
+    {
+      name: t.site_plan_teams, description: t.site_plan_teams_desc,
+      price: 49, priceLabel: '$49', pricePeriod: t.site_plan_per_user,
+      features: [t.site_plan_teams_f1, t.site_plan_teams_f2, t.site_plan_teams_f3, t.site_plan_teams_f4, t.site_plan_teams_f5],
+      ctaAction: 'teams-monthly',
+    },
+    {
+      name: t.site_plan_enterprise, description: t.site_plan_enterprise_desc, enterprise: true,
+      price: -1, priceLabel: t.site_plan_custom, pricePeriod: '',
+      features: [t.site_plan_ent_f1, t.site_plan_ent_f2, t.site_plan_ent_f3, t.site_plan_ent_f4, t.site_plan_ent_f5],
+      ctaLabel: t.site_plan_contact_sales, ctaAction: 'contact',
     },
   ];
 
@@ -385,7 +406,7 @@ export default function LandingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="pricing-section">
+      <section id="pricing" className="pricing-section fade-in-section">
         <div className="section-label">{t.site_section_pricing}</div>
         <h2>{t.site_pricing_h2}</h2>
         <p className="section-subtitle">
@@ -409,34 +430,53 @@ export default function LandingPage() {
 
         <div className="pricing-grid">
           {plans.map((plan) => (
-            <div key={plan.name} className={`pricing-card${plan.popular ? ' popular' : ''}`}>
+            <div key={plan.name} className={`pricing-card${plan.popular ? ' popular' : ''}${plan.enterprise ? ' enterprise' : ''}`}>
               {plan.popular && <div className="pricing-badge">{t.site_plan_popular}</div>}
+              {plan.tag && <div className="pricing-tag">{plan.tag}</div>}
               <h3>{plan.name}</h3>
               <p className="pricing-description">{plan.description}</p>
               <div className="pricing-price">
-                <span className="price-amount">
-                  ${billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice}
-                </span>
-                <span className="price-period">
-                  /{billingCycle === 'monthly' ? t.site_plan_per_mo : t.site_plan_per_yr}
-                </span>
+                <span className="price-amount">{plan.priceLabel}</span>
+                {plan.pricePeriod && (
+                  <span className="price-period">/{plan.pricePeriod}</span>
+                )}
               </div>
-              {billingCycle === 'annual' && (
+              {billingCycle === 'annual' && plan.annualSavings && (
                 <div className="pricing-savings">{t.site_plan_save(plan.annualSavings)}</div>
               )}
-              <div className="pricing-trial">{t.site_trial_included}</div>
-              <button
-                className="btn-primary pricing-cta"
-                onClick={() => handleCheckout(billingCycle === 'monthly' ? plan.monthlyPlan : plan.annualPlan)}
-                disabled={checkoutLoading !== null}
-              >
-                {checkoutLoading === (billingCycle === 'monthly' ? plan.monthlyPlan : plan.annualPlan)
-                  ? t.site_plan_loading
-                  : t.site_cta}
-              </button>
+              {plan.ctaAction !== 'github' && plan.ctaAction !== 'contact' && (
+                <div className="pricing-trial">{t.site_trial_included}</div>
+              )}
+              {plan.ctaAction === 'github' ? (
+                <a
+                  href="https://github.com/christopherlhammer11-ai/hammerlock"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-secondary pricing-cta"
+                  style={{ display: 'block', textDecoration: 'none', textAlign: 'center' }}
+                >
+                  {plan.ctaLabel || t.site_cta}
+                </a>
+              ) : plan.ctaAction === 'contact' ? (
+                <a
+                  href="mailto:info@hammerlockai.com"
+                  className="btn-secondary pricing-cta"
+                  style={{ display: 'block', textDecoration: 'none', textAlign: 'center' }}
+                >
+                  {plan.ctaLabel || t.site_cta}
+                </a>
+              ) : (
+                <button
+                  className="btn-primary pricing-cta"
+                  onClick={() => handleCheckout(plan.ctaAction)}
+                  disabled={checkoutLoading !== null}
+                >
+                  {checkoutLoading === plan.ctaAction ? t.site_plan_loading : (plan.ctaLabel || t.site_cta)}
+                </button>
+              )}
               <ul className="pricing-features">
                 {plan.features.map((f) => (
-                  <li key={f}><Check size={16} /> {f}</li>
+                  <li key={f}><Check size={14} /> {f}</li>
                 ))}
               </ul>
             </div>

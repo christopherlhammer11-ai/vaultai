@@ -2551,7 +2551,7 @@ export default function ChatPage() {
                   )}
                 </>
               : subscription.active
-                ? <span style={{marginLeft:12,color:"var(--accent)"}}>{subscription.tier==="premium" ? ` ${t.chat_footer_premium}` : ` ${t.chat_footer_lite}`}</span>
+                ? <span style={{marginLeft:12,color:"var(--accent)"}}>{` ${subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)}`}</span>
                 : <span style={{marginLeft:12}}>{freeLeft > 0 ? t.chat_footer_free_left(freeLeft) : t.chat_footer_free_limit}</span>
             }
           </div>
