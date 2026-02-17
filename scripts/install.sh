@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 log() {
-  echo "[vaultai] $1"
+  echo "[hammerlock] $1"
 }
 
 copy_if_missing() {

@@ -93,7 +93,7 @@ export default function AgentsPage() {
   return (
     <div className="page-wrapper" style={{ padding: "0 20px", maxWidth: 900, margin: "0 auto" }}>
       <nav className="site-nav" style={{ justifyContent: "space-between" }}>
-        <Link href="/" className="logo-mark" style={{ textDecoration: "none", color: "inherit" }}>{"\uD83D\uDD12"} VaultAI</Link>
+        <Link href="/" className="logo-mark" style={{ textDecoration: "none", color: "inherit" }}>{"\uD83D\uDD12"} HammerLock AI</Link>
         <Link href="/" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 4 }}>
           &larr; Back
         </Link>
@@ -108,7 +108,7 @@ export default function AgentsPage() {
           Your team, inside the vault.
         </h1>
         <p style={{ fontSize: "1.05rem", color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 640, marginBottom: 48 }}>
-          VaultAI comes with 6 specialized agents, each trained for a specific domain.
+          HammerLock AI comes with 6 specialized agents, each trained for a specific domain.
           Switch between them anytime. Your conversations stay encrypted regardless of which agent you use.
         </p>
 

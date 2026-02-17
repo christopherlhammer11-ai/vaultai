@@ -39,6 +39,13 @@ export default function VaultPage() {
   const attemptsRef = useRef(0);
   const mode: "create" | "unlock" = hasVault ? "unlock" : "create";
 
+  // Auto-redirect to /chat if session is already restored (survives refresh)
+  useEffect(() => {
+    if (isUnlocked) {
+      router.replace("/chat");
+    }
+  }, [isUnlocked, router]);
+
   const WELCOME_FEATURES = [
     { icon: Lock, label: t.welcome_encrypted_label, desc: t.welcome_encrypted_desc },
     { icon: Brain, label: t.welcome_memory_label, desc: t.welcome_memory_desc },
@@ -58,7 +65,7 @@ export default function VaultPage() {
   // ── First-launch detection: show welcome only for brand-new users ──
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const seen = localStorage.getItem("vaultai_welcomed");
+    const seen = localStorage.getItem("hammerlock_welcomed");
     if (!hasVault && !seen) {
       // First launch — run welcome sequence
       setWelcomePhase(0);
@@ -84,7 +91,7 @@ export default function VaultPage() {
     } else if (welcomePhase === 2) {
       // Fade out welcome, show form
       timers.push(setTimeout(() => {
-        localStorage.setItem("vaultai_welcomed", "1");
+        localStorage.setItem("hammerlock_welcomed", "1");
         setWelcomeDone(true);
         setTimeout(() => setCardVisible(true), 100);
       }, 600));
@@ -96,7 +103,7 @@ export default function VaultPage() {
   // Skip welcome on click/key
   const skipWelcome = useCallback(() => {
     if (welcomeDone) return;
-    localStorage.setItem("vaultai_welcomed", "1");
+    localStorage.setItem("hammerlock_welcomed", "1");
     setWelcomePhase(-1);
     setWelcomeDone(true);
     setTimeout(() => setCardVisible(true), 50);
@@ -215,7 +222,7 @@ export default function VaultPage() {
             <div className="welcome-lock-wrap">
               <Lock size={48} strokeWidth={1.5} />
             </div>
-            <h1 className="welcome-title">VaultAI</h1>
+            <h1 className="welcome-title">HammerLock AI</h1>
             <p className="welcome-tagline">{t.welcome_tagline}</p>
           </div>
 
@@ -253,7 +260,7 @@ export default function VaultPage() {
           {/* Brand header */}
           <div className="vault-brand">
             <Lock size={14} />
-            <span>VaultAI</span>
+            <span>HammerLock AI</span>
           </div>
 
           {/* Animated lock/shield icon */}

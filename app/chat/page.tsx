@@ -4,12 +4,13 @@ import {
   FileText, Share2, User, Search, BarChart3, Bot, Zap, Globe, Settings, Key,
   Plus, FolderPlus, MessageSquare, ChevronDown, Edit3, Check, Download,
   Copy, Volume2, VolumeX, RefreshCw, Menu, PanelLeftClose, Archive,
+  Shield, StickyNote, File, Image,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSubscription, FREE_MESSAGE_LIMIT } from "@/lib/subscription-store";
-import { useVault, type VaultMessage } from "@/lib/vault-store";
+import { useVault, type VaultMessage, type VaultFile } from "@/lib/vault-store";
 import { useRouter } from "next/navigation";
 import { useI18n, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import {
@@ -17,8 +18,79 @@ import {
   CUSTOM_AGENT_ICONS, CUSTOM_AGENT_COLORS,
   type AgentDef, type CustomAgentInput,
 } from "@/lib/agents";
+import { useNudges, type NudgeDef } from "@/lib/use-nudges";
+import NudgeToast from "@/components/NudgeToast";
+import SettingsPanel from "@/components/SettingsPanel";
+import SourcesAccordion from "@/components/SourcesAccordion";
 
 type GatewayStatus = "connected" | "connecting" | "offline";
+
+// OpenClaw action badge display maps
+const ACTION_BADGE_ICONS: Record<string, string> = {
+  reminder: "⏰", email: "📧", message: "💬", notes: "📝",
+  calendar: "📅", smart_home: "💡", github: "🐙", todo: "✅",
+  camera: "📷", summarize_url: "🔗",
+};
+const ACTION_BADGE_LABELS: Record<string, string> = {
+  reminder: "Reminder", email: "Email", message: "Message Sent",
+  notes: "Note Created", calendar: "Calendar", smart_home: "Smart Home",
+  github: "GitHub", todo: "Todo", camera: "Camera", summarize_url: "Summarized",
+};
+
+/** Nudge catalog — proactive tips shown at the right moment */
+const NUDGE_CATALOG: Record<string, NudgeDef> = {
+  remember_tip: {
+    id: "remember_tip",
+    icon: "🧠",
+    message: "Teach me about yourself! Say \"remember: I live in Austin\" or any detail — I'll use it to personalize every response.",
+    ctaLabel: "Try it \u2192",
+    ctaCommand: "remember: ",
+  },
+  search_tip: {
+    id: "search_tip",
+    icon: "🌐",
+    message: "I can search the web! Try asking about weather, news, restaurants, or anything that needs real-time data.",
+    ctaLabel: "Try a search \u2192",
+    ctaCommand: "search ",
+  },
+  voice_tip: {
+    id: "voice_tip",
+    icon: "🎙\uFE0F",
+    message: "You can talk to me! Click the mic button to use voice input, or say \"read it out loud\" to hear my response.",
+  },
+  vault_tip: {
+    id: "vault_tip",
+    icon: "📎",
+    message: "Upload PDFs and images with the paperclip button — I'll analyze them and store them encrypted in your Vault.",
+  },
+  agents_tip: {
+    id: "agents_tip",
+    icon: "🤖",
+    message: "Try switching agents in the sidebar! I have specialized modes for coding, writing, health, finance, and more.",
+  },
+};
+
+/** Fun thinking messages shown while AI is processing */
+const THINKING_MESSAGES = [
+  "Cooking up something good...",
+  "Hmm, let me think about that...",
+  "Crunching the numbers...",
+  "Digging through the archives...",
+  "Putting the pieces together...",
+  "Working my magic...",
+  "On it, one sec...",
+  "Consulting the oracle...",
+  "Brewing up an answer...",
+  "Let me look into that...",
+  "Neurons firing...",
+  "Connecting the dots...",
+  "Hold tight, almost there...",
+  "Shuffling through the data...",
+  "Thinking cap: ON...",
+];
+function getThinkingMessage() {
+  return THINKING_MESSAGES[Math.floor(Math.random() * THINKING_MESSAGES.length)];
+}
 
 /** Simple emoji-based agent icon to avoid lucide barrel import issues in dev */
 const AGENT_EMOJI: Record<string, string> = {
@@ -86,7 +158,9 @@ export default function ChatPage() {
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [uploadedPdf, setUploadedPdf] = useState<{ name: string; text: string } | null>(null);
-  const [sidebarSection, setSidebarSection] = useState<"commands" | "agents">("commands");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const dragCounterRef = useRef(0);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   // ---- Agent state ----
   const [activeAgentId, setActiveAgentId] = useState<string>(DEFAULT_AGENT_ID);
   const [customAgents, setCustomAgents] = useState<AgentDef[]>([]);
@@ -96,6 +170,13 @@ export default function ChatPage() {
     expertise: "", personality: "", instructions: "",
   });
 
+  // ---- File Vault state ----
+  const [showVaultPanel, setShowVaultPanel] = useState(false);
+  const [vaultSearchQuery, setVaultSearchQuery] = useState("");
+  const [showNewNote, setShowNewNote] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [newNoteContent, setNewNoteContent] = useState("");
+
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeys, setApiKeys] = useState({ openai: "", anthropic: "", gemini: "", groq: "", mistral: "", deepseek: "", brave: "" });
   const [onboardingStep, setOnboardingStep] = useState(-1);
@@ -103,6 +184,10 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
   const [copiedToast, setCopiedToast] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [activeNudge, setActiveNudge] = useState<NudgeDef | null>(null);
+  const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { shouldShow: shouldShowNudge, dismissNudge, disableAll: disableAllNudges } = useNudges();
   const [tutorialStep, setTutorialStep] = useState(-1);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, string>>({});
   const [onboardingInput, setOnboardingInput] = useState("");
@@ -113,6 +198,16 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  /** True when the current message was triggered via voice input — auto-play TTS on reply */
+  const voiceInputRef = useRef(false);
+  /** True when in "talk to me" live conversation mode — auto-restart mic after TTS */
+  const liveConvoRef = useRef(false);
+  /** Stable ref to sendCommand for use in voice callbacks (avoids stale closure) */
+  const sendCommandRef = useRef<(preset?: string) => void>(() => {});
+  /** Stable ref to handleVoice for use in TTS callbacks */
+  const handleVoiceRef = useRef<() => void>(() => {});
+  /** Callback invoked when TTS audio finishes — used by "talk to me" to auto-restart mic */
+  const ttsFinishedCallbackRef = useRef<(() => void) | null>(null);
 
   const ONBOARDING_STEPS = [
     { key: "name", q: t.onboarding_q_name, placeholder: t.onboarding_q_name_placeholder },
@@ -133,19 +228,100 @@ export default function ChatPage() {
 
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
+  // ---- REMINDER SCHEDULER: check persona reminders against system clock ----
+  const firedRemindersRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    // Request notification permission on mount
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    const interval = setInterval(() => {
+      const personaText = vaultData?.persona || "";
+      if (!personaText) return;
+
+      const now = new Date();
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+
+      // Parse reminder lines: "Reminder: drink water (daily at 10am)"
+      const reminderLines = personaText.split("\n").filter((l: string) => /^Reminder:/i.test(l.trim()));
+      for (const line of reminderLines) {
+        const match = line.match(/^Reminder:\s*(.+?)\s*\(daily\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\)/i);
+        if (!match) continue;
+        const task = match[1].trim();
+        let hour = parseInt(match[2], 10);
+        const minute = match[3] ? parseInt(match[3], 10) : 0;
+        const ampm = (match[4] || "").toLowerCase();
+        if (ampm === "pm" && hour < 12) hour += 12;
+        if (ampm === "am" && hour === 12) hour = 0;
+
+        if (currentH === hour && currentM === minute) {
+          const key = `${task}-${currentH}:${currentM}-${now.toDateString()}`;
+          if (firedRemindersRef.current.has(key)) continue;
+          firedRemindersRef.current.add(key);
+
+          // Get user's name from persona
+          const nameMatch = personaText.match(/^Name:\s*(.+)/im);
+          const name = nameMatch ? nameMatch[1].trim() : "";
+          const greeting = name ? `Hey ${name}, ` : "Hey, ";
+          const alertText = `${greeting}${task}!`;
+
+          // 1. In-app message
+          const rid = `reminder-${Date.now()}`;
+          setMessages(prev => [...prev, {
+            id: rid, role: "ai" as const, content: `🔔 **Reminder:** ${alertText}`,
+            timestamp: now.toISOString(), pending: false,
+          }]);
+
+          // 2. Browser notification
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            new Notification("HammerLock AI Reminder", { body: alertText, icon: "/icon-512.png" });
+          }
+
+          // 3. TTS if available
+          try {
+            fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: alertText, voice: "nova" }),
+            }).then(res => {
+              if (res.ok && res.headers.get("content-type")?.includes("audio")) {
+                res.blob().then(blob => {
+                  const url = URL.createObjectURL(blob);
+                  const audio = new Audio(url);
+                  audio.onended = () => URL.revokeObjectURL(url);
+                  audio.play();
+                });
+              }
+            }).catch(() => {
+              // Fallback to browser TTS
+              if (typeof window !== "undefined" && window.speechSynthesis) {
+                const utter = new SpeechSynthesisUtterance(alertText);
+                window.speechSynthesis.speak(utter);
+              }
+            });
+          } catch { /* silent */ }
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [vaultData?.persona]);
+
   // Listen for Electron menu bar events (refs for stable callbacks)
   const createNewConversationRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     const onNewChat = () => createNewConversationRef.current?.();
     const onToggleSidebar = () => setSidebarOpen(prev => !prev);
     const onOpenSettings = () => setShowApiKeyModal(true);
-    window.addEventListener("vaultai:new-chat", onNewChat);
-    window.addEventListener("vaultai:toggle-sidebar", onToggleSidebar);
-    window.addEventListener("vaultai:open-settings", onOpenSettings);
+    window.addEventListener("hammerlock:new-chat", onNewChat);
+    window.addEventListener("hammerlock:toggle-sidebar", onToggleSidebar);
+    window.addEventListener("hammerlock:open-settings", onOpenSettings);
     return () => {
-      window.removeEventListener("vaultai:new-chat", onNewChat);
-      window.removeEventListener("vaultai:toggle-sidebar", onToggleSidebar);
-      window.removeEventListener("vaultai:open-settings", onOpenSettings);
+      window.removeEventListener("hammerlock:new-chat", onNewChat);
+      window.removeEventListener("hammerlock:toggle-sidebar", onToggleSidebar);
+      window.removeEventListener("hammerlock:open-settings", onOpenSettings);
     };
   }, []);
 
@@ -270,7 +446,9 @@ export default function ChatPage() {
     if (needsApiKeys) return;
     if (showApiKeyModal) return;
     onboardingChecked.current = true;
-    if (!vaultData?.persona && (!vaultData?.chatHistory || vaultData.chatHistory.length === 0)) {
+    if (!vaultData?.persona
+        && (!vaultData?.chatHistory || vaultData.chatHistory.length === 0)
+        && !vaultData?.settings?.onboarding_completed) {
       setOnboardingStep(0);
     }
   }, [isUnlocked, vaultData, needsApiKeys, showApiKeyModal]);
@@ -295,7 +473,7 @@ export default function ChatPage() {
       const personaText = [
         `Name: ${newAnswers.name || ""}`,
         `Role: ${newAnswers.role || ""}`,
-        `Uses VaultAI for: ${newAnswers.use_case || ""}`,
+        `Uses HammerLock AI for: ${newAnswers.use_case || ""}`,
         `Communication style: ${newAnswers.style || ""}`,
       ].join("\n");
 
@@ -320,19 +498,10 @@ export default function ChatPage() {
         });
       } catch { /* ok if fails */ }
 
-      const name = newAnswers.name || "there";
-      const welcomeMsg: VaultMessage = {
-        id: Date.now().toString(),
-        role: "ai",
-        content: t.onboarding_welcome(name),
-        timestamp: new Date().toISOString(),
-      };
-      setMessages([welcomeMsg]);
-
-      // Update active conversation with welcome message
-      setConversations(prev => prev.map(c =>
-        c.id === activeConvoId ? { ...c, messages: [welcomeMsg], updatedAt: new Date().toISOString() } : c
-      ));
+      // Don't add a welcome message — let the empty state greet the user
+      // with prompt suggestions (like ChatGPT / Claude). The empty-state
+      // will show "Welcome back, <name>" with suggestion cards.
+      setMessages([]);
 
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -402,6 +571,30 @@ export default function ChatPage() {
     router.push("/vault");
   }, [lockVault, router]);
 
+  // ---- AUTO-LOCK ON INACTIVITY (5 minutes) ----
+  const AUTO_LOCK_MS = 5 * 60 * 1000;
+  const autoLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetAutoLock = useCallback(() => {
+    if (autoLockTimerRef.current) clearTimeout(autoLockTimerRef.current);
+    if (!isUnlocked) return;
+    autoLockTimerRef.current = setTimeout(() => {
+      handleLock();
+    }, AUTO_LOCK_MS);
+  }, [isUnlocked, handleLock]);
+
+  useEffect(() => {
+    if (!isUnlocked) return;
+    const events = ["mousedown", "keydown", "scroll", "touchstart", "mousemove"];
+    const handler = () => resetAutoLock();
+    events.forEach(e => window.addEventListener(e, handler, { passive: true }));
+    resetAutoLock(); // start timer on mount
+    return () => {
+      events.forEach(e => window.removeEventListener(e, handler));
+      if (autoLockTimerRef.current) clearTimeout(autoLockTimerRef.current);
+    };
+  }, [isUnlocked, resetAutoLock]);
+
   // ---- MULTI-CONVERSATION HANDLERS ----
   const switchConversation = useCallback((id: string) => {
     // Save current messages to current conversation
@@ -417,7 +610,7 @@ export default function ChatPage() {
   }, [activeConvoId, messages, conversations]);
 
   const createNewConversation = useCallback((groupId: string | null = null) => {
-    // Save current
+    // Save current conversation, then create new one
     setConversations(prev => {
       const updated = prev.map(c =>
         c.id === activeConvoId ? { ...c, messages, updatedAt: new Date().toISOString() } : c
@@ -431,11 +624,13 @@ export default function ChatPage() {
         updatedAt: new Date().toISOString(),
       };
       setActiveConvoId(newConvo.id);
-      setMessages([]);
-      setActiveAgentId(DEFAULT_AGENT_ID); // Reset to general agent on new chat
-      setTimeout(() => inputRef.current?.focus(), 50);
       return [...updated, newConvo];
     });
+    // Reset state OUTSIDE the setConversations callback to ensure it fires
+    setMessages([]);
+    setActiveAgentId(DEFAULT_AGENT_ID);
+    setUploadedPdf(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }, [activeConvoId, messages]);
 
   // Keep ref in sync for Electron menu events
@@ -550,22 +745,32 @@ export default function ChatPage() {
   // ---- AUTO-TITLE GENERATOR (non-blocking) ----
   const generateConvoTitle = useCallback(async (userMsg: string, aiReply: string, convoId: string) => {
     try {
+      // Read current conversations for dedup (use functional update to avoid stale closure)
+      let existingNames: string[] = [];
+      setConversations(cs => { existingNames = cs.map(c => c.name).filter(n => !n.startsWith(t.chat_default_name)); return cs; });
+      const avoidList = existingNames.length > 0 ? `\nExisting titles (DO NOT reuse these): ${existingNames.slice(0, 10).join(", ")}` : "";
       const res = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          command: `Generate a very short title (3-6 words, no quotes, no period) summarizing this conversation:\nUser: ${userMsg.slice(0, 200)}\nAssistant: ${aiReply.slice(0, 200)}`,
+          command: `Title this chat in 2-5 words. Be SPECIFIC to the content. No quotes, no period, no emoji.\nBAD (too generic): "Casual Greeting Exchange", "General Conversation", "Chat Session", "Friendly Chat"\nGOOD (specific): "Sushi Near San Ramon", "Weekly Weather Check", "Pizza Recommendations", "Kid Summer Camp Ideas"${avoidList}\n\nChat:\nUser: ${userMsg.slice(0, 200)}\nAI: ${aiReply.slice(0, 200)}\n\nTitle:`,
           locale,
         }),
         signal: AbortSignal.timeout(8000),
       });
       const data = await res.json();
-      const title = (data.response || data.reply || "").replace(/^["']|["']$/g, "").replace(/\.+$/, "").trim();
+      let title = (data.response || data.reply || "").replace(/^["']|["']$/g, "").replace(/\.+$/, "").trim();
       if (title && title.length > 2 && title.length < 60) {
+        // Dedup: if this title already exists, append a number
+        if (existingNames.includes(title)) {
+          let n = 2;
+          while (existingNames.includes(`${title} ${n}`)) n++;
+          title = `${title} ${n}`;
+        }
         setConversations(cs => cs.map(c => c.id === convoId ? { ...c, name: title } : c));
       }
     } catch { /* non-critical, keep truncated user message */ }
-  }, [locale]);
+  }, [locale, t.chat_default_name]);
 
   // ---- SEND MESSAGE ----
   const sendCommand = useCallback(async (preset?: string) => {
@@ -576,9 +781,12 @@ export default function ChatPage() {
     let fullText = text;
     const currentPdf = uploadedPdf;
     if (currentPdf) {
-      const pdfSnippet = currentPdf.text.length > 8000
-        ? currentPdf.text.slice(0, 8000) + t.chat_pdf_truncated
-        : currentPdf.text;
+      const isImage = currentPdf.text.includes("data:image/");
+      // Don't truncate images — the full base64 data URL is needed for vision
+      const pdfSnippet = isImage ? currentPdf.text
+        : (currentPdf.text.length > 8000
+          ? currentPdf.text.slice(0, 8000) + t.chat_pdf_truncated
+          : currentPdf.text);
       fullText = `${t.chat_pdf_attached(currentPdf.name)}\n\n${pdfSnippet}\n\n---\n\nUser question: ${text}`;
       setUploadedPdf(null);
     }
@@ -587,14 +795,34 @@ export default function ChatPage() {
     const uid = Date.now().toString();
     const pid = String(Date.now()+1);
     const userMsg: VaultMessage = {id:uid,role:"user",content:text + (currentPdf ? t.chat_pdf_ref(currentPdf.name) : ""),timestamp:ts};
-    const pendingMsg: VaultMessage = {id:pid,role:"ai",content:t.chat_processing,timestamp:ts,pending:true};
+    const pendingMsg: VaultMessage = {id:pid,role:"ai",content:getThinkingMessage(),timestamp:ts,pending:true};
     setMessages(prev => [...prev, userMsg, pendingMsg]);
     setInput(""); setSending(true);
     setTimeout(() => inputRef.current?.focus(), 0);
 
     try {
       const currentAgent = getAgentById(activeAgentId, customAgents);
-      const res = await fetch("/api/execute", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:fullText,persona:"operator",agentSystemPrompt:currentAgent?.systemPrompt,locale})});
+      // Send conversation history for context (last 20 messages, excluding pending)
+      const recentHistory = messages
+        .filter(m => !m.pending && (m.role === "user" || m.role === "ai"))
+        .slice(-20)
+        .map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
+      // Build user profile from vault persona data so the LLM knows who the user is
+      const personaText = vaultData?.persona || "";
+      const personaParts: Record<string, string> = {};
+      personaText.split("\n").filter((l: string) => l.trim()).forEach((line: string) => {
+        const colonIdx = line.indexOf(":");
+        if (colonIdx > 0 && colonIdx < 30) {
+          const key = line.slice(0, colonIdx).trim().toLowerCase();
+          const val = line.slice(colonIdx + 1).trim();
+          if (key === "name") personaParts.name = val;
+          else if (key === "role" || key === "job" || key === "occupation") personaParts.role = val;
+          else if (key === "industry" || key === "field") personaParts.industry = val;
+          else personaParts.context = (personaParts.context ? personaParts.context + "; " : "") + line.trim();
+        }
+      });
+      const userProfile = Object.keys(personaParts).length > 0 ? personaParts : undefined;
+      const res = await fetch("/api/execute", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:fullText,persona:"operator",userProfile,agentSystemPrompt:currentAgent?.systemPrompt,locale,history:recentHistory})});
       const data = await res.json();
       if (!res.ok) {
         showError(`Gateway error: ${data.response || data.error || t.error_unknown}`);
@@ -608,17 +836,34 @@ export default function ChatPage() {
         return;
       }
 
+      // Handle language switch directive from server
+      if (data.switchLocale) {
+        setLocale(data.switchLocale as Locale);
+      }
+
+      // Handle nudge toggle directive from server
+      if (data.setNudges !== undefined) {
+        updateVaultData((prev) => ({
+          ...prev,
+          settings: { ...prev.settings, nudges_enabled: data.setNudges },
+        }));
+      }
+
       const reply = data.reply || data.response || data.result || t.chat_no_response;
+      const msgSources = Array.isArray(data.sources) ? data.sources : undefined;
+      const msgSourcesSummary = data.sourcesSummary || undefined;
+      const msgFollowUps = Array.isArray(data.followUps) ? data.followUps : undefined;
+      const msgActionType = typeof data.actionType === "string" ? data.actionType : undefined;
+      const msgActionStatus = (data.actionStatus === "success" || data.actionStatus === "error")
+        ? data.actionStatus as "success" | "error" : undefined;
       setMessages(prev => {
-        const updated = prev.map(m => m.id===pid ? {...m,content:reply,pending:false,timestamp:new Date().toISOString()} : m);
+        const updated = prev.map(m => m.id===pid ? {...m,content:reply,pending:false,timestamp:new Date().toISOString(),sources:msgSources,sourcesSummary:msgSourcesSummary,followUps:msgFollowUps,actionType:msgActionType,actionStatus:msgActionStatus} : m);
         // Auto-name conversation from first user message (like Claude/ChatGPT)
         const isFirstExchange = prev.filter(m => m.role === "user").length <= 1;
         setConversations(cs => cs.map(c => {
           if (c.id !== activeConvoId) return c;
           if (isFirstExchange && c.name.startsWith(t.chat_default_name)) {
-            // Instant: use truncated user message as temporary name
             const tempName = text.replace(/\n/g, " ").trim().slice(0, 45) + (text.length > 45 ? "…" : "");
-            // Background: ask LLM for a better summary title (non-blocking)
             generateConvoTitle(text, reply, c.id);
             return { ...c, name: tempName, messages: updated, updatedAt: new Date().toISOString() };
           }
@@ -627,6 +872,40 @@ export default function ChatPage() {
         return updated;
       });
       incrementMessageCount();
+
+      // Contextual nudges — show tips at the right moment
+      // Suppress for short utility queries (time, date, status) — don't interrupt quick checks
+      const isQuickUtility = /^(wh?at\s*(?:time|tim)|w(?:hat)?t\s*(?:rn)?|time\s*(?:rn|now)?|(?:the\s+)?date|status)[\s?!.]*$/i.test(text.trim());
+      if (!isQuickUtility) {
+        const msgCount = messageCount + 1;
+        if (msgCount === 2) triggerNudge("remember_tip");
+        else if (msgCount === 5) triggerNudge("search_tip");
+        else if (msgCount === 8) triggerNudge("voice_tip");
+        else if (msgCount === 12) triggerNudge("agents_tip");
+      }
+
+      // Auto-play TTS if user said "read this out loud", "talk to me", or if input came from voice
+      const ttsExact = /^(talk\s+to\s+me|read\s+it\s+(?:out\s+)?(?:loud|aloud)|say\s+it)[\s.!?]*$/i;
+      const ttsPrefix = /^(read\s+(?:this\s+)?out\s+loud|say\s+this|speak|read\s+aloud|talk\s+to\s+me)[:\s]/i;
+      const isTalkToMe = /^talk\s+to\s+me[\s.!?]*$/i.test(text.trim());
+      const shouldAutoTTS = voiceInputRef.current || ttsExact.test(text.trim()) || ttsPrefix.test(text.trim());
+
+      // "talk to me" = live conversation mode
+      if (isTalkToMe) liveConvoRef.current = true;
+
+      if (shouldAutoTTS) {
+        voiceInputRef.current = false;
+        // In live convo mode, set a callback that fires when TTS audio actually ends
+        // (replaces the old brittle word-count * 350ms estimate)
+        if (liveConvoRef.current) {
+          ttsFinishedCallbackRef.current = () => {
+            if (liveConvoRef.current && !isListening) {
+              setTimeout(() => handleVoiceRef.current(), 300); // small buffer before re-listening
+            }
+          };
+        }
+        setTimeout(() => handleReadAloud(pid, reply), 300);
+      }
 
       // Refresh compute units balance (desktop only, non-blocking)
       if (isElectron()) {
@@ -649,13 +928,25 @@ export default function ChatPage() {
     }
   }, [input, sending, canSendMessage, incrementMessageCount, showError, uploadedPdf, activeConvoId, t.chat_processing]);
 
-  // ---- VOICE INPUT ----
+  // Keep sendCommand ref in sync so voice callbacks always use latest version
+  sendCommandRef.current = sendCommand;
+
+  // ---- VOICE INPUT with silence detection ----
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const silenceFrameRef = useRef(0);
+
   const handleVoice = useCallback(async () => {
     if (!isFeatureAvailable("voice_input")) {
       setPaywallFeature("Voice Input"); setShowPaywall(true); return;
     }
     if (isListening && mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop(); return;
+      // Toggle off — stop recording
+      if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current as unknown as number); silenceTimerRef.current = null; }
+      if (audioContextRef.current) { audioContextRef.current.close().catch(() => {}); audioContextRef.current = null; }
+      mediaRecorderRef.current.stop();
+      return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -666,6 +957,45 @@ export default function ChatPage() {
       audioChunksRef.current = [];
       mediaRecorderRef.current = recorder;
 
+      // Set up silence detection with Web Audio API
+      const audioCtx = new AudioContext();
+      audioContextRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+      silenceFrameRef.current = 0;
+      let hasSpeech = false;
+
+      // Check audio levels every 100ms
+      const SILENCE_THRESHOLD = 15; // RMS level below which = silence
+      const SILENCE_FRAMES_TO_STOP = 20; // 20 * 100ms = 2 seconds of silence
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      silenceTimerRef.current = setInterval(() => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const rms = Math.sqrt(dataArray.reduce((sum, v) => sum + v * v, 0) / dataArray.length);
+
+        if (rms > SILENCE_THRESHOLD) {
+          hasSpeech = true;
+          silenceFrameRef.current = 0;
+        } else {
+          silenceFrameRef.current++;
+        }
+
+        // Auto-stop after 2s of silence (only if user has spoken)
+        if (hasSpeech && silenceFrameRef.current >= SILENCE_FRAMES_TO_STOP) {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop();
+          }
+          if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current as unknown as number); silenceTimerRef.current = null; }
+          if (audioContextRef.current) { audioContextRef.current.close().catch(() => {}); audioContextRef.current = null; }
+        }
+      }, 100) as unknown as ReturnType<typeof setTimeout>;
+
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
@@ -674,14 +1004,16 @@ export default function ChatPage() {
 
       recorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
+        if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current as unknown as number); silenceTimerRef.current = null; }
+        if (audioContextRef.current) { audioContextRef.current.close().catch(() => {}); audioContextRef.current = null; }
         setIsListening(false);
         mediaRecorderRef.current = null;
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         audioChunksRef.current = [];
         const recordingDuration = Date.now() - recordingStartTime;
-        // Minimum 1 second of recording to avoid Whisper hallucinations
-        if (audioBlob.size < 2000 || recordingDuration < 1000) {
-          showError("Recording too short — hold the mic button for at least 1 second");
+        // Lower threshold: 0.5s minimum (was 1s)
+        if (audioBlob.size < 1000 || recordingDuration < 500) {
+          showError("Keep talking — I'm listening! Tap the mic and speak for at least a second.");
           return;
         }
         setInput(t.chat_transcribing);
@@ -693,8 +1025,10 @@ export default function ChatPage() {
           const res = await fetch("/api/transcribe", { method: "POST", body: formData });
           const data = await res.json();
           if (res.ok && data.text) {
-            setInput(data.text);
-            setTimeout(() => inputRef.current?.focus(), 50);
+            // Auto-send voice input and flag for auto-TTS reply
+            voiceInputRef.current = true;
+            setInput("");
+            sendCommandRef.current(data.text);
           } else {
             showError(data.error || t.error_transcription_failed);
             setInput("");
@@ -707,6 +1041,8 @@ export default function ChatPage() {
 
       recorder.onerror = () => {
         stream.getTracks().forEach(track => track.stop());
+        if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current as unknown as number); silenceTimerRef.current = null; }
+        if (audioContextRef.current) { audioContextRef.current.close().catch(() => {}); audioContextRef.current = null; }
         setIsListening(false); mediaRecorderRef.current = null;
         showError(t.error_voice_recording);
       };
@@ -723,12 +1059,73 @@ export default function ChatPage() {
     }
   }, [isFeatureAvailable, isListening, showError, t]);
 
+  // Keep handleVoice ref in sync
+  handleVoiceRef.current = handleVoice;
+
   // ---- COPY TO CLIPBOARD ----
   const handleCopy = useCallback((text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedToast(true);
-      setTimeout(() => setCopiedToast(false), 2000);
-    });
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopiedToast(true);
+        setTimeout(() => setCopiedToast(false), 2000);
+      })
+      .catch(() => {
+        // Fallback for sandboxed Electron / non-secure contexts
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          setCopiedToast(true);
+          setTimeout(() => setCopiedToast(false), 2000);
+        } catch {
+          showError("Couldn't copy to clipboard");
+        }
+      });
+  }, [showError]);
+
+  // ---- NUDGE SYSTEM ----
+  const triggerNudge = useCallback((nudgeId: string) => {
+    if (!shouldShowNudge(nudgeId)) return;
+    const nudge = NUDGE_CATALOG[nudgeId];
+    if (!nudge) return;
+    // Don't stack nudges — dismiss any existing one first
+    if (activeNudge) return;
+    // Small delay so it doesn't feel intrusive
+    if (nudgeTimerRef.current) clearTimeout(nudgeTimerRef.current);
+    nudgeTimerRef.current = setTimeout(() => setActiveNudge(nudge), 1200);
+  }, [shouldShowNudge, activeNudge]);
+
+  const handleNudgeDismiss = useCallback(() => {
+    setActiveNudge(null);
+  }, []);
+
+  const handleNudgeDismissPermanent = useCallback(() => {
+    if (activeNudge) {
+      dismissNudge(activeNudge.id);
+    }
+    setActiveNudge(null);
+  }, [activeNudge, dismissNudge]);
+
+  const handleNudgeDisableAll = useCallback(() => {
+    disableAllNudges();
+    setActiveNudge(null);
+  }, [disableAllNudges]);
+
+  const handleNudgeCta = useCallback((command: string) => {
+    // If command ends with space, put it in input box
+    if (command.endsWith(" ")) {
+      setInput(command);
+      inputRef.current?.focus();
+    } else {
+      sendCommand(command);
+    }
+    setActiveNudge(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---- SAVE TO VAULT ----
@@ -748,19 +1145,143 @@ export default function ChatPage() {
     } catch { /* silent */ }
   }, [locale]);
 
-  // ---- READ ALOUD (TTS) ----
-  const handleReadAloud = useCallback((msgId: string, text: string) => {
+  // ---- FILE VAULT OPERATIONS ----
+  const vaultFiles: VaultFile[] = (vaultData?.vaultFiles || []) as VaultFile[];
+
+  const addVaultFile = useCallback(async (file: Omit<VaultFile, "id" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString();
+    const newFile: VaultFile = {
+      ...file,
+      id: generateId(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    await updateVaultData(prev => ({
+      ...prev,
+      vaultFiles: [...(prev.vaultFiles || []), newFile],
+    }));
+    return newFile;
+  }, [updateVaultData]);
+
+  const deleteVaultFile = useCallback(async (fileId: string) => {
+    await updateVaultData(prev => ({
+      ...prev,
+      vaultFiles: (prev.vaultFiles || []).filter(f => f.id !== fileId),
+    }));
+  }, [updateVaultData]);
+
+  const saveSnippetToVault = useCallback(async (text: string, title?: string) => {
+    const name = title || text.replace(/\n/g, " ").trim().slice(0, 60) + (text.length > 60 ? "..." : "");
+    await addVaultFile({
+      name,
+      type: "snippet",
+      content: text,
+      tags: ["chat-snippet"],
+      size: new Blob([text]).size,
+    });
+    setVaultSaved(true);
+    setTimeout(() => setVaultSaved(false), 2000);
+  }, [addVaultFile]);
+
+  const saveNoteToVault = useCallback(async () => {
+    if (!newNoteContent.trim()) return;
+    const name = newNoteTitle.trim() || newNoteContent.trim().slice(0, 60) + (newNoteContent.length > 60 ? "..." : "");
+    await addVaultFile({
+      name,
+      type: "note",
+      content: newNoteContent,
+      tags: ["note"],
+      size: new Blob([newNoteContent]).size,
+    });
+    setNewNoteTitle("");
+    setNewNoteContent("");
+    setShowNewNote(false);
+  }, [addVaultFile, newNoteTitle, newNoteContent]);
+
+  const savePdfToVault = useCallback(async (fileName: string, text: string, size?: number) => {
+    await addVaultFile({
+      name: fileName,
+      type: "pdf",
+      content: text,
+      mimeType: "application/pdf",
+      tags: ["pdf", "document"],
+      size,
+    });
+  }, [addVaultFile]);
+
+  const filteredVaultFiles = vaultSearchQuery.trim()
+    ? vaultFiles.filter(f =>
+        f.name.toLowerCase().includes(vaultSearchQuery.toLowerCase()) ||
+        f.content.toLowerCase().includes(vaultSearchQuery.toLowerCase()) ||
+        f.tags.some(tag => tag.toLowerCase().includes(vaultSearchQuery.toLowerCase()))
+      )
+    : vaultFiles;
+
+  // ---- READ ALOUD (TTS) — OpenAI TTS with browser fallback ----
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const handleReadAloud = useCallback(async (msgId: string, text: string) => {
+    // Toggle off if already speaking this message
     if (speakingMsgId === msgId) {
       window.speechSynthesis.cancel();
+      if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
       setSpeakingMsgId(null);
       return;
     }
+    // Stop any current speech
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.replace(/[#*_`~\[\]]/g, ""));
-    utterance.onend = () => setSpeakingMsgId(null);
-    utterance.onerror = () => setSpeakingMsgId(null);
-    window.speechSynthesis.speak(utterance);
+    if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
     setSpeakingMsgId(msgId);
+
+    try {
+      // Try OpenAI TTS first (much better voice quality)
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "nova" }),
+      });
+
+      if (res.ok) {
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("audio")) {
+          // Got audio back — play it
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          ttsAudioRef.current = audio;
+          audio.onended = () => {
+            setSpeakingMsgId(null); URL.revokeObjectURL(url); ttsAudioRef.current = null;
+            // "Talk to me" mode: auto-restart mic when TTS finishes
+            ttsFinishedCallbackRef.current?.();
+            ttsFinishedCallbackRef.current = null;
+          };
+          audio.onerror = () => {
+            setSpeakingMsgId(null); URL.revokeObjectURL(url); ttsAudioRef.current = null;
+            ttsFinishedCallbackRef.current?.();
+            ttsFinishedCallbackRef.current = null;
+          };
+          audio.play();
+          return;
+        }
+        // JSON response means fallback needed
+      }
+    } catch {
+      // Network error — fall through to browser TTS
+    }
+
+    // Fallback: browser Web Speech API
+    const cleanText = text.replace(/[#*_`~\[\]()]/g, "").replace(/!\[.*?\]\(.*?\)/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.onend = () => {
+      setSpeakingMsgId(null);
+      ttsFinishedCallbackRef.current?.();
+      ttsFinishedCallbackRef.current = null;
+    };
+    utterance.onerror = () => {
+      setSpeakingMsgId(null);
+      ttsFinishedCallbackRef.current?.();
+      ttsFinishedCallbackRef.current = null;
+    };
+    window.speechSynthesis.speak(utterance);
   }, [speakingMsgId]);
 
   // ---- REGENERATE LAST RESPONSE ----
@@ -780,10 +1301,10 @@ export default function ChatPage() {
 
   // ---- TUTORIAL (first launch) ----
   const TUTORIAL_STEPS = [
-    { icon: "🔐", title: t.tutorial_title || "Get the Most Out of Your Vault", desc: t.tutorial_step1_desc || "VaultAI encrypts everything on your device. Your conversations, personas, and files never leave your machine." },
+    { icon: "🔐", title: t.tutorial_title || "Get the Most Out of Your Vault", desc: t.tutorial_step1_desc || "HammerLock AI encrypts everything on your device. Your conversations, personas, and files never leave your machine." },
     { icon: "🤖", title: t.tutorial_step2_title || "6 Specialized Agents", desc: t.tutorial_step2_desc || "Switch between Strategist, Counsel, Analyst, Researcher, Operator, and Writer in the sidebar. Create your own custom agents too." },
     { icon: "🎙️", title: t.tutorial_step3_title || "Voice & Web Search", desc: t.tutorial_step3_desc || "Click the microphone to dictate. Type 'search' to find anything on the web with cited sources. All queries are PII-scrubbed." },
-    { icon: "🧠", title: t.tutorial_step4_title || "Teach It About You", desc: t.tutorial_step4_desc || "Say 'remember that...' to store preferences. Load your persona each session. VaultAI gets smarter the more you use it." },
+    { icon: "🧠", title: t.tutorial_step4_title || "Teach It About You", desc: t.tutorial_step4_desc || "Say 'remember that...' to store preferences. Load your persona each session. HammerLock AI gets smarter the more you use it." },
     { icon: "🚀", title: t.tutorial_done_title || "You're All Set!", desc: t.tutorial_done_desc || "Start chatting, upload PDFs, run searches, or switch agents. Everything stays encrypted on your machine." },
   ];
 
@@ -792,14 +1313,14 @@ export default function ChatPage() {
     if (onboardingStep >= 0) return; // Don't show during onboarding
     if (showApiKeyModal) return;
     if (typeof window === "undefined") return;
-    if (!localStorage.getItem("vaultai_tutorial_seen") && vaultData?.persona) {
+    if (!localStorage.getItem("hammerlock_tutorial_seen") && vaultData?.persona) {
       setTutorialStep(0);
     }
   }, [isUnlocked, onboardingStep, showApiKeyModal, vaultData]);
 
   const handleTutorialNext = useCallback(() => {
     if (tutorialStep >= TUTORIAL_STEPS.length - 1) {
-      localStorage.setItem("vaultai_tutorial_seen", "1");
+      localStorage.setItem("hammerlock_tutorial_seen", "1");
       setTutorialStep(-1);
     } else {
       setTutorialStep(prev => prev + 1);
@@ -807,7 +1328,7 @@ export default function ChatPage() {
   }, [tutorialStep, TUTORIAL_STEPS.length]);
 
   const handleTutorialSkip = useCallback(() => {
-    localStorage.setItem("vaultai_tutorial_seen", "1");
+    localStorage.setItem("hammerlock_tutorial_seen", "1");
     setTutorialStep(-1);
   }, []);
 
@@ -822,23 +1343,121 @@ export default function ChatPage() {
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".pdf")) { showError(t.error_pdf_only); return; }
-    if (file.size > 10 * 1024 * 1024) { showError(t.error_pdf_large); return; }
+    if (file.size > 10 * 1024 * 1024) { showError(t.error_pdf_large || "File too large (max 10MB)"); return; }
+
+    const name = file.name.toLowerCase();
+    const isImage = /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/.test(name);
+    const isPdf = name.endsWith(".pdf");
+
+    if (!isPdf && !isImage) {
+      showError("Supported formats: PDF, PNG, JPG, GIF, WebP");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/pdf-parse", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) { showError(data.error || t.error_pdf_parse_failed); return; }
-      setUploadedPdf({ name: file.name, text: data.text });
-      setInput(prev => prev || t.chat_summarize_pdf);
+      if (isPdf) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/pdf-parse", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || t.error_pdf_parse_failed); return; }
+        setUploadedPdf({ name: file.name, text: data.text });
+        setInput(prev => prev || t.chat_summarize_pdf);
+        // Also save to vault for persistent access
+        savePdfToVault(file.name, data.text, file.size).catch(() => {});
+      } else {
+        // Image: read as data URL and attach as context
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setUploadedPdf({ name: file.name, text: `[Image attached: ${file.name}]\n${dataUrl}` });
+          setInput(prev => prev || "Describe this image");
+        };
+        reader.onerror = () => showError("Failed to read image file");
+        reader.readAsDataURL(file);
+      }
       inputRef.current?.focus();
     } catch (err) {
-      showError(t.error_pdf_upload_failed + ": " + String(err));
+      showError((t.error_pdf_upload_failed || "Upload failed") + ": " + String(err));
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [showError, t]);
+
+  // ---- DRAG & DROP file upload ----
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer?.types?.includes("Files")) {
+      setIsDraggingFile(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDraggingFile(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDraggingFile(false);
+
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    if (!isFeatureAvailable("pdf_upload")) {
+      setPaywallFeature("PDF Upload"); setShowPaywall(true); return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { showError("File too large (max 10MB)"); return; }
+
+    const name = file.name.toLowerCase();
+    const isImage = /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/.test(name);
+    const isPdf = name.endsWith(".pdf");
+
+    if (!isPdf && !isImage) {
+      showError("Supported formats: PDF, PNG, JPG, GIF, WebP");
+      return;
+    }
+
+    try {
+      if (isPdf) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/pdf-parse", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || "Failed to parse PDF"); return; }
+        setUploadedPdf({ name: file.name, text: data.text });
+        setInput(prev => prev || t.chat_summarize_pdf);
+        savePdfToVault(file.name, data.text, file.size).catch(() => {});
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setUploadedPdf({ name: file.name, text: `[Image attached: ${file.name}]\n${dataUrl}` });
+          setInput(prev => prev || "Describe this image");
+        };
+        reader.onerror = () => showError("Failed to read image file");
+        reader.readAsDataURL(file);
+      }
+      inputRef.current?.focus();
+    } catch (err) {
+      showError("Upload failed: " + String(err));
+    }
+  }, [isFeatureAvailable, showError, t]);
 
   // ---- GENERATE REPORT ----
   const handleGenerateReport = useCallback(async () => {
@@ -904,7 +1523,7 @@ export default function ChatPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `vaultai-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `hammerlock-chat-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   }, [messages, showError, t]);
@@ -918,36 +1537,83 @@ export default function ChatPage() {
   const statusLabel = gatewayStatus === "connected" ? t.topbar_connected : gatewayStatus === "connecting" ? t.topbar_connecting : t.topbar_offline;
   const hasMessages = messages.length > 0;
 
+  // Date bucket helper for sidebar section headers
+  const getDateBucket = (isoDate: string): string => {
+    const d = new Date(isoDate);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
+    const startOf7DaysAgo = new Date(startOfToday.getTime() - 7 * 86400000);
+    if (d >= startOfToday) return "Today";
+    if (d >= startOfYesterday) return "Yesterday";
+    if (d >= startOf7DaysAgo) return "Previous 7 Days";
+    return "Older";
+  };
+
   // Group conversations for sidebar rendering
-  const ungrouped = conversations.filter(c => !c.groupId);
+  const ungrouped = conversations.filter(c => !c.groupId).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   const grouped = groups.map(g => ({
     ...g,
     convos: conversations.filter(c => c.groupId === g.id),
   }));
 
   return (
-    <div className="console-layout">
+    <div
+      className="console-layout"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drop zone overlay */}
+      {isDraggingFile && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-content">
+            <Paperclip size={48} />
+            <span>Drop file here</span>
+            <span className="drop-hint">PDF, PNG, JPG, GIF, WebP</span>
+          </div>
+        </div>
+      )}
       <aside className={`console-sidebar${sidebarOpen ? "" : " collapsed"}`}>
         <div className="sidebar-scroll">
-        {/* Top: Console + New Chat */}
+        {/* Top: New Chat */}
         <div className="sidebar-section">
-          <div className="sidebar-label">{t.sidebar_console.toUpperCase()}</div>
-          <button className="sidebar-item active"><Terminal size={16} /> {t.sidebar_console}</button>
           <button className="sidebar-item" onClick={handleClearChat}><Plus size={16} /> {t.sidebar_new_chat}</button>
         </div>
 
-        {/* Conversation list */}
-        <div className="sidebar-section" style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        {/* Conversation list — fills available space */}
+        <div className="sidebar-section" style={{ flex: 1, minHeight: 80, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
             <div className="sidebar-label" style={{ marginBottom: 0 }}>{t.sidebar_chats}</div>
-            <button
-              className="ghost-btn"
-              onClick={() => setShowNewGroup(true)}
-              title={t.sidebar_new_group}
-              style={{ padding: 2 }}
-            >
-              <FolderPlus size={14} />
-            </button>
+            <div style={{ display: "flex", gap: 2 }}>
+              <button
+                className="ghost-btn"
+                onClick={() => {
+                  if (conversations.length <= 1) return;
+                  if (confirm("Clear all chats? This can't be undone.")) {
+                    setConversations([{
+                      id: generateId(), name: `${t.chat_default_name} 1`, groupId: null, messages: [],
+                      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+                    }]);
+                    setMessages([]);
+                    setGroups([]);
+                  }
+                }}
+                title="Clear all chats"
+                style={{ padding: 2, opacity: conversations.length > 1 ? 0.5 : 0.2 }}
+              >
+                <Trash2 size={13} />
+              </button>
+              <button
+                className="ghost-btn"
+                onClick={() => setShowNewGroup(true)}
+                title={t.sidebar_new_group}
+                style={{ padding: 2 }}
+              >
+                <FolderPlus size={14} />
+              </button>
+            </div>
           </div>
 
           {/* New group inline input */}
@@ -972,43 +1638,61 @@ export default function ChatPage() {
           )}
 
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* Ungrouped conversations */}
-            {ungrouped.map(convo => (
-              <div
-                key={convo.id}
-                className={"sidebar-item" + (convo.id === activeConvoId ? " active" : "")}
-                onClick={() => switchConversation(convo.id)}
-                onContextMenu={e => { e.preventDefault(); setRenamingId(convo.id); setRenameValue(convo.name); }}
-                style={{ padding: "6px 10px", fontSize: "0.8rem", position: "relative", gap: 6 }}
-              >
-                <MessageSquare size={13} />
-                {renamingId === convo.id ? (
-                  <input
-                    autoFocus
-                    value={renameValue}
-                    onChange={e => setRenameValue(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter") renameConversation(convo.id, renameValue); if (e.key === "Escape") setRenamingId(null); }}
-                    onBlur={() => renameConversation(convo.id, renameValue)}
-                    onClick={e => e.stopPropagation()}
-                    style={{
-                      flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--accent)",
-                      color: "var(--text-primary)", fontSize: "0.8rem", padding: 0, outline: "none",
-                    }}
-                  />
-                ) : (
-                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{convo.name}</span>
-                )}
-                {conversations.length > 1 && convo.id !== activeConvoId && (
-                  <button
-                    className="ghost-btn"
-                    onClick={e => { e.stopPropagation(); deleteConversation(convo.id); }}
-                    style={{ padding: 1, opacity: 0.4 }}
-                  ><X size={12} /></button>
-                )}
-              </div>
-            ))}
+            {/* Ungrouped conversations with date section headers */}
+            {(() => {
+              let lastBucket = "";
+              return ungrouped.map(convo => {
+                const bucket = getDateBucket(convo.updatedAt);
+                const showHeader = bucket !== lastBucket;
+                lastBucket = bucket;
+                return (
+                  <div key={convo.id}>
+                    {showHeader && (
+                      <div style={{
+                        fontSize: "0.65rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em",
+                        color: "var(--text-muted, #666)", padding: "8px 12px 2px", marginTop: 4,
+                      }}>{bucket}</div>
+                    )}
+                    <div
+                      className={"sidebar-item" + (convo.id === activeConvoId ? " active" : "")}
+                      onClick={() => switchConversation(convo.id)}
+                      onContextMenu={e => { e.preventDefault(); setRenamingId(convo.id); setRenameValue(convo.name); }}
+                      style={{ padding: "8px 12px", fontSize: "0.85rem", position: "relative", gap: 6 }}
+                    >
+                      <MessageSquare size={13} />
+                      {renamingId === convo.id ? (
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") renameConversation(convo.id, renameValue); if (e.key === "Escape") setRenamingId(null); }}
+                          onBlur={() => renameConversation(convo.id, renameValue)}
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--accent)",
+                            color: "var(--text-primary)", fontSize: "0.85rem", padding: 0, outline: "none",
+                          }}
+                        />
+                      ) : (
+                        <span title={convo.name} style={{
+                          flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+                          whiteSpace: "nowrap", lineHeight: 1.3,
+                        }}>{convo.name}</span>
+                      )}
+                      {conversations.length > 1 && (
+                        <button
+                          className="ghost-btn sidebar-delete-btn"
+                          onClick={e => { e.stopPropagation(); deleteConversation(convo.id); }}
+                          style={{ padding: 1 }}
+                        ><X size={12} /></button>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
 
-            {/* Grouped conversations */}
+            {/* Grouped conversations -- handled below */}
             {grouped.map(g => (
               <div key={g.id} style={{ marginTop: 4 }}>
                 <div
@@ -1038,7 +1722,7 @@ export default function ChatPage() {
                     className={"sidebar-item" + (convo.id === activeConvoId ? " active" : "")}
                     onClick={() => switchConversation(convo.id)}
                     onContextMenu={e => { e.preventDefault(); setRenamingId(convo.id); setRenameValue(convo.name); }}
-                    style={{ padding: "5px 10px 5px 24px", fontSize: "0.78rem", gap: 6 }}
+                    style={{ padding: "7px 12px 7px 24px", fontSize: "0.83rem", gap: 6 }}
                   >
                     <MessageSquare size={12} />
                     {renamingId === convo.id ? (
@@ -1051,11 +1735,14 @@ export default function ChatPage() {
                         onClick={e => e.stopPropagation()}
                         style={{
                           flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--accent)",
-                          color: "var(--text-primary)", fontSize: "0.78rem", padding: 0, outline: "none",
+                          color: "var(--text-primary)", fontSize: "0.83rem", padding: 0, outline: "none",
                         }}
                       />
                     ) : (
-                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{convo.name}</span>
+                      <span title={convo.name} style={{
+                        flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+                        whiteSpace: "nowrap", lineHeight: 1.3,
+                      }}>{convo.name}</span>
                     )}
                     <button
                       className="ghost-btn"
@@ -1069,41 +1756,42 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Tab switcher for sidebar sections */}
-        <div className="sidebar-section">
-          <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
-            <button
-              onClick={() => setSidebarSection("commands")}
+        {/* Collapsible Options section */}
+        <div className="sidebar-section sidebar-options-section">
+          <button
+            className="sidebar-options-toggle"
+            onClick={() => setOptionsOpen(prev => !prev)}
+          >
+            <ChevronDown
+              size={14}
               style={{
-                flex: 1, padding: "4px 0", fontSize: "0.65rem", textTransform: "uppercase",
-                letterSpacing: "0.05em", background: sidebarSection === "commands" ? "var(--bg-tertiary)" : "transparent",
-                border: "none", color: sidebarSection === "commands" ? "var(--accent)" : "var(--text-secondary)",
-                borderRadius: "var(--radius-sm)", cursor: "pointer", fontWeight: 600,
+                transform: optionsOpen ? "none" : "rotate(-90deg)",
+                transition: "transform 0.15s",
               }}
-            >
-              {t.sidebar_commands}
-            </button>
-            <button
-              onClick={() => setSidebarSection("agents")}
-              style={{
-                flex: 1, padding: "4px 0", fontSize: "0.65rem", textTransform: "uppercase",
-                letterSpacing: "0.05em", background: sidebarSection === "agents" ? "var(--bg-tertiary)" : "transparent",
-                border: "none", color: sidebarSection === "agents" ? "var(--accent)" : "var(--text-secondary)",
-                borderRadius: "var(--radius-sm)", cursor: "pointer", fontWeight: 600,
-              }}
-            >
-              {t.sidebar_tools}
-            </button>
-          </div>
+            />
+            <span>OPTIONS</span>
+          </button>
 
-          {sidebarSection === "commands" && (
-            <>
+          {optionsOpen && (
+            <div className="sidebar-options-content">
+              {/* Tools */}
+              <div className="sidebar-label">{t.sidebar_tools_label}</div>
+              <button className="sidebar-item" onClick={() => sendCommand("status")}><Settings size={14} /> {t.sidebar_system_status}</button>
+              <button className="sidebar-item" onClick={() => sendCommand("!load-persona")}><User size={14} /> {t.sidebar_my_persona}</button>
+              <button className="sidebar-item" onClick={handleGenerateReport}><BarChart3 size={14} /> {t.sidebar_generate_report}</button>
+              <button className="sidebar-item" onClick={handleShare}><Share2 size={14} /> {t.sidebar_share_chat}</button>
+              <button className="sidebar-item" onClick={handleExportChat}><Download size={14} /> {t.sidebar_export_chat}</button>
+              <button className="sidebar-item" onClick={handleUpload}><Paperclip size={14} /> {t.sidebar_upload_pdf}</button>
+              <button className="sidebar-item" onClick={() => setShowVaultPanel(true)}><Shield size={14} /> My Vault {vaultFiles.length > 0 && <span style={{ marginLeft: "auto", fontSize: "0.7rem", opacity: 0.5 }}>{vaultFiles.length}</span>}</button>
+              <button className="sidebar-item" onClick={() => setShowApiKeyModal(true)}><Key size={14} /> {t.sidebar_api_keys}</button>
+
               {/* Agent-specific quick commands */}
               {(() => {
                 const agent = getAgentById(activeAgentId, customAgents);
                 if (agent && agent.id !== "general" && agent.quickCommands.length > 0) {
                   return (
                     <>
+                      <div style={{ height: 8 }} />
                       <div className="sidebar-label" style={{ color: agent.color }}>{agent.name.toUpperCase()}</div>
                       {agent.quickCommands.map(qc => (
                         <button key={qc.label} className="sidebar-item" onClick={() => {
@@ -1113,76 +1801,45 @@ export default function ChatPage() {
                           <ChevronRight size={14} /> {qc.label}
                         </button>
                       ))}
-                      <div style={{ height: 8 }} />
                     </>
                   );
                 }
                 return null;
               })()}
-              <div className="sidebar-label">{t.sidebar_quick_commands}</div>
-              {[
-                { label: t.sidebar_status, cmd: "status", icon: <Zap size={14} /> },
-                { label: t.sidebar_help, cmd: t.cmd_help, icon: <ChevronRight size={14} /> },
-                { label: t.sidebar_summarize, cmd: t.cmd_summarize, icon: <ChevronRight size={14} /> },
-                { label: t.sidebar_search, cmd: null, icon: <Search size={14} /> },
-              ].map(item => (
-                <button key={item.label} className="sidebar-item" onClick={() => {
-                  if (item.cmd) { sendCommand(item.cmd); }
-                  else {
-                    setInput("search ");
-                    inputRef.current?.focus();
-                    inputRef.current?.setSelectionRange(7, 7);
-                  }
-                }}>{item.icon} {item.label}</button>
-              ))}
-              <div style={{ height: 8 }} />
-              <div className="sidebar-label">{t.sidebar_tools_label}</div>
-              <button className="sidebar-item" onClick={() => sendCommand("status")}><Settings size={14} /> {t.sidebar_system_status}</button>
-              <button className="sidebar-item" onClick={() => sendCommand("!load-persona")}><User size={14} /> {t.sidebar_my_persona}</button>
-              <button className="sidebar-item" onClick={handleGenerateReport}><BarChart3 size={14} /> {t.sidebar_generate_report}</button>
-              <button className="sidebar-item" onClick={handleShare}><Share2 size={14} /> {t.sidebar_share_chat}</button>
-              <button className="sidebar-item" onClick={handleExportChat}><Download size={14} /> {t.sidebar_export_chat}</button>
-              <button className="sidebar-item" onClick={handleUpload}><Paperclip size={14} /> {t.sidebar_upload_pdf}</button>
-              <button className="sidebar-item" onClick={() => setShowApiKeyModal(true)}><Key size={14} /> {t.sidebar_api_keys}</button>
-            </>
-          )}
 
-          {sidebarSection === "agents" && (
-            <>
+              {/* Agents */}
+              <div style={{ height: 8 }} />
               <div className="sidebar-label">{t.sidebar_agents_label}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 320, overflowY: "auto" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 200, overflowY: "auto" }}>
                 {[...BUILT_IN_AGENTS, ...customAgents].map(agent => (
                   <div
                     key={agent.id}
                     onClick={() => setActiveAgentId(agent.id)}
                     style={{
                       display: "flex", alignItems: "center", gap: 8,
-                      padding: "8px 10px", borderRadius: 8, cursor: "pointer",
+                      padding: "6px 10px", borderRadius: 8, cursor: "pointer",
                       background: activeAgentId === agent.id ? "var(--bg-tertiary)" : "transparent",
                       border: activeAgentId === agent.id ? `1px solid ${agent.color}33` : "1px solid transparent",
                       transition: "all 0.15s",
                     }}
                   >
                     <div style={{
-                      width: 28, height: 28, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
                       background: `${agent.color}18`, color: agent.color, flexShrink: 0,
                     }}>
-                      <AgentIcon name={agent.icon} size={15} />
+                      <AgentIcon name={agent.icon} size={13} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        fontSize: "0.8rem", fontWeight: 600,
+                        fontSize: "0.75rem", fontWeight: 600,
                         color: activeAgentId === agent.id ? "var(--text-primary)" : "var(--text-secondary)",
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       }}>
                         {agent.name}
                       </div>
-                      <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {agent.tagline}
-                      </div>
                     </div>
                     {activeAgentId === agent.id && (
-                      <div style={{ width: 6, height: 6, borderRadius: 3, background: agent.color, flexShrink: 0 }} />
+                      <div style={{ width: 5, height: 5, borderRadius: 3, background: agent.color, flexShrink: 0 }} />
                     )}
                     {agent.custom && (
                       <button
@@ -1197,14 +1854,11 @@ export default function ChatPage() {
               <button
                 className="sidebar-item"
                 onClick={() => setShowCreateAgent(true)}
-                style={{ marginTop: 8, color: "var(--accent)", fontSize: "0.78rem" }}
+                style={{ marginTop: 4, color: "var(--accent)", fontSize: "0.78rem" }}
               >
                 <Plus size={14} /> {t.sidebar_create_agent}
               </button>
-              <div style={{ marginTop: 12, padding: "8px 10px", background: "var(--bg-tertiary)", borderRadius: 8, fontSize: "0.7rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                <strong style={{ color: "var(--text-secondary)" }}>{t.sidebar_agents_help_title}</strong> {t.sidebar_agents_help_text}
-              </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -1242,33 +1896,50 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+          <button className="sidebar-lock" onClick={() => setShowSettings(true)} style={{ marginBottom: 4, opacity: 0.7 }}><Settings size={16} /> Settings</button>
           <button className="sidebar-lock" onClick={handleLock}><Lock size={16} /> {t.sidebar_lock}</button>
         </div>
       </aside>
       <div className="console-main" style={{position:"relative"}}>
+        {/* Floating sidebar reopen button — only visible when sidebar is collapsed */}
+        {!sidebarOpen && (
+          <button
+            className="sidebar-reopen-btn"
+            onClick={() => setSidebarOpen(true)}
+            title="Open sidebar"
+          >
+            <Menu size={18} />
+          </button>
+        )}
         <header className="console-topbar">
           <div className="topbar-brand" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="sidebar-toggle" onClick={() => setSidebarOpen(prev => !prev)} title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}>
               {sidebarOpen ? <PanelLeftClose size={16} /> : <Menu size={16} />}
             </button>
-            <Lock size={18} /><span>VAULTAI</span>
+            <Lock size={18} /><span>HAMMERLOCK AI</span>
           </div>
           <div className="topbar-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {(() => {
               const agent = getAgentById(activeAgentId, customAgents);
               if (agent && agent.id !== "general") {
                 return (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: agent.color, fontSize: "0.8rem", fontWeight: 600 }}>
+                  <button
+                    className="topbar-agent-badge"
+                    onClick={() => setActiveAgentId(DEFAULT_AGENT_ID)}
+                    title="Click to switch back to General"
+                    style={{ borderColor: `${agent.color}40`, color: agent.color }}
+                  >
                     <AgentIcon name={agent.icon} size={14} />
-                    {agent.name}
-                  </span>
+                    <span>{agent.name}</span>
+                    <X size={12} style={{ opacity: 0.5, marginLeft: 2 }} />
+                  </button>
                 );
               }
               return <span>{t.chat_title}</span>;
             })()}
           </div>
           <div className="topbar-actions">
-            <div className="status-badge"><span className={statusDotClass} /> {statusLabel}</div>
+            <div className="status-badge"><span className={statusDotClass} /><span className="status-label">{statusLabel}</span></div>
           </div>
         </header>
         {errorBanner && (
@@ -1380,7 +2051,13 @@ export default function ChatPage() {
                 </div>
                 {onboardingStep > 0 && (
                   <button
-                    onClick={() => setOnboardingStep(-1)}
+                    onClick={() => {
+                      setOnboardingStep(-1);
+                      updateVaultData(prev => ({
+                        ...prev,
+                        settings: { ...prev.settings, onboarding_completed: new Date().toISOString() }
+                      }));
+                    }}
                     style={{
                       marginTop: 18, background: "none", border: "none",
                       color: "var(--text-muted)", fontSize: "0.75rem",
@@ -1404,52 +2081,61 @@ export default function ChatPage() {
                 if (agent && agent.id !== "general") {
                   return (
                     <>
-                      <div style={{
-                        width: 64, height: 64, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center",
-                        background: `${agent.color}18`, color: agent.color, marginBottom: 12,
-                      }}>
+                      <div className="welcome-icon-wrap" style={{ background: `${agent.color}18`, color: agent.color }}>
                         <AgentIcon name={agent.icon} size={32} />
                       </div>
                       <h2 className="empty-title" style={{ color: agent.color }}>{agent.name}</h2>
                       <p className="empty-subtitle">{agent.tagline}</p>
-                      <div className="prompt-pills">
+                      <div className="suggestion-grid">
                         {agent.quickCommands.slice(0, 4).map(qc => (
-                          <button key={qc.label} className="prompt-pill" onClick={() => {
+                          <button key={qc.label} className="suggestion-card" onClick={() => {
                             if (qc.cmd.endsWith(" ")) { setInput(qc.cmd); inputRef.current?.focus(); }
                             else sendCommand(qc.cmd);
-                          }}>{qc.label}</button>
+                          }}>
+                            <span className="suggestion-icon">💬</span>
+                            <span className="suggestion-text">{qc.label}</span>
+                          </button>
                         ))}
                       </div>
                     </>
                   );
                 }
+                const userName = vaultData?.settings?.user_name as string | undefined;
                 return (
                   <>
-                    <div style={{
-                      width: 72, height: 72, borderRadius: 20,
-                      background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.12)",
-                      display: "grid", placeItems: "center", marginBottom: 16,
-                      position: "relative",
-                    }}>
-                      <Lock size={36} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
-                      <div style={{
-                        position: "absolute", inset: -6, borderRadius: 24,
-                        background: "radial-gradient(circle, rgba(0,255,136,0.08), transparent 70%)",
-                        animation: "vaultIconGlow 3s ease-in-out infinite",
-                        zIndex: -1,
-                      }} />
+                    <div className="welcome-icon-wrap">
+                      <Lock size={32} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
+                      <div className="welcome-glow" />
                     </div>
-                    <h2 className="empty-title">{t.chat_empty_title}</h2>
+                    <h2 className="empty-title">{userName ? `${t.welcome_back || "Welcome back"}, ${userName}` : t.chat_empty_title}</h2>
                     <p className="empty-subtitle">{t.chat_empty_subtitle}</p>
-                    <div className="prompt-pills">
-                      {PROMPT_PILLS.map(pill => (
-                        <button key={pill} className="prompt-pill" onClick={() => sendCommand(pill)}>{pill}</button>
-                      ))}
+                    <div className="suggestion-grid">
+                      <button className="suggestion-card" onClick={() => sendCommand(t.pill_status)}>
+                        <span className="suggestion-icon">⚡</span>
+                        <span className="suggestion-label">{t.sidebar_system_status || "System Status"}</span>
+                        <span className="suggestion-text">{t.pill_status}</span>
+                      </button>
+                      <button className="suggestion-card" onClick={() => sendCommand(t.pill_persona)}>
+                        <span className="suggestion-icon">🧠</span>
+                        <span className="suggestion-label">{t.sidebar_my_persona || "My Persona"}</span>
+                        <span className="suggestion-text">{t.pill_persona}</span>
+                      </button>
+                      <button className="suggestion-card" onClick={() => { setInput("search "); inputRef.current?.focus(); }}>
+                        <span className="suggestion-icon">🌐</span>
+                        <span className="suggestion-label">{t.site_feat_search_title || "Web Search"}</span>
+                        <span className="suggestion-text">{t.pill_search}</span>
+                      </button>
+                      <button className="suggestion-card" onClick={() => sendCommand(t.pill_report)}>
+                        <span className="suggestion-icon">📊</span>
+                        <span className="suggestion-label">{t.sidebar_generate_report || "Generate Report"}</span>
+                        <span className="suggestion-text">{t.pill_report}</span>
+                      </button>
                     </div>
                     <div className="feature-hints">
-                      <div className="feature-hint">🔐 {t.site_footer_aes || "AES-256"}</div>
+                      <div className="feature-hint">🔐 {t.site_footer_aes || "AES-256 Encrypted"}</div>
                       <div className="feature-hint">🎙️ {t.site_feat_voice_title || "Voice Input"}</div>
-                      <div className="feature-hint">🌐 {t.site_feat_search_title || "Web Search"}</div>
+                      <div className="feature-hint">🤖 {t.site_feat_agents_title || "6 AI Agents"}</div>
+                      <div className="feature-hint">📄 {t.site_feat_pdf_title || "PDF Upload"}</div>
                     </div>
                   </>
                 );
@@ -1459,10 +2145,29 @@ export default function ChatPage() {
           {messages.map((msg, idx) => (
             <div key={msg.id} className={"console-message " + msg.role + (msg.pending ? " pending" : "")}>
               <div className="message-meta">
-                <span>{msg.role==="user" ? t.chat_you : (getAgentById(activeAgentId, customAgents)?.name?.toLowerCase() || t.chat_ai)}</span>
+                <span className="message-sender">{msg.role==="user" ? t.chat_you : (getAgentById(activeAgentId, customAgents)?.name?.toLowerCase() || t.chat_ai)}</span>
                 <span className="message-time">{new Date(msg.timestamp || Date.now()).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</span>
               </div>
-              <div><ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown></div>
+              <div className="message-content"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" />}}>{msg.content}</ReactMarkdown></div>
+              {msg.sources && msg.sources.length > 0 && (
+                <SourcesAccordion sources={msg.sources} summary={msg.sourcesSummary} />
+              )}
+              {msg.actionType && !msg.pending && (
+                <div className="action-badge" data-status={msg.actionStatus || "success"}>
+                  <span>{msg.actionStatus === "error" ? "⚠️" : ACTION_BADGE_ICONS[msg.actionType] || "⚡"}</span>
+                  <span>{ACTION_BADGE_LABELS[msg.actionType] || msg.actionType}{msg.actionStatus === "error" ? " Failed" : ""}</span>
+                </div>
+              )}
+              {msg.followUps && msg.followUps.length > 0 && !msg.pending && msg.role === "ai"
+                && idx === messages.length - 1 && !sending && (
+                <div className="followup-chips">
+                  {msg.followUps.map((q, i) => (
+                    <button key={i} className="followup-chip" onClick={() => sendCommand(q)}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
               {msg.pending && <div className="message-status">{t.chat_processing}</div>}
               {/* Message action buttons — copy on all messages, extra actions on AI */}
               {!msg.pending && msg.role !== "error" && (
@@ -1479,7 +2184,7 @@ export default function ChatPage() {
                       >
                         {speakingMsgId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                       </button>
-                      <button onClick={() => handleSaveToVault(msg.content)} title={t.msg_save_vault || "Save to Vault"}>
+                      <button onClick={() => saveSnippetToVault(msg.content)} title={t.msg_save_vault || "Save to Vault"}>
                         <Archive size={14} />
                       </button>
                       {idx === messages.length - 1 && (
@@ -1493,17 +2198,24 @@ export default function ChatPage() {
               )}
             </div>
           ))}
-          {/* Typing indicator */}
-          {sending && (
-            <div className="console-message ai">
-              <div className="message-meta"><span>{getAgentById(activeAgentId, customAgents)?.name?.toLowerCase() || t.chat_ai}</span></div>
-              <div className="typing-dots"><span /><span /><span /></div>
-            </div>
-          )}
         </div>
         {/* Copied / Saved toasts */}
         {copiedToast && <div className="copied-toast">{t.msg_copied || "Copied!"}</div>}
         {vaultSaved && <div className="copied-toast">🔐 {t.msg_saved_vault || "Saved to Vault!"}</div>}
+
+        {/* Nudge toast — contextual tips with opt-out */}
+        {activeNudge && (
+          <NudgeToast
+            nudge={activeNudge}
+            onDismiss={handleNudgeDismiss}
+            onDismissPermanent={handleNudgeDismissPermanent}
+            onDisableAll={handleNudgeDisableAll}
+            onCta={handleNudgeCta}
+          />
+        )}
+
+        {/* Settings Panel */}
+        <SettingsPanel open={showSettings} onClose={() => setShowSettings(false)} />
 
         {/* API Key Configuration Modal — premium welcome flow */}
         {showApiKeyModal && (
@@ -1768,39 +2480,54 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Hidden file input for PDF upload */}
-        <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={handleFileChange} />
+        {/* Hidden file input for PDF + image upload */}
+        <input ref={fileInputRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" style={{ display: "none" }} onChange={handleFileChange} />
         <div className="console-input">
           {uploadedPdf && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "6px 12px", background: "var(--accent-subtle)",
-              borderRadius: "var(--radius-md)", fontSize: "0.8rem",
-              color: "var(--accent)", border: "1px solid rgba(0,255,136,0.2)"
-            }}>
+            <div className="input-attachment-chip">
               <Paperclip size={14} />
               <span>{uploadedPdf.name}</span>
-              <button onClick={() => setUploadedPdf(null)}
-                style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}
-              ><X size={14} /></button>
+              <button onClick={() => setUploadedPdf(null)} className="attachment-remove"><X size={12} /></button>
             </div>
           )}
           <div className="input-bar">
-            <button type="button" className={`ghost-btn${isListening ? " listening" : ""}`}
-              onClick={handleVoice} title={isListening ? t.voice_stop : t.voice_start}
-              style={isListening ? { color: "var(--danger)", animation: "pulse 1s infinite" } : undefined}>
+            <button type="button" className="input-icon-btn" onClick={handleUpload} title={t.sidebar_upload_pdf}>
+              <Plus size={18} />
+            </button>
+            <button type="button" className={`input-icon-btn${isListening ? " listening" : ""}`}
+              onClick={handleVoice} title={isListening ? t.voice_stop : t.voice_start}>
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
             </button>
-            <button type="button" className="ghost-btn" onClick={handleUpload} title={t.sidebar_upload_pdf}><Paperclip size={18} /></button>
             <textarea
               ref={inputRef}
-              placeholder={isListening ? t.chat_placeholder_recording : t.chat_placeholder}
+              placeholder={isListening ? t.chat_placeholder_recording : (sending ? "HammerLock AI is thinking..." : t.chat_placeholder)}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){e.preventDefault();sendCommand();} }}
-              disabled={sending}
             />
-            <button type="button" className="send-btn" onClick={() => sendCommand()} disabled={sending || !input.trim()}><Send size={18} /></button>
+            {/* Agent chip — shows current agent, click to switch back to general */}
+            {(() => {
+              const agent = getAgentById(activeAgentId, customAgents);
+              if (agent && agent.id !== "general") {
+                return (
+                  <button
+                    type="button"
+                    className="input-agent-chip"
+                    onClick={() => setActiveAgentId(DEFAULT_AGENT_ID)}
+                    title={`Using ${agent.name} — click to switch to General`}
+                    style={{ borderColor: `${agent.color}40`, color: agent.color }}
+                  >
+                    <AgentIcon name={agent.icon} size={12} />
+                    <span>{agent.name}</span>
+                    <X size={10} style={{ opacity: 0.6 }} />
+                  </button>
+                );
+              }
+              return null;
+            })()}
+            <button type="button" className="send-btn" onClick={() => sendCommand()} disabled={sending || !input.trim()}>
+              <Send size={16} />
+            </button>
           </div>
           <div className="console-footer">
             <span className="dot" /> {t.chat_footer_encrypted}
@@ -1828,6 +2555,127 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* ---- FILE VAULT PANEL ---- */}
+      {showVaultPanel && (
+        <div className="vault-panel-overlay" onClick={() => setShowVaultPanel(false)}>
+          <div className="vault-panel" onClick={e => e.stopPropagation()}>
+            <div className="vault-panel-header">
+              <Shield size={18} />
+              <h3>My Vault</h3>
+              <span className="vault-count">{vaultFiles.length} items</span>
+              <button className="ghost-btn" onClick={() => setShowVaultPanel(false)} style={{marginLeft:"auto"}}><X size={16} /></button>
+            </div>
+
+            {/* Search + Actions */}
+            <div className="vault-panel-actions">
+              <div className="vault-search-bar">
+                <Search size={14} />
+                <input
+                  type="text"
+                  placeholder="Search vault..."
+                  value={vaultSearchQuery}
+                  onChange={e => setVaultSearchQuery(e.target.value)}
+                />
+              </div>
+              <button className="vault-action-btn" onClick={() => setShowNewNote(true)}>
+                <StickyNote size={14} /> New Note
+              </button>
+            </div>
+
+            {/* New Note Form */}
+            {showNewNote && (
+              <div className="vault-new-note">
+                <input
+                  type="text"
+                  placeholder="Note title (optional)"
+                  value={newNoteTitle}
+                  onChange={e => setNewNoteTitle(e.target.value)}
+                  className="vault-note-title-input"
+                />
+                <textarea
+                  placeholder="Write your note..."
+                  value={newNoteContent}
+                  onChange={e => setNewNoteContent(e.target.value)}
+                  className="vault-note-textarea"
+                  rows={4}
+                />
+                <div style={{display:"flex",gap:8}}>
+                  <button className="vault-save-btn" onClick={saveNoteToVault} disabled={!newNoteContent.trim()}>
+                    <Check size={14} /> Save
+                  </button>
+                  <button className="ghost-btn" onClick={() => { setShowNewNote(false); setNewNoteTitle(""); setNewNoteContent(""); }} style={{fontSize:"0.8rem"}}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* File List */}
+            <div className="vault-file-list">
+              {filteredVaultFiles.length === 0 ? (
+                <div className="vault-empty">
+                  <Shield size={32} style={{opacity:0.2}} />
+                  <p>{vaultSearchQuery ? "No matching files" : "Your vault is empty"}</p>
+                  <p style={{fontSize:"0.75rem",color:"var(--text-muted)"}}>
+                    {vaultSearchQuery ? "Try a different search" : "Save chat responses, upload PDFs, or create notes to store them securely."}
+                  </p>
+                </div>
+              ) : (
+                filteredVaultFiles.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).map(file => (
+                  <div key={file.id} className="vault-file-item">
+                    <div className="vault-file-icon">
+                      {file.type === "pdf" ? <FileText size={16} /> :
+                       file.type === "image" ? <Image size={16} /> :
+                       file.type === "note" ? <StickyNote size={16} /> :
+                       <File size={16} />}
+                    </div>
+                    <div className="vault-file-info">
+                      <div className="vault-file-name">{file.name}</div>
+                      <div className="vault-file-meta">
+                        <span className="vault-file-type">{file.type}</span>
+                        {file.size && <span>{(file.size / 1024).toFixed(1)}KB</span>}
+                        <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      {file.tags.length > 0 && (
+                        <div className="vault-file-tags">
+                          {file.tags.map(tag => <span key={tag} className="vault-tag">{tag}</span>)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="vault-file-actions">
+                      <button
+                        className="ghost-btn"
+                        title="Copy content"
+                        onClick={() => handleCopy(file.content)}
+                      >
+                        <Copy size={13} />
+                      </button>
+                      <button
+                        className="ghost-btn"
+                        title="Use in chat"
+                        onClick={() => {
+                          setUploadedPdf({ name: file.name, text: file.content.slice(0, 8000) });
+                          setShowVaultPanel(false);
+                        }}
+                      >
+                        <Send size={13} />
+                      </button>
+                      <button
+                        className="ghost-btn vault-delete-btn"
+                        title="Remove from vault"
+                        onClick={() => deleteVaultFile(file.id)}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tutorial Modal */}
       {tutorialStep >= 0 && (

@@ -113,7 +113,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         }
         setSubscription(parsed);
       }
-      const count = window.localStorage.getItem("vault_message_count");
+      const count = window.localStorage.getItem("hammerlock_message_count");
       if (count) setMessageCount(parseInt(count, 10) || 0);
     } catch {
       // ignore
@@ -145,7 +145,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     setMessageCount((prev) => {
       const next = prev + 1;
       if (typeof window !== "undefined") {
-        window.localStorage.setItem("vault_message_count", String(next));
+        window.localStorage.setItem("hammerlock_message_count", String(next));
       }
       return next;
     });
@@ -154,7 +154,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const resetMessageCount = useCallback(() => {
     setMessageCount(0);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("vault_message_count", "0");
+      window.localStorage.setItem("hammerlock_message_count", "0");
     }
   }, []);
 
@@ -179,7 +179,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const clearSubscription = useCallback(() => {
     if (typeof window === "undefined") return;
     window.localStorage.removeItem(STORAGE_KEY);
-    window.localStorage.removeItem("vault_message_count");
+    window.localStorage.removeItem("hammerlock_message_count");
     setSubscription(defaultSubscription());
     setMessageCount(0);
   }, []);

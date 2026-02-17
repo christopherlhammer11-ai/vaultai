@@ -1,5 +1,5 @@
 /**
- * VaultAI — Electron main process
+ * HammerLock AI — Electron main process
  *
  * Lifecycle:
  *   1. Show cinematic splash screen instantly (no server dependency)
@@ -14,7 +14,7 @@
  *   - No nodeIntegration in renderer
  */
 
-import { app, BrowserWindow, shell, Menu } from "electron";
+import { app, BrowserWindow, shell, Menu, session, systemPreferences } from "electron";
 import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -27,17 +27,17 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 
 // Load .env.local from multiple locations (first found wins per key)
-// 1. ~/.vaultai/.env — user's own config (highest priority)
+// 1. ~/.hammerlock/.env — user's own config (highest priority)
 // 2. App bundle root — for dev mode
 // 3. Source checkout — fallback for local dev
-dotenvConfig({ path: path.join(os.homedir(), ".vaultai", ".env") });
+dotenvConfig({ path: path.join(os.homedir(), ".hammerlock", ".env") });
 dotenvConfig({ path: path.join(ROOT, ".env.local") });
 dotenvConfig({ path: path.join(ROOT, ".env") });
 const IS_DEV = !app.isPackaged;
 
 const NEXT_PORT = 3100; // Use a different port from dev to avoid conflicts
 const GATEWAY_PORT = 18789;
-const GATEWAY_PROFILE = "vaultai";
+const GATEWAY_PROFILE = "hammerlock";
 
 let mainWindow = null;
 let gatewayProcess = null;
@@ -98,12 +98,12 @@ function waitForPort(port, timeoutMs = 15000) {
 async function startGateway() {
   const inUse = await isPortInUse(GATEWAY_PORT);
   if (inUse) {
-    console.log(`[vaultai] Gateway already running on port ${GATEWAY_PORT}`);
+    console.log(`[hammerlock] Gateway already running on port ${GATEWAY_PORT}`);
     return;
   }
 
   try {
-    console.log(`[vaultai] Starting OpenClaw gateway on port ${GATEWAY_PORT}...`);
+    console.log(`[hammerlock] Starting OpenClaw gateway on port ${GATEWAY_PORT}...`);
     gatewayProcess = spawn("openclaw", ["--profile", GATEWAY_PROFILE, "gateway", "--port", String(GATEWAY_PORT)], {
       cwd: ROOT,
       stdio: "pipe",
@@ -118,10 +118,10 @@ async function startGateway() {
     });
 
     await waitForPort(GATEWAY_PORT);
-    console.log("[vaultai] Gateway ready.");
+    console.log("[hammerlock] Gateway ready.");
   } catch (err) {
-    console.warn("[vaultai] Gateway failed to start (optional):", err.message);
-    console.warn("[vaultai] App will still work with cloud LLM providers.");
+    console.warn("[hammerlock] Gateway failed to start (optional):", err.message);
+    console.warn("[hammerlock] App will still work with cloud LLM providers.");
     gatewayProcess = null;
   }
 }
@@ -132,13 +132,13 @@ async function startGateway() {
 async function startNext() {
   const inUse = await isPortInUse(NEXT_PORT);
   if (inUse) {
-    console.log(`[vaultai] Next.js already running on port ${NEXT_PORT}`);
+    console.log(`[hammerlock] Next.js already running on port ${NEXT_PORT}`);
     return;
   }
 
   if (IS_DEV) {
     // Dev mode: spawn npx next dev
-    console.log(`[vaultai] Starting Next.js (dev) on port ${NEXT_PORT}...`);
+    console.log(`[hammerlock] Starting Next.js (dev) on port ${NEXT_PORT}...`);
     nextProcess = spawn("npx", ["next", "dev", "-p", String(NEXT_PORT)], {
       cwd: ROOT,
       stdio: "pipe",
@@ -153,7 +153,7 @@ async function startNext() {
     });
   } else {
     // Production: use Next.js programmatic server (no child process needed)
-    console.log(`[vaultai] Starting Next.js (production) on port ${NEXT_PORT}...`);
+    console.log(`[hammerlock] Starting Next.js (production) on port ${NEXT_PORT}...`);
     try {
       const nextModule = await import(path.join(ROOT, "node_modules", "next", "dist", "server", "next.js"));
       const NextServer = nextModule.default?.default || nextModule.default;
@@ -172,10 +172,10 @@ async function startNext() {
         server.listen(NEXT_PORT, "127.0.0.1", () => resolve());
         server.on("error", reject);
       });
-      console.log(`[vaultai] Next.js production server listening on port ${NEXT_PORT}`);
+      console.log(`[hammerlock] Next.js production server listening on port ${NEXT_PORT}`);
       return; // skip waitForPort — already listening
     } catch (err) {
-      console.error("[vaultai] Programmatic Next.js failed, falling back to CLI:", err.message);
+      console.error("[hammerlock] Programmatic Next.js failed, falling back to CLI:", err.message);
       // Fallback: spawn the next binary directly
       const nextBin = path.join(ROOT, "node_modules", "next", "dist", "bin", "next");
       nextProcess = spawn(process.execPath, [nextBin, "start", "-p", String(NEXT_PORT)], {
@@ -193,7 +193,7 @@ async function startNext() {
   }
 
   await waitForPort(NEXT_PORT);
-  console.log("[vaultai] Next.js ready.");
+  console.log("[hammerlock] Next.js ready.");
 }
 
 // ---------------------------------------------------------------------------
@@ -205,8 +205,9 @@ function createWindow() {
     height: 860,
     minWidth: 800,
     minHeight: 600,
-    title: "VaultAI",
-    titleBarStyle: "hiddenInset",
+    title: "HammerLock AI",
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 14, y: 20 },
     backgroundColor: "#050505",
     show: false, // Don't show until splash is painted
     webPreferences: {
@@ -225,10 +226,19 @@ function createWindow() {
     mainWindow.show();
   });
 
-  // Open external links in system browser
+  // Open external links in system browser (target="_blank" / window.open)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };
+  });
+
+  // Catch ALL navigation away from the app (regular <a href> clicks)
+  // Any link pointing outside our local Next.js server opens in system browser
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (!url.startsWith(`http://127.0.0.1:${NEXT_PORT}`) && !url.startsWith(`http://localhost:${NEXT_PORT}`)) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
   });
 
   mainWindow.on("closed", () => {
@@ -289,8 +299,9 @@ function createNewWindow() {
     height: 860,
     minWidth: 800,
     minHeight: 600,
-    title: "VaultAI",
-    titleBarStyle: "hiddenInset",
+    title: "HammerLock AI",
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 14, y: 20 },
     backgroundColor: "#050505",
     show: false,
     webPreferences: {
@@ -304,6 +315,12 @@ function createNewWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };
+  });
+  win.webContents.on("will-navigate", (event, url) => {
+    if (!url.startsWith(`http://127.0.0.1:${NEXT_PORT}`) && !url.startsWith(`http://localhost:${NEXT_PORT}`)) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
   });
   return win;
 }
@@ -352,7 +369,7 @@ function buildAppMenu() {
             const win = BrowserWindow.getFocusedWindow();
             if (win) {
               win.webContents.executeJavaScript(
-                `window.dispatchEvent(new CustomEvent("vaultai:new-chat"));`
+                `window.dispatchEvent(new CustomEvent("hammerlock:new-chat"));`
               );
             }
           },
@@ -365,7 +382,7 @@ function buildAppMenu() {
             const win = BrowserWindow.getFocusedWindow();
             if (win) {
               win.webContents.executeJavaScript(
-                `window.dispatchEvent(new CustomEvent("vaultai:open-settings"));`
+                `window.dispatchEvent(new CustomEvent("hammerlock:open-settings"));`
               );
             }
           },
@@ -398,7 +415,7 @@ function buildAppMenu() {
             const win = BrowserWindow.getFocusedWindow();
             if (win) {
               win.webContents.executeJavaScript(
-                `window.dispatchEvent(new CustomEvent("vaultai:toggle-sidebar"));`
+                `window.dispatchEvent(new CustomEvent("hammerlock:toggle-sidebar"));`
               );
             }
           },
@@ -440,15 +457,15 @@ function buildAppMenu() {
       label: "Help",
       submenu: [
         {
-          label: "VaultAI Documentation",
+          label: "HammerLock AI Documentation",
           click: () => {
-            shell.openExternal("https://vaultai.app/docs");
+            shell.openExternal("https://hammerlock.ai/docs");
           },
         },
         {
           label: "Report an Issue",
           click: () => {
-            shell.openExternal("https://github.com/nicholasychua/vaultai/issues");
+            shell.openExternal("https://github.com/nicholasychua/hammerlock/issues");
           },
         },
         { type: "separator" },
@@ -468,11 +485,29 @@ let splashStart = 0;
 
 app.whenReady().then(async () => {
   buildAppMenu();
+
+  // ---- Microphone / media permissions for voice input ----
+  // Without these handlers, Electron silently denies getUserMedia() requests.
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    const allowed = ["media", "mediaKeySystem", "geolocation", "notifications"];
+    callback(allowed.includes(permission));
+  });
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+    const allowed = ["media", "mediaKeySystem", "geolocation", "notifications"];
+    return allowed.includes(permission);
+  });
+
+  // On macOS, proactively request microphone permission so the OS dialog
+  // appears on first launch rather than silently failing.
+  if (process.platform === "darwin") {
+    systemPreferences.askForMediaAccess("microphone").catch(() => {});
+  }
+
   splashStart = Date.now();
   try {
     await ensureServersAndCreateWindow();
   } catch (err) {
-    console.error("[vaultai] Startup failed:", err);
+    console.error("[hammerlock] Startup failed:", err);
     app.quit();
   }
 });
@@ -488,7 +523,7 @@ app.on("activate", async () => {
       try {
         await ensureServersAndCreateWindow();
       } catch (err) {
-        console.error("[vaultai] Re-launch failed:", err);
+        console.error("[hammerlock] Re-launch failed:", err);
       }
     } else {
       // App is ready, go straight to vault (no splash needed for re-activate)
@@ -497,8 +532,9 @@ app.on("activate", async () => {
         height: 860,
         minWidth: 800,
         minHeight: 600,
-        title: "VaultAI",
-        titleBarStyle: "hiddenInset",
+        title: "HammerLock AI",
+        titleBarStyle: "hidden",
+        trafficLightPosition: { x: 14, y: 20 },
         backgroundColor: "#050505",
         show: false,
         webPreferences: {
@@ -513,6 +549,12 @@ app.on("activate", async () => {
         shell.openExternal(url);
         return { action: "deny" };
       });
+      mainWindow.webContents.on("will-navigate", (event, url) => {
+        if (!url.startsWith(`http://127.0.0.1:${NEXT_PORT}`) && !url.startsWith(`http://localhost:${NEXT_PORT}`)) {
+          event.preventDefault();
+          shell.openExternal(url);
+        }
+      });
       mainWindow.on("closed", () => { mainWindow = null; });
     }
   }
@@ -520,11 +562,11 @@ app.on("activate", async () => {
 
 app.on("before-quit", () => {
   if (gatewayProcess) {
-    console.log("[vaultai] Stopping gateway...");
+    console.log("[hammerlock] Stopping gateway...");
     gatewayProcess.kill("SIGTERM");
   }
   if (nextProcess) {
-    console.log("[vaultai] Stopping Next.js...");
+    console.log("[hammerlock] Stopping Next.js...");
     nextProcess.kill("SIGTERM");
   }
 });

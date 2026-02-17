@@ -8,12 +8,12 @@ import crypto from "crypto";
  * POST /api/share — Create a shareable link for selected vault entries
  * GET /api/share?id=xxx — Retrieve shared data by ID
  *
- * Shares are stored locally as JSON files in ~/.vaultai/.shares directory.
+ * Shares are stored locally as JSON files in ~/.hammerlock/.shares directory.
  * They expire after 24 hours by default.
  * Data is NOT encrypted in transit — the user chooses what to share.
  */
 
-const SHARES_DIR = path.join(os.homedir(), ".vaultai", ".shares");
+const SHARES_DIR = path.join(os.homedir(), ".hammerlock", ".shares");
 
 async function ensureSharesDir() {
   try {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       JSON.stringify(shareData, null, 2)
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://127.0.0.1:${process.env.PORT || 3000}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://127.0.0.1:${process.env.PORT || 3100}`;
 
     return NextResponse.json({
       shareId,

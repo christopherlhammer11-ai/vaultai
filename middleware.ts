@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * VaultAI middleware
+ * HammerLock AI middleware
  *
  * On Vercel (the public website), /chat and /vault are desktop-only features.
  * Redirect visitors to the download page instead of showing a broken console.

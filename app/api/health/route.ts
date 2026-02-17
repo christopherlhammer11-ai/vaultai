@@ -25,7 +25,7 @@ export async function GET() {
     const { promisify } = await import("util");
     const execAsync = promisify(exec);
     try {
-      await execAsync("openclaw --profile vaultai health --json 2>/dev/null", {
+      await execAsync("openclaw --profile hammerlock health --json 2>/dev/null", {
         timeout: 5000,
       });
       gatewayUp = true;

@@ -1,21 +1,18 @@
 /**
- * VaultAI Anonymization Layer
+ * HammerLock AI Anonymization Layer — v2 (holistic rewrite)
  *
- * Scrubs personally identifiable information (PII) from outbound queries
- * before they reach external LLM / search APIs, then re-hydrates the
- * response so the user sees their original names, companies, etc.
+ * DESIGN PRINCIPLES:
+ *   1. Only scrub OUTBOUND text (queries sent to Brave / OpenAI / Anthropic).
+ *      Never scrub LLM responses or system prompts containing search results.
+ *   2. Only scrub KNOWN PII — values explicitly found in the user's persona
+ *      file or profile (name, email, phone, address, company).
+ *      No more regex guessing ("2-3 capitalized words = person name").
+ *   3. Keep SSN / credit-card / account-number regex as a safety net —
+ *      these are unambiguous patterns that should never leak.
+ *   4. One Anonymizer instance per request. The caller decides what to scrub.
  *
- * How it works:
- *   1. Regex + heuristic detection finds PII tokens (names, emails,
- *      phone numbers, SSNs, company names, addresses, URLs with PII).
- *   2. Each token is replaced with a stable placeholder like [PERSON_1],
- *      [ORG_1], [EMAIL_1], etc.
- *   3. The scrubbed text goes to the external API.
- *   4. The API response is scanned for those placeholders and the
- *      original values are restored before showing the user.
- *
- * Privacy guarantee: the raw PII never leaves the local server process.
- * Only the placeholder tokens reach OpenAI / Anthropic / Brave.
+ * Privacy guarantee: raw PII never leaves the local server process.
+ * Only placeholder tokens reach external APIs.
  */
 
 // ---- PII categories ----
@@ -28,8 +25,6 @@ type PIICategory =
   | "SSN"
   | "CREDIT_CARD"
   | "ADDRESS"
-  | "IP"
-  | "DATE_OF_BIRTH"
   | "ACCOUNT";
 
 type PIIMatch = {
@@ -38,48 +33,18 @@ type PIIMatch = {
   placeholder: string;
 };
 
-// ---- Regex patterns ----
+// ---- Safety-net regex patterns (unambiguous, high-confidence only) ----
 
-const PATTERNS: { category: PIICategory; regex: RegExp }[] = [
-  // Email addresses
-  { category: "EMAIL", regex: /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b/g },
-
-  // US phone numbers (various formats)
-  { category: "PHONE", regex: /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g },
-
-  // SSN
+const SAFETY_PATTERNS: { category: PIICategory; regex: RegExp }[] = [
+  // SSN — always dangerous to leak
   { category: "SSN", regex: /\b\d{3}-\d{2}-\d{4}\b/g },
 
-  // Credit card numbers (basic)
+  // Credit card numbers (basic 16-digit groups)
   { category: "CREDIT_CARD", regex: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g },
 
-  // IP addresses
-  { category: "IP", regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g },
-
-  // Account / routing numbers (8-17 digits)
+  // Account / routing numbers preceded by a keyword
   { category: "ACCOUNT", regex: /\b(?:account|routing|acct)[\s#:]*\d{8,17}\b/gi },
 ];
-
-// Words that are common enough to NOT anonymize as person names
-const NAME_STOPWORDS = new Set([
-  // Common English words that look like names
-  "the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it",
-  "for", "not", "on", "with", "he", "as", "you", "do", "at", "this",
-  "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
-  "an", "will", "my", "one", "all", "would", "there", "their", "what",
-  // Tech / business terms
-  "ai", "api", "ceo", "cto", "cfo", "llm", "saas", "b2b", "b2c",
-  "pdf", "csv", "json", "sql", "etf", "ipo", "m&a", "roi", "kpi",
-  "gdpr", "hipaa", "sec", "fda", "eu", "us", "uk",
-  // Common nouns often capitalized
-  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
-  "january", "february", "march", "april", "may", "june", "july",
-  "august", "september", "october", "november", "december",
-  "north", "south", "east", "west",
-  // Agent / app terms
-  "vaultai", "strategist", "counsel", "analyst", "researcher", "operator", "writer",
-  "vault", "persona", "search", "brave", "openai", "anthropic", "claude", "ollama",
-]);
 
 // ---- Anonymizer class ----
 
@@ -94,20 +59,27 @@ export class Anonymizer {
     SSN: 0,
     CREDIT_CARD: 0,
     ADDRESS: 0,
-    IP: 0,
-    DATE_OF_BIRTH: 0,
     ACCOUNT: 0,
   };
 
   /**
-   * Creates an Anonymizer, optionally seeded with known PII from the
-   * user's persona / profile so those values are always caught.
+   * Creates an Anonymizer seeded with KNOWN PII from the user's
+   * persona / profile. Only these values (plus SSN/CC safety-net)
+   * will ever be scrubbed.
    */
-  constructor(knownPII?: { names?: string[]; orgs?: string[]; emails?: string[] }) {
+  constructor(knownPII?: {
+    names?: string[];
+    orgs?: string[];
+    emails?: string[];
+    phones?: string[];
+    addresses?: string[];
+  }) {
     if (knownPII) {
       knownPII.names?.forEach((n) => this.register(n.trim(), "PERSON"));
       knownPII.orgs?.forEach((o) => this.register(o.trim(), "ORG"));
       knownPII.emails?.forEach((e) => this.register(e.trim(), "EMAIL"));
+      knownPII.phones?.forEach((p) => this.register(p.trim(), "PHONE"));
+      knownPII.addresses?.forEach((a) => this.register(a.trim(), "ADDRESS"));
     }
   }
 
@@ -127,15 +99,27 @@ export class Anonymizer {
   }
 
   /**
-   * Scrub PII from text, replacing with placeholders.
-   * Returns the scrubbed text.
+   * Scrub KNOWN PII from outbound text, replacing with placeholders.
+   *
+   * This ONLY replaces:
+   *   - Values explicitly registered from the user's persona/profile
+   *   - SSN, credit card, and account numbers (safety-net regex)
+   *
+   * It does NOT guess at names from capitalized words.
    */
   scrub(text: string): string {
     let result = text;
 
-    // 1. Apply regex-based patterns first (emails, phones, SSNs, etc.)
-    for (const { category, regex } of PATTERNS) {
-      // Reset regex lastIndex for global patterns
+    // 1. Replace all registered known PII (case-insensitive)
+    for (const [, match] of this.map) {
+      const escaped = match.original.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(escaped, "gi");
+      result = result.replace(re, match.placeholder);
+    }
+
+    // 2. Safety-net: catch SSNs, credit cards, account numbers
+    //    These are unambiguous patterns that should never reach external APIs.
+    for (const { category, regex } of SAFETY_PATTERNS) {
       regex.lastIndex = 0;
       const matches = result.match(regex);
       if (matches) {
@@ -146,60 +130,27 @@ export class Anonymizer {
       }
     }
 
-    // 2. Detect probable person names (capitalized word sequences)
-    //    Pattern: 2-3 consecutive capitalized words not at sentence start
-    const nameRegex = /(?<!\.\s)(?<![.!?]\s)(?<=\s|^)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})(?=[\s,;.!?]|$)/g;
-    const nameMatches = text.match(nameRegex);
-    if (nameMatches) {
-      for (const name of nameMatches) {
-        const words = name.trim().split(/\s+/);
-        // Skip if any word is a stopword
-        if (words.some((w) => NAME_STOPWORDS.has(w.toLowerCase()))) continue;
-        // Skip very short matches (likely false positives)
-        if (name.length < 4) continue;
-        const placeholder = this.register(name.trim(), "PERSON");
-        result = result.split(name.trim()).join(placeholder);
-      }
-    }
-
-    // 3. Replace any pre-registered PII (from persona / profile seed)
-    //    Do this last so explicit registrations always take effect
-    for (const [key, match] of this.map) {
-      // Case-insensitive replacement of the original value
-      const escaped = match.original.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const re = new RegExp(escaped, "gi");
-      result = result.replace(re, match.placeholder);
-    }
-
     return result;
   }
 
   /**
    * Restore original PII values in an API response.
+   * Call this on the LLM reply to put real names/values back.
    */
   restore(text: string): string {
     let result = text;
     for (const [placeholder, original] of this.reverseMap) {
-      // Replace all occurrences of the placeholder
       result = result.split(placeholder).join(original);
     }
     return result;
   }
 
-  /**
-   * Scrub a persona / system prompt, keeping it useful for the LLM
-   * but stripping identifying details.
-   */
-  scrubSystemPrompt(prompt: string): string {
-    return this.scrub(prompt);
-  }
-
-  /** Get the number of PII items detected */
+  /** Get the number of PII items registered */
   get detectedCount(): number {
     return this.map.size;
   }
 
-  /** Get a summary of what was anonymized (for logging, never send externally) */
+  /** Get a summary of what was registered (for logging, never send externally) */
   get summary(): string {
     const cats: Partial<Record<PIICategory, number>> = {};
     for (const match of this.map.values()) {
@@ -214,21 +165,24 @@ export class Anonymizer {
 // ---- Convenience functions for use in API routes ----
 
 /**
- * Extract known PII from persona text and user profile
- * to seed the anonymizer.
+ * Extract known PII from persona text and user profile.
+ * Only extracts EXPLICITLY stated values — no guessing.
  */
 export function extractKnownPII(
   persona?: string,
   userProfile?: { name?: string; role?: string; industry?: string; context?: string } | null
-): { names: string[]; orgs: string[]; emails: string[] } {
+): { names: string[]; orgs: string[]; emails: string[]; phones: string[]; addresses: string[] } {
   const names: string[] = [];
   const orgs: string[] = [];
   const emails: string[] = [];
+  const phones: string[] = [];
+  const addresses: string[] = [];
 
   // Extract from user profile
   if (userProfile?.name) {
     names.push(userProfile.name);
-    // Also register individual name parts (first, last)
+    // Also register individual name parts (first, last) — but only
+    // if they're 3+ chars to avoid catching short common words
     const parts = userProfile.name.trim().split(/\s+/);
     if (parts.length >= 2) {
       parts.forEach((p) => {
@@ -237,10 +191,12 @@ export function extractKnownPII(
     }
   }
 
-  // Extract from persona text
+  // Extract from persona text — only labeled fields
   if (persona) {
-    // Look for "Name: Foo Bar" patterns
-    const nameMatch = persona.match(/(?:name|founder|ceo|cto|owner)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/gi);
+    // "Name: Foo Bar" patterns
+    const nameMatch = persona.match(
+      /(?:name|founder|ceo|cto|owner)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/gi
+    );
     if (nameMatch) {
       for (const m of nameMatch) {
         const val = m.replace(/^[^:]+:\s*/, "").trim();
@@ -248,8 +204,10 @@ export function extractKnownPII(
       }
     }
 
-    // Look for company names
-    const orgMatch = persona.match(/(?:company|org|firm|employer|business|startup|founded)[\s:]+([^\n.,]+)/gi);
+    // "Company: Acme Corp" patterns
+    const orgMatch = persona.match(
+      /(?:company|org|firm|employer|business|startup|founded)[\s:]+([^\n.,]+)/gi
+    );
     if (orgMatch) {
       for (const m of orgMatch) {
         const val = m.replace(/^[^:]+:\s*/, "").trim();
@@ -257,17 +215,36 @@ export function extractKnownPII(
       }
     }
 
-    // Find emails in persona
-    const emailMatch = persona.match(/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b/g);
+    // Email addresses in persona
+    const emailMatch = persona.match(
+      /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b/g
+    );
     if (emailMatch) emails.push(...emailMatch);
+
+    // Phone numbers in persona
+    const phoneMatch = persona.match(
+      /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g
+    );
+    if (phoneMatch) phones.push(...phoneMatch);
+
+    // Labeled address lines: "Location: 123 Main St, City, ST 12345"
+    const addrMatch = persona.match(
+      /(?:location|address|city)[\s:]+([^\n]+)/gi
+    );
+    if (addrMatch) {
+      for (const m of addrMatch) {
+        const val = m.replace(/^[^:]+:\s*/, "").trim();
+        if (val.length > 3) addresses.push(val);
+      }
+    }
   }
 
-  return { names, orgs, emails };
+  return { names, orgs, emails, phones, addresses };
 }
 
 /**
  * Create an anonymizer seeded with the user's known PII.
- * Call once per request, use for scrub() and restore().
+ * Call ONCE per request, pass it through to wherever scrub/restore are needed.
  */
 export function createAnonymizer(
   persona?: string,

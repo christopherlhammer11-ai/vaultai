@@ -3,8 +3,15 @@ import path from "path";
 import os from "os";
 import { config as dotenvConfig } from "dotenv";
 
-// Load user env from ~/.vaultai/.env (for Electron packaged builds)
-dotenvConfig({ path: path.join(os.homedir(), ".vaultai", ".env") });
+// Load user env from ~/.hammerlock/.env (for Electron packaged builds)
+// If encrypted, env vars are loaded via /api/vault-session on vault unlock
+try {
+  const envPath = path.join(os.homedir(), ".hammerlock", ".env");
+  const raw = require("fs").readFileSync(envPath, "utf8");
+  if (!raw.startsWith("HAMMERLOCK_ENC:")) {
+    dotenvConfig({ path: envPath });
+  }
+} catch { /* .env doesn't exist yet */ }
 
 /**
  * POST /api/transcribe
@@ -18,6 +25,9 @@ const WHISPER_HALLUCINATIONS = new Set([
   "you", "thank you", "thanks", "bye", "the end", "thanks for watching",
   "thank you for watching", "subscribe", "like and subscribe",
   "please subscribe", "see you next time", "goodbye",
+  // Whisper sometimes echoes the prompt back as the transcription
+  "the user is speaking a command or question to an ai assistant called hammerlock",
+  "the user is speaking a command or question to an ai assistant called hammerlock.",
 ]);
 
 // Map locale codes to Whisper language codes
@@ -70,7 +80,7 @@ export async function POST(req: Request) {
         // Temperature 0 = more deterministic, fewer hallucinations
         whisperForm.append("temperature", "0");
         // Prompt gives Whisper context about expected content
-        whisperForm.append("prompt", "The user is speaking a command or question to an AI assistant called VaultAI.");
+        whisperForm.append("prompt", "The user is speaking a command or question to an AI assistant called HammerLock AI.");
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 25000);
@@ -87,7 +97,14 @@ export async function POST(req: Request) {
           const text = data.text?.trim();
           if (text) {
             // Filter known Whisper hallucinations
-            if (WHISPER_HALLUCINATIONS.has(text.toLowerCase().replace(/[.,!?]/g, ""))) {
+            const normalized = text.toLowerCase().replace(/[.,!?]/g, "").trim();
+            const isHallucination =
+              WHISPER_HALLUCINATIONS.has(normalized) ||
+              // Whisper sometimes echoes parts of the context prompt back
+              normalized.includes("speaking a command") ||
+              normalized.includes("ai assistant called hammerlock") ||
+              normalized.includes("user is speaking");
+            if (isHallucination) {
               console.log(`[transcribe] Filtered Whisper hallucination: "${text}"`);
               return NextResponse.json(
                 { error: "Could not understand the recording. Please speak clearly and try again." },

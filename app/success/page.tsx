@@ -56,7 +56,7 @@ function SuccessContent() {
             <div className="download-card-icon"><Monitor size={28} /></div>
             <h3>{t.site_getapp_desktop}</h3>
             <p>{t.site_getapp_desktop_desc}</p>
-            <a href="https://github.com/christopherlhammer11-ai/vaultai/releases/latest/download/VaultAI.dmg" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/christopherlhammer11-ai/hammerlock/releases/latest/download/HammerLock-AI.dmg" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer">
               <Download size={16} /> {t.site_getapp_download_mac}
             </a>
             <span className="download-meta">{t.site_getapp_mac_meta} &middot; Apple Silicon &amp; Intel</span>
@@ -93,7 +93,7 @@ function SuccessContent() {
         </div>
       </div>
       <div className="success-footer">
-        <p>{t.site_success_questions} <strong>info@personalvaultai.com</strong></p>
+        <p>{t.site_success_questions} <strong>info@hammerlockai.com</strong></p>
         <Link href="/" className="success-home-link">{t.site_success_back}</Link>
       </div>
     </div>

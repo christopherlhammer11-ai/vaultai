@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VaultAI</title>
+<title>HammerLock AI</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #030303;
+    background: #020204;
     color: #e8e8e8;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
     height: 100vh;
@@ -20,98 +22,96 @@
     justify-content: center;
   }
 
-  /* ── Particle field ── */
-  .particles {
+  /* ── Noise texture overlay ── */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── Ambient gradient orbs ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: 0;
+    opacity: 0;
+    animation: orbFadeIn 3s ease forwards;
+  }
+  .orb-1 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0,255,136,0.12), transparent 70%);
+    top: 30%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    animation-delay: 0.3s;
+  }
+  .orb-2 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0,180,255,0.06), transparent 70%);
+    top: 60%;
+    left: 60%;
+    transform: translate(-50%, -50%);
+    animation-delay: 0.6s;
+  }
+  .orb-3 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(0,255,136,0.05), transparent 70%);
+    top: 40%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+    animation-delay: 0.9s;
+    animation: orbFadeIn 3s ease 0.9s forwards, orbFloat 8s ease-in-out 1.5s infinite;
+  }
+  @keyframes orbFadeIn {
+    to { opacity: 1; }
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-20px); }
+  }
+
+  /* ── Grid lines ── */
+  .grid-lines {
     position: fixed;
     inset: 0;
     z-index: 0;
-  }
-  .particle {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    border-radius: 50%;
-    background: rgba(0,255,136,0.3);
-    animation: drift linear infinite;
-  }
-  @keyframes drift {
-    0% { transform: translateY(0) scale(1); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateY(-100vh) scale(0); opacity: 0; }
-  }
-
-  /* ── Central glow ── */
-  .core-glow {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,255,136,0.15), transparent 70%);
-    animation: coreExpand 2s cubic-bezier(0.25,0.46,0.45,0.94) 0.3s forwards;
-    z-index: 0;
-  }
-  @keyframes coreExpand {
-    to { width: 800px; height: 800px; }
-  }
-
-  /* ── Rings ── */
-  .ring-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 0;
-  }
-  .ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid rgba(0,255,136,0.08);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
     opacity: 0;
+    animation: gridReveal 2s ease 0.5s forwards;
+    background:
+      linear-gradient(rgba(0,255,136,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.015) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent);
+    -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent);
   }
-  .ring-1 {
-    width: 200px; height: 200px;
-    animation: ringExpand 1.2s ease-out 0.5s forwards;
-  }
-  .ring-2 {
-    width: 340px; height: 340px;
-    border-color: rgba(0,255,136,0.05);
-    animation: ringExpand 1.2s ease-out 0.7s forwards;
-  }
-  .ring-3 {
-    width: 500px; height: 500px;
-    border-color: rgba(0,255,136,0.03);
-    animation: ringExpand 1.2s ease-out 0.9s forwards;
-  }
-  @keyframes ringExpand {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    60% { opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  @keyframes gridReveal {
+    to { opacity: 1; }
   }
 
-  /* ── Horizontal scan line ── */
-  .scanline {
+  /* ── Horizontal accent line ── */
+  .accent-line {
     position: fixed;
-    top: 0;
+    top: 50%;
     left: 0;
     right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(0,255,136,0.4), transparent);
-    z-index: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,255,136,0.2), rgba(0,180,255,0.15), transparent);
+    z-index: 0;
     opacity: 0;
-    animation: scan 2.5s ease-in-out 0.8s forwards;
+    transform: scaleX(0);
+    animation: lineStretch 1.5s cubic-bezier(0.25,0.46,0.45,0.94) 0.8s forwards;
   }
-  @keyframes scan {
-    0% { top: 0; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
+  @keyframes lineStretch {
+    0% { opacity: 0; transform: scaleX(0); }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; transform: scaleX(1); }
   }
 
   /* ── Main content ── */
@@ -124,128 +124,142 @@
     gap: 0;
   }
 
-  /* Lock container */
-  .lock-wrap {
-    width: 110px;
-    height: 110px;
-    border-radius: 32px;
-    background: rgba(0,255,136,0.04);
-    border: 1px solid rgba(0,255,136,0.08);
+  /* ── Logo mark — stylized HL monogram ── */
+  .logo-mark {
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(0,255,136,0.08), rgba(0,180,255,0.04));
+    border: 1px solid rgba(0,255,136,0.12);
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transform: scale(0.3) rotate(-10deg);
-    animation: lockBurst 1s cubic-bezier(0.34,1.56,0.64,1) 0.6s forwards;
+    transform: scale(0.5) rotate(-8deg);
+    animation: logoBurst 1s cubic-bezier(0.34,1.56,0.64,1) 0.6s forwards;
     position: relative;
-    margin-bottom: 32px;
-  }
-  @keyframes lockBurst {
-    0% { opacity: 0; transform: scale(0.3) rotate(-10deg); }
-    60% { transform: scale(1.05) rotate(2deg); }
-    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    margin-bottom: 36px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
-  /* Spinning conic border */
-  .lock-wrap::before {
+  /* Spinning conic gradient border */
+  .logo-mark::before {
     content: "";
     position: absolute;
-    inset: -3px;
-    border-radius: 35px;
-    background: conic-gradient(from 0deg, rgba(0,255,136,0.4), transparent 30%, transparent 70%, rgba(0,229,255,0.3));
+    inset: -2px;
+    border-radius: 30px;
+    background: conic-gradient(from 0deg, rgba(0,255,136,0.5), transparent 25%, transparent 50%, rgba(0,180,255,0.4) 75%, rgba(0,255,136,0.5));
     z-index: -1;
     opacity: 0;
-    animation: fadeIn 0.6s ease 1.8s forwards, lockSpin 6s linear 1.8s infinite;
+    animation: fadeIn 0.8s ease 1.6s forwards, logoSpin 8s linear 1.6s infinite;
   }
 
-  /* Outer glow pulse */
-  .lock-wrap::after {
+  /* Outer glow */
+  .logo-mark::after {
     content: "";
     position: absolute;
-    inset: -20px;
-    border-radius: 48px;
-    background: radial-gradient(circle, rgba(0,255,136,0.08), transparent 70%);
+    inset: -24px;
+    border-radius: 44px;
+    background: radial-gradient(circle, rgba(0,255,136,0.1), transparent 70%);
     z-index: -2;
-    animation: glowPulse 2.5s ease-in-out 1.5s infinite;
-  }
-  @keyframes glowPulse {
-    0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.15); opacity: 0.3; }
+    animation: glowPulse 3s ease-in-out 1.5s infinite;
   }
 
-  /* SVG lock */
-  .lock-svg {
-    width: 52px;
-    height: 52px;
+  .logo-svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .logo-path-lock {
     fill: none;
-    stroke: #00ff88;
-    stroke-width: 1.8;
+    stroke: url(#logoGrad);
+    stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 8px rgba(0,255,136,0.3));
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: drawIn 1.4s ease 0.9s forwards;
+    filter: drop-shadow(0 0 6px rgba(0,255,136,0.3));
   }
-  .lock-body {
-    stroke-dasharray: 80;
-    stroke-dashoffset: 80;
-    animation: drawIn 1.2s ease 0.9s forwards;
+  .logo-path-hammer {
+    fill: none;
+    stroke: url(#logoGrad);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: drawIn 1s ease 1.2s forwards;
+    filter: drop-shadow(0 0 6px rgba(0,255,136,0.3));
   }
-  .lock-shackle {
-    stroke-dasharray: 50;
-    stroke-dashoffset: 50;
-    animation: drawIn 0.8s ease 1.3s forwards;
-  }
-  .lock-keyhole {
+  .logo-dot {
+    fill: #00ff88;
     opacity: 0;
-    animation: keyholeReveal 0.3s ease 1.8s forwards;
-  }
-  @keyframes keyholeReveal {
-    0% { opacity: 0; r: 0; }
-    100% { opacity: 1; r: 1.8; }
+    animation: dotReveal 0.3s ease 1.8s forwards;
+    filter: drop-shadow(0 0 4px rgba(0,255,136,0.6));
   }
 
-  /* Brand name — big reveal */
+  @keyframes logoBurst {
+    0% { opacity: 0; transform: scale(0.5) rotate(-8deg); }
+    60% { transform: scale(1.04) rotate(1deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+  @keyframes dotReveal {
+    to { opacity: 1; }
+  }
+
+  /* ── Brand name — premium display font ── */
   .brand-name {
-    font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
-    font-size: 2.8rem;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 50%, #00e5ff 100%);
+    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 40%, #00ff88 80%, #00ccff 100%);
+    background-size: 200% 100%;
     -webkit-background-clip: text;
-    color: transparent;
+    -webkit-text-fill-color: transparent;
     opacity: 0;
-    transform: translateY(24px);
-    animation: brandReveal 0.8s cubic-bezier(0.25,0.46,0.45,0.94) 1.6s forwards;
-    margin-bottom: 10px;
+    transform: translateY(20px);
+    animation: brandReveal 0.9s cubic-bezier(0.25,0.46,0.45,0.94) 1.5s forwards, brandShimmer 4s ease 3s infinite;
+    margin-bottom: 8px;
+    line-height: 1.15;
   }
   @keyframes brandReveal {
     to { opacity: 1; transform: translateY(0); }
   }
-
-  /* Tagline — typed effect */
-  .brand-tagline {
-    font-size: 0.78rem;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: #444;
-    opacity: 0;
-    animation: fadeUp 0.6s ease 2.1s forwards;
-    margin-bottom: 40px;
+  @keyframes brandShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
-  /* Progress — minimal */
+  /* ── Tagline ── */
+  .brand-tagline {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 400;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #4a4a4a;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 2s forwards;
+    margin-bottom: 48px;
+  }
+
+  /* ── Progress — refined ── */
   .progress-area {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     opacity: 0;
-    animation: fadeUp 0.5s ease 2.5s forwards;
+    animation: fadeUp 0.5s ease 2.4s forwards;
   }
 
   .progress-track {
-    width: 180px;
-    height: 2px;
-    background: rgba(255,255,255,0.04);
+    width: 200px;
+    height: 1.5px;
+    background: rgba(255,255,255,0.03);
     border-radius: 2px;
     overflow: hidden;
   }
@@ -253,55 +267,82 @@
   .progress-fill {
     height: 100%;
     width: 30%;
-    background: linear-gradient(90deg, #00ff88, #00e5ff);
+    background: linear-gradient(90deg, #00ff88, #00ccff);
     border-radius: 2px;
-    animation: progressSweep 2s ease-in-out infinite;
-    box-shadow: 0 0 16px rgba(0,255,136,0.5);
+    animation: progressSweep 2.2s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(0,255,136,0.4);
   }
 
   .progress-status {
     font-family: "SF Mono", "JetBrains Mono", monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.15em;
-    color: #333;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    color: #2a2a2a;
   }
-  .progress-status span { color: #00ff88; animation: blink 1s step-end infinite; }
+  .progress-status span { color: #00ff88; animation: blink 1.2s step-end infinite; }
 
-  /* Keyframes — shared */
-  @keyframes lockSpin { to { transform: rotate(360deg); } }
+  /* ── Version badge ── */
+  .version-badge {
+    position: fixed;
+    bottom: 20px;
+    right: 24px;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+    font-size: 0.52rem;
+    letter-spacing: 0.12em;
+    color: #1a1a1a;
+    opacity: 0;
+    animation: fadeIn 0.5s ease 3s forwards;
+  }
+
+  /* ── Keyframes — shared ── */
+  @keyframes logoSpin { to { transform: rotate(360deg); } }
   @keyframes drawIn { to { stroke-dashoffset: 0; } }
   @keyframes fadeUp {
-    to { opacity: 1; transform: translateY(0); }
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
   @keyframes fadeIn { to { opacity: 1; } }
   @keyframes progressSweep {
     0% { margin-left: -30%; width: 30%; }
-    50% { width: 50%; }
+    50% { width: 45%; }
     100% { margin-left: 100%; width: 30%; }
   }
   @keyframes blink { 50% { opacity: 0; } }
+  @keyframes glowPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.12); opacity: 0.3; }
+  }
 </style>
 </head>
 <body>
-  <div class="particles" id="particles"></div>
-  <div class="core-glow"></div>
-  <div class="ring-container">
-    <div class="ring ring-1"></div>
-    <div class="ring ring-2"></div>
-    <div class="ring ring-3"></div>
-  </div>
-  <div class="scanline"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grid-lines"></div>
+  <div class="accent-line"></div>
 
   <div class="splash-content">
-    <div class="lock-wrap">
-      <svg class="lock-svg" viewBox="0 0 24 24">
-        <rect class="lock-body" x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path class="lock-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        <circle class="lock-keyhole" cx="12" cy="16.5" r="0" fill="#00ff88"/>
+    <div class="logo-mark">
+      <svg class="logo-svg" viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00ff88"/>
+            <stop offset="100%" stop-color="#00ccff"/>
+          </linearGradient>
+        </defs>
+        <!-- Lock body -->
+        <rect class="logo-path-lock" x="4" y="11" width="16" height="10" rx="2" ry="2"/>
+        <!-- Lock shackle -->
+        <path class="logo-path-lock" d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        <!-- Hammer (small, inside the lock body) -->
+        <line class="logo-path-hammer" x1="12" y1="14" x2="12" y2="18.5"/>
+        <line class="logo-path-hammer" x1="9.5" y1="14" x2="14.5" y2="14"/>
+        <!-- Keyhole dot -->
+        <circle class="logo-dot" cx="12" cy="15.5" r="1.2"/>
       </svg>
     </div>
 
-    <div class="brand-name">VaultAI</div>
+    <div class="brand-name">HammerLock AI</div>
     <div class="brand-tagline">Private Intelligence</div>
 
     <div class="progress-area">
@@ -310,21 +351,9 @@
     </div>
   </div>
 
-  <script>
-    // Generate floating particles
-    const container = document.getElementById('particles');
-    for (let i = 0; i < 40; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = Math.random() * 100 + '%';
-      p.style.bottom = '-10px';
-      p.style.animationDuration = (4 + Math.random() * 6) + 's';
-      p.style.animationDelay = (Math.random() * 5) + 's';
-      p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
-      p.style.opacity = String(0.1 + Math.random() * 0.4);
-      container.appendChild(p);
-    }
+  <div class="version-badge">v0.2.0</div>
 
+  <script>
     // Cycle status text
     const statuses = ['initializing', 'loading runtime', 'preparing vault', 'encrypting channel', 'almost ready'];
     let idx = 0;
@@ -332,7 +361,7 @@
     setInterval(() => {
       idx = (idx + 1) % statuses.length;
       statusEl.innerHTML = statuses[idx] + '<span>_</span>';
-    }, 1800);
+    }, 2000);
   </script>
 </body>
 </html>

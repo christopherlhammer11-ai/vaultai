@@ -1,13 +1,13 @@
 {
-  "name": "vaultai",
-  "version": "0.1.0",
-  "description": "VaultAI — privacy-first AI assistant. Local encryption, zero cloud dependency.",
+  "name": "hammerlock",
+  "version": "0.2.0",
+  "description": "HammerLock AI — privacy-first AI assistant. Local encryption, zero cloud dependency.",
   "type": "module",
   "author": "Hammer Enterprises",
   "license": "MIT",
   "main": "electron/main.js",
   "bin": {
-    "vaultai": "bin/vaultai.js"
+    "hammerlock": "bin/hammerlock.js"
   },
   "scripts": {
     "setup": "./scripts/install.sh",
@@ -36,6 +36,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
+    "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "stripe": "^20.3.1",
     "zod": "^3.22.4"
@@ -49,13 +50,14 @@
     "typescript": "^5.4.2"
   },
   "build": {
-    "appId": "com.vaultai.app",
-    "productName": "VaultAI",
+    "appId": "com.hammerlock.app",
+    "productName": "HammerLock AI",
     "asar": false,
     "directories": {
       "output": "dist-electron"
     },
     "files": [
+      ".env.local",
       "electron/**/*",
       "app/**/*",
       "lib/**/*",
@@ -88,15 +90,18 @@
     ],
     "mac": {
       "target": "dmg",
-      "artifactName": "VaultAI.${ext}",
-      "icon": "public/vaultai-logo.png",
+      "artifactName": "HammerLock-AI.${ext}",
+      "icon": "public/hammerlock-logo.png",
       "category": "public.app-category.productivity",
       "identity": "Christopher Hammer (89Q438GN53)",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "notarize": true
+      "notarize": true,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "HammerLock AI uses your microphone for voice input and live conversation mode."
+      }
     },
     "dmg": {
       "contents": [
@@ -115,13 +120,13 @@
         "width": 540,
         "height": 380
       },
-      "icon": "public/vaultai-logo.png",
+      "icon": "public/hammerlock-logo.png",
       "iconSize": 80,
       "background": null
     },
     "win": {
       "target": "nsis",
-      "icon": "public/vaultai-logo.png"
+      "icon": "public/hammerlock-logo.png"
     },
     "nsis": {
       "oneClick": true,

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       timeout: 20000,
     });
 
-    const origin = req.headers.get("origin") || "https://personalvaultai.com";
+    const origin = req.headers.get("origin") || "https://hammerlockai.com";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

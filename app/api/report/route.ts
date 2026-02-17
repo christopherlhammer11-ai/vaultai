@@ -239,7 +239,7 @@ export async function POST(req: Request) {
     const type = reportType || "daily";
     const range = timeRange || "today";
 
-    const systemPrompt = `You are VaultAI's report generator. Create a concise, actionable ${type} digest report. Use markdown formatting with headers, bullet points, and bold for key items. Include sections for: Key Topics Discussed, Decisions Made, Action Items, and a Brief Summary. Keep it professional and scannable.`;
+    const systemPrompt = `You are HammerLock AI's report generator. Create a concise, actionable ${type} digest report. Use markdown formatting with headers, bullet points, and bold for key items. Include sections for: Key Topics Discussed, Decisions Made, Action Items, and a Brief Summary. Keep it professional and scannable.`;
 
     const chatSummary = messages
       .filter((m: any) => m.role !== "error" && !m.pending)

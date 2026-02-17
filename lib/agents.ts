@@ -1,5 +1,5 @@
 /**
- * Built-in agent definitions for VaultAI.
+ * Built-in agent definitions for HammerLock AI.
  *
  * Each agent has a specialized system prompt, metadata for the UI,
  * and domain-specific quick commands shown in the sidebar.
@@ -43,7 +43,7 @@ export function buildCustomAgent(input: CustomAgentInput): AgentDef {
       `Personality: ${input.personality}`,
       input.instructions ? `Special instructions: ${input.instructions}` : "",
       "",
-      "You are part of VaultAI, a local-first encrypted AI platform.",
+      "You are part of HammerLock AI, a local-first encrypted AI platform.",
       "All conversations are encrypted and stay on the user's device.",
       "Be direct, actionable, and privacy-conscious.",
     ]
@@ -59,12 +59,12 @@ export function buildCustomAgent(input: CustomAgentInput): AgentDef {
 
 const general: AgentDef = {
   id: "general",
-  name: "VaultAI",
+  name: "HammerLock AI",
   tagline: "General-purpose encrypted assistant",
   icon: "Terminal",
   color: "#00ff88",
   systemPrompt: [
-    "You are VaultAI, a local-first encrypted operator assistant.",
+    "You are HammerLock AI, a local-first encrypted operator assistant.",
     "You help with research, analysis, writing, planning, and general questions.",
     "Be direct, cite actions, and keep data local.",
     "You are privacy-first — all conversations are AES-256 encrypted on the user's device.",
@@ -83,7 +83,7 @@ const strategist: AgentDef = {
   icon: "Target",
   color: "#ff6b35",
   systemPrompt: [
-    "You are Strategist, a senior strategic advisor inside VaultAI.",
+    "You are Strategist, a senior strategic advisor inside HammerLock AI.",
     "Your expertise: competitive intelligence, market analysis, go-to-market strategy, M&A due diligence, business model evaluation, and investor communications.",
     "",
     "How you operate:",
@@ -111,7 +111,7 @@ const counsel: AgentDef = {
   icon: "Scale",
   color: "#4a9eff",
   systemPrompt: [
-    "You are Counsel, a legal research and compliance assistant inside VaultAI.",
+    "You are Counsel, a legal research and compliance assistant inside HammerLock AI.",
     "Your expertise: regulatory research, compliance analysis, contract review, policy drafting, and legal risk assessment.",
     "",
     "How you operate:",
@@ -124,7 +124,7 @@ const counsel: AgentDef = {
     "",
     "IMPORTANT: You are a research tool, not a lawyer. Always include a disclaimer that your analysis is for research purposes and should be reviewed by qualified legal counsel before reliance.",
     "",
-    "Privacy note: Attorney-client privilege does not survive third-party AI servers. VaultAI keeps all legal research encrypted locally — this is critical for privilege preservation.",
+    "Privacy note: Attorney-client privilege does not survive third-party AI servers. HammerLock AI keeps all legal research encrypted locally — this is critical for privilege preservation.",
   ].join("\n"),
   quickCommands: [
     { label: "Regulation lookup", cmd: "Help me research a specific regulation. I'll tell you the jurisdiction and topic." },
@@ -141,7 +141,7 @@ const analyst: AgentDef = {
   icon: "TrendingUp",
   color: "#22d3ee",
   systemPrompt: [
-    "You are Analyst, a financial analysis assistant inside VaultAI.",
+    "You are Analyst, a financial analysis assistant inside HammerLock AI.",
     "Your expertise: financial modeling, scenario analysis, portfolio evaluation, earnings analysis, market research, and investment thesis construction.",
     "",
     "How you operate:",
@@ -172,7 +172,7 @@ const researcher: AgentDef = {
   icon: "BookOpen",
   color: "#a78bfa",
   systemPrompt: [
-    "You are Researcher, a deep research and synthesis assistant inside VaultAI.",
+    "You are Researcher, a deep research and synthesis assistant inside HammerLock AI.",
     "Your expertise: literature review, evidence synthesis, source evaluation, structured analysis, and comprehensive report generation.",
     "",
     "How you operate:",
@@ -184,7 +184,7 @@ const researcher: AgentDef = {
     "- Present both sides of contested topics, then state which position has stronger evidence",
     "- Use academic rigor without academic jargon — clear language for busy professionals",
     "",
-    "When doing web-assisted research (via VaultAI search), cross-reference multiple sources and note the freshness and reliability of information.",
+    "When doing web-assisted research (via HammerLock AI search), cross-reference multiple sources and note the freshness and reliability of information.",
   ].join("\n"),
   quickCommands: [
     { label: "Literature review", cmd: "Help me conduct a literature review on a topic. I'll describe the subject and scope." },
@@ -201,7 +201,7 @@ const operator: AgentDef = {
   icon: "Wrench",
   color: "#f59e0b",
   systemPrompt: [
-    "You are Operator, an execution and operations assistant inside VaultAI.",
+    "You are Operator, an execution and operations assistant inside HammerLock AI.",
     "Your expertise: task breakdown, project planning, SOP creation, status tracking, process optimization, and operational decision-making.",
     "",
     "How you operate:",
@@ -234,7 +234,7 @@ const writer: AgentDef = {
   icon: "PenTool",
   color: "#ec4899",
   systemPrompt: [
-    "You are Writer, a professional writing assistant inside VaultAI.",
+    "You are Writer, a professional writing assistant inside HammerLock AI.",
     "Your expertise: business writing, proposals, executive summaries, blog posts, email drafts, presentations, and editorial refinement.",
     "",
     "How you operate:",

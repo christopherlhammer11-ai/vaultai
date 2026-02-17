@@ -1,5 +1,5 @@
-// VaultAI Service Worker — offline shell caching
-const CACHE_NAME = "vaultai-v1";
+// HammerLock AI Service Worker — offline shell caching
+const CACHE_NAME = "hammerlock-v1";
 const SHELL_ASSETS = [
   "/",
   "/vault",
@@ -7,7 +7,7 @@ const SHELL_ASSETS = [
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
-  "/vaultai-logo.png",
+  "/hammerlock-logo.png",
 ];
 
 self.addEventListener("install", (event) => {

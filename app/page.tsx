@@ -171,7 +171,7 @@ export default function LandingPage() {
       <nav className="site-nav">
         <a href="/" className="logo-mark" style={{ textDecoration: 'none', color: 'inherit' }}>
           <Lock size={16} />
-          VaultAI
+          HammerLock AI
         </a>
         <ul>
           <li><a href="#features">{t.site_nav_features}</a></li>
@@ -545,15 +545,15 @@ export default function LandingPage() {
           </p>
           <div className="cta-buttons">
             <a href="#pricing" className="btn-primary">{t.site_cta}</a>
-            <a href="https://github.com/christopherlhammer11-ai/vaultai" target="_blank" rel="noreferrer" className="btn-secondary">{t.site_github}</a>
+            <a href="https://github.com/christopherlhammer11-ai/hammerlock" target="_blank" rel="noreferrer" className="btn-secondary">{t.site_github}</a>
           </div>
-          <p className="contact-line">{t.site_footer_contact} <a href="mailto:info@personalvaultai.com">info@personalvaultai.com</a></p>
+          <p className="contact-line">{t.site_footer_contact} <a href="mailto:info@hammerlockai.com">info@hammerlockai.com</a></p>
         </div>
       </section>
 
       <footer className="site-footer">
         <a href="/" className="logo-mark" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Lock size={16} /> VaultAI
+          <Lock size={16} /> HammerLock AI
         </a>
         <div className="trust-badges">
           <span className="trust-badge">🔐 {t.site_footer_aes}</span>
@@ -561,7 +561,7 @@ export default function LandingPage() {
           <span className="trust-badge">🛡️ {t.site_footer_pii}</span>
         </div>
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          <a href="mailto:info@personalvaultai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@personalvaultai.com</a>
+          <a href="mailto:info@hammerlockai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@hammerlockai.com</a>
         </div>
       </footer>
     </div>

@@ -1,22 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { VaultProvider } from "@/lib/vault-store";
 import { SubscriptionProvider } from "@/lib/subscription-store";
 import { I18nProvider } from "@/lib/i18n";
 import Script from "next/script";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-brand", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "VaultAI — Your AI. Your Data. Your Rules.",
+  title: "HammerLock AI — Your AI. Your Data. Your Rules.",
   description: "Local-first AI with encrypted memory built for operators",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "VaultAI",
+    title: "HammerLock AI",
   },
   icons: {
     icon: "/icon-192.png",
@@ -39,15 +40,29 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${jetbrains.variable}`}>
+      <head>
+        {/* Electron detection — must run before first paint to enable drag regions */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            try {
+              if (navigator.userAgent.includes('Electron') || window.electron) {
+                document.documentElement.classList.add('is-electron');
+              }
+            } catch(e) {}
+          `,
+        }} />
+      </head>
+      <body className={`${inter.variable} ${jetbrains.variable} ${spaceGrotesk.variable}`}>
+        {/* Electron drag bar — invisible fixed strip at top for window dragging */}
+        <div className="electron-drag-bar" />
         <I18nProvider>
           <SubscriptionProvider>
             <VaultProvider>{children}</VaultProvider>
           </SubscriptionProvider>
         </I18nProvider>
         <Script
-          id="electron-detect"
-          strategy="beforeInteractive"
+          id="electron-detect-body"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               if (navigator.userAgent.includes('Electron') || window.electron) {

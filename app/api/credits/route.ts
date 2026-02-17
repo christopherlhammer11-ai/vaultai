@@ -14,7 +14,7 @@ export async function GET() {
 
   try {
     const info = await getCreditInfo();
-    const hasUserKey = !!(process.env.VAULTAI_USER_OPENAI_KEY || process.env.VAULTAI_USER_ANTHROPIC_KEY);
+    const hasUserKey = !!(process.env.HAMMERLOCK_USER_OPENAI_KEY || process.env.HAMMERLOCK_USER_ANTHROPIC_KEY);
 
     return NextResponse.json({
       ...info,

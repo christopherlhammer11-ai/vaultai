@@ -1,6 +1,6 @@
 {
-  "name": "VaultAI",
-  "short_name": "VaultAI",
+  "name": "HammerLock AI",
+  "short_name": "HammerLock",
   "description": "Privacy-first AI assistant. Encrypted. Local-first. Yours.",
   "start_url": "/vault",
   "display": "standalone",

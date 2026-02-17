@@ -24,18 +24,52 @@ import {
 } from "./crypto";
 import type { KdfVersion } from "./crypto";
 
+export type SourceRef = {
+  title: string;
+  url: string;
+  domain: string;
+  age?: string | null;
+};
+
 export type VaultMessage = {
   id: string;
   role: "user" | "ai" | "error";
   content: string;
   pending?: boolean;
   timestamp?: string;
+  /** Attached web sources for search-powered responses */
+  sources?: SourceRef[];
+  sourcesSummary?: string;
+  /** Follow-up suggestion questions shown as clickable chips */
+  followUps?: string[];
+  /** OpenClaw action type when an action was executed ("reminder", "email", "message", etc.) */
+  actionType?: string;
+  /** Whether the OpenClaw action succeeded or failed */
+  actionStatus?: "success" | "error";
+};
+
+export type VaultFile = {
+  id: string;
+  name: string;
+  type: "pdf" | "image" | "note" | "snippet";
+  /** For notes/snippets: the text content. For files: base64 data or extracted text. */
+  content: string;
+  /** Original MIME type for files */
+  mimeType?: string;
+  /** File size in bytes (original, before base64) */
+  size?: number;
+  /** Tags for organization */
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type VaultData = {
   persona: string | null;
   chatHistory: VaultMessage[];
   settings: Record<string, unknown>;
+  /** Encrypted file vault — PDFs, images, notes, code snippets */
+  vaultFiles?: VaultFile[];
 };
 
 const defaultVaultData = (): VaultData => ({
@@ -44,12 +78,103 @@ const defaultVaultData = (): VaultData => ({
   settings: {}
 });
 
+/** Notify server of vault unlock/lock so it can encrypt/decrypt files at rest */
+async function syncServerVaultSession(action: "unlock" | "lock", key?: CryptoKey) {
+  try {
+    if (action === "unlock" && key) {
+      const exported = await crypto.subtle.exportKey("raw", key);
+      const keyHex = Array.from(new Uint8Array(exported))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+      await fetch("/api/vault-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unlock", keyHex }),
+      });
+    } else {
+      await fetch("/api/vault-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "lock" }),
+      });
+    }
+  } catch (err) {
+    console.warn("[vault] Server session sync failed:", err);
+  }
+}
+
 const STORAGE_KEYS = {
   salt: "vault_salt",
   passwordHash: "vault_password_hash",
   encrypted: "vault_encrypted_data",
   kdfVersion: "vault_kdf_version"
 };
+
+/* ── Session persistence (survives refresh, clears on tab close) ── */
+const SESSION_KEYS = {
+  derivedKey: "hammerlock_session_key",
+  salt: "hammerlock_session_salt",
+  kdfVersion: "hammerlock_session_kdf",
+};
+
+async function persistSession(key: CryptoKey, salt: Uint8Array, version: KdfVersion) {
+  if (typeof window === "undefined") return;
+  try {
+    const exported = await crypto.subtle.exportKey("raw", key);
+    const keyB64 = bytesToBase64(new Uint8Array(exported));
+    sessionStorage.setItem(SESSION_KEYS.derivedKey, keyB64);
+    sessionStorage.setItem(SESSION_KEYS.salt, bytesToBase64(salt));
+    sessionStorage.setItem(SESSION_KEYS.kdfVersion, version);
+  } catch (err) {
+    console.warn("[vault] Failed to persist session:", err);
+  }
+}
+
+async function restoreSession(): Promise<{
+  key: CryptoKey;
+  data: VaultData;
+  salt: Uint8Array;
+} | null> {
+  if (typeof window === "undefined") return null;
+
+  const keyB64 = sessionStorage.getItem(SESSION_KEYS.derivedKey);
+  const saltB64 = sessionStorage.getItem(SESSION_KEYS.salt);
+  const encryptedPayload = localStorage.getItem(STORAGE_KEYS.encrypted);
+
+  if (!keyB64 || !saltB64 || !encryptedPayload) return null;
+
+  try {
+    const keyBytes = base64ToBytes(keyB64);
+    const salt = base64ToBytes(saltB64);
+
+    // Re-import key (extractable: false — we don't need to re-export)
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBytes as unknown as ArrayBuffer,
+      { name: "AES-GCM" },
+      true,
+      ["encrypt", "decrypt"]
+    );
+
+    setActiveSalt(salt);
+    const plaintext = await decrypt(encryptedPayload, key);
+    const data: VaultData = JSON.parse(plaintext);
+
+    return { key, data, salt };
+  } catch (err) {
+    console.warn("[vault] Session restore failed:", err);
+    clearSession();
+    return null;
+  }
+}
+
+function clearSession() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(SESSION_KEYS.derivedKey);
+  sessionStorage.removeItem(SESSION_KEYS.salt);
+  sessionStorage.removeItem(SESSION_KEYS.kdfVersion);
+}
+/* ── end session persistence ── */
 
 const KDF_VERSION_SET = new Set<KdfVersion>(Object.values(KDF_VERSIONS));
 const LEGACY_KDF_VERSION: KdfVersion = FALLBACK_KDF_VERSION;
@@ -121,17 +246,39 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     setActiveSalt(null);
     setVaultData(null);
     setIsUnlocked(false);
+    clearSession();
+    // Clear server-side session key
+    syncServerVaultSession("lock");
   }, []);
 
+  // Sync flags on mount (no longer locks on beforeunload — session handles that)
   useEffect(() => {
     if (typeof window === "undefined") return;
     syncFlags();
-    const handleBeforeUnload = () => {
-      lockVault();
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [syncFlags, lockVault]);
+  }, [syncFlags]);
+
+  // Auto-restore from sessionStorage on mount (survives page refresh)
+  useEffect(() => {
+    if (typeof window === "undefined" || isUnlocked) return;
+
+    let cancelled = false;
+    (async () => {
+      const session = await restoreSession();
+      if (session && !cancelled) {
+        keyRef.current = session.key;
+        dataRef.current = session.data;
+        setActiveSalt(session.salt);
+        // Re-sync server session key BEFORE marking unlocked
+        // so API keys are loaded before user can send messages
+        await syncServerVaultSession("unlock", session.key);
+        setVaultData(session.data);
+        setIsUnlocked(true);
+        setHasVault(true);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
 
   const persistEncrypted = useCallback(async (data: VaultData) => {
     if (!keyRef.current) {
@@ -158,6 +305,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       keyRef.current = key;
       dataRef.current = initialData;
       await persistEncrypted(initialData);
+      // Sync encryption key to server BEFORE marking as unlocked
+      // so API keys are available when user sends first message
+      await syncServerVaultSession("unlock", key);
+      await persistSession(key, salt, version);
       setVaultData(initialData);
       setIsUnlocked(true);
       setHasVault(true);
@@ -187,6 +338,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     const parsed: VaultData = JSON.parse(plaintext);
     keyRef.current = key;
     dataRef.current = parsed;
+    // Sync encryption key to server BEFORE marking as unlocked
+    // so API keys are available when user sends first message
+    await syncServerVaultSession("unlock", key);
+    await persistSession(key, salt, version);
     setVaultData(parsed);
     setIsUnlocked(true);
     setHasVault(true);
@@ -220,6 +375,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     w.localStorage.removeItem(STORAGE_KEYS.passwordHash);
     w.localStorage.removeItem(STORAGE_KEYS.encrypted);
     w.localStorage.removeItem(STORAGE_KEYS.kdfVersion);
+    clearSession();
     lockVault();
     syncFlags();
   }, [lockVault, syncFlags]);

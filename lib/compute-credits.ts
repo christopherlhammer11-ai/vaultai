@@ -2,7 +2,7 @@ import path from "path";
 import os from "os";
 import fs from "fs/promises";
 
-const CREDITS_PATH = path.join(os.homedir(), ".vaultai", "credits.json");
+const CREDITS_PATH = path.join(os.homedir(), ".hammerlock", "credits.json");
 
 // Premium users start with 500 compute units
 // Roughly: 1 unit = 1 simple chat, search costs 2, reports 3
@@ -75,7 +75,7 @@ export async function getCreditInfo(): Promise<{
  * Returns true if the user has their own API key (unlimited).
  */
 export async function hasCredit(requestType: string = "chat"): Promise<boolean> {
-  const hasUserKey = !!(process.env.VAULTAI_USER_OPENAI_KEY || process.env.VAULTAI_USER_ANTHROPIC_KEY);
+  const hasUserKey = !!(process.env.HAMMERLOCK_USER_OPENAI_KEY || process.env.HAMMERLOCK_USER_ANTHROPIC_KEY);
   if (hasUserKey) return true;
 
   const cost = COST_MAP[requestType] || COST_MAP.chat;
@@ -88,7 +88,7 @@ export async function hasCredit(requestType: string = "chat"): Promise<boolean> 
  * Skips deduction if the user is using their own key.
  */
 export async function deductCredit(requestType: string = "chat"): Promise<void> {
-  const hasUserKey = !!(process.env.VAULTAI_USER_OPENAI_KEY || process.env.VAULTAI_USER_ANTHROPIC_KEY);
+  const hasUserKey = !!(process.env.HAMMERLOCK_USER_OPENAI_KEY || process.env.HAMMERLOCK_USER_ANTHROPIC_KEY);
   if (hasUserKey) return;
 
   const cost = COST_MAP[requestType] || COST_MAP.chat;
