@@ -127,16 +127,19 @@ export default function LandingPage() {
     }
   }, []);
 
+  // QR code only in local dev — never on production (Vercel returns container IPs)
   useEffect(() => {
-    fetch('/api/local-ip')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.ip && data.ip !== 'localhost') {
-          const port = window.location.port || '3000';
-          setMobileUrl(`http://${data.ip}:${port}`);
-        }
-      })
-      .catch(() => {});
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      fetch('/api/local-ip')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.ip && data.ip !== 'localhost') {
+            const port = window.location.port || '3000';
+            setMobileUrl(`http://${data.ip}:${port}`);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // Nav scroll effect
