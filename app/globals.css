@@ -3516,7 +3516,7 @@ footer .logo-mark { font-size: 0.85rem; }
   gap: var(--space-md);
   max-width: 1500px;
   margin: 0 auto;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .pricing-grid > .pricing-card {
@@ -3531,6 +3531,8 @@ footer .logo-mark { font-size: 0.85rem; }
   text-align: left;
   position: relative;
   transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
 }
 
 .pricing-card:hover {
@@ -3619,6 +3621,7 @@ footer .logo-mark { font-size: 0.85rem; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
 .pricing-features li {

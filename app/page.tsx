@@ -426,9 +426,6 @@ export default function LandingPage() {
                   <span className="price-period">/{plan.pricePeriod}</span>
                 )}
               </div>
-              {plan.ctaAction !== 'github' && plan.ctaAction !== 'contact' && (
-                <div className="pricing-trial">{t.site_trial_included}</div>
-              )}
               {plan.ctaAction === 'github' ? (
                 <a
                   href="https://github.com/christopherlhammer11-ai/hammerlock"

@@ -16,9 +16,9 @@ const PLAN_CONFIG: Record<string, PlanConfig> = {
   // Core — $15 one-time
   "core-onetime":     { priceEnv: "STRIPE_PRICE_CORE_ONETIME",     mode: "payment" },
   // Pro — $29/mo
-  "pro-monthly":      { priceEnv: "STRIPE_PRICE_PRO_MONTHLY",      mode: "subscription", trial: 7 },
+  "pro-monthly":      { priceEnv: "STRIPE_PRICE_PRO_MONTHLY",      mode: "subscription" },
   // Teams — $49/user/mo
-  "teams-monthly":    { priceEnv: "STRIPE_PRICE_TEAMS_MONTHLY",    mode: "subscription", trial: 7, perSeat: true },
+  "teams-monthly":    { priceEnv: "STRIPE_PRICE_TEAMS_MONTHLY",    mode: "subscription", perSeat: true },
 };
 
 const VALID_PLANS = new Set(Object.keys(PLAN_CONFIG));
