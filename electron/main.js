@@ -253,7 +253,19 @@ function createWindow() {
 async function transitionToVault() {
   if (!mainWindow) return;
 
-  const vaultURL = `http://127.0.0.1:${NEXT_PORT}/vault`;
+  // Check license status before navigating
+  let targetPath = "/vault";
+  try {
+    const res = await fetch(`http://127.0.0.1:${NEXT_PORT}/api/license/check`);
+    const data = await res.json();
+    if (data.needsActivation) {
+      targetPath = "/activate";
+    }
+  } catch {
+    // If check fails, go to vault anyway (fail-open for first setup)
+  }
+
+  const targetURL = `http://127.0.0.1:${NEXT_PORT}${targetPath}`;
 
   // Inject fade-out animation on the splash, then navigate
   await mainWindow.webContents.executeJavaScript(`
@@ -262,8 +274,8 @@ async function transitionToVault() {
     new Promise(r => setTimeout(r, 400));
   `);
 
-  // Navigate to vault
-  mainWindow.loadURL(vaultURL);
+  // Navigate to target (vault or activate page)
+  mainWindow.loadURL(targetURL);
 }
 
 // ---------------------------------------------------------------------------
@@ -527,7 +539,17 @@ app.on("activate", async () => {
         console.error("[hammerlock] Re-launch failed:", err);
       }
     } else {
-      // App is ready, go straight to vault (no splash needed for re-activate)
+      // App is ready, check license then go to vault or activate
+      let reactivatePath = "/vault";
+      try {
+        const res = await fetch(`http://127.0.0.1:${NEXT_PORT}/api/license/check`);
+        const data = await res.json();
+        if (data.needsActivation) {
+          reactivatePath = "/activate";
+        }
+      } catch {
+        // Fail-open: go to vault
+      }
       mainWindow = new BrowserWindow({
         width: 1280,
         height: 860,
@@ -544,7 +566,7 @@ app.on("activate", async () => {
           nodeIntegration: false,
         },
       });
-      mainWindow.loadURL(`http://127.0.0.1:${NEXT_PORT}/vault`);
+      mainWindow.loadURL(`http://127.0.0.1:${NEXT_PORT}${reactivatePath}`);
       mainWindow.once("ready-to-show", () => { mainWindow.show(); });
       mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);

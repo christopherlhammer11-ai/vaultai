@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-13
     env:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_APP_ID: com.vaultai.app
+      APPLE_APP_ID: com.hammerlock.app
       CSC_NAME: "Christopher Hammer (89Q438GN53)"
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -59,12 +59,13 @@ jobs:
         env:
           CSC_LINK: file://${{ github.workspace }}/signing_cert.p12
           APPLE_API_KEY: ${{ env.APPLE_API_KEY_PATH }}
+          DATABASE_URL: "file:./prisma/hammerlock.db"
         run: npm run electron:build:mac
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VaultAI-dmg
+          name: HammerLock-AI-dmg
           path: dist-electron/*.dmg
 
       - name: Publish GitHub Release artifact

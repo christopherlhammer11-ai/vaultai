@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
+import { requireTier } from "@/lib/license-guard";
 
 export async function POST(req: Request) {
+  // Tier gate: PDF parsing requires Pro or higher
+  const tierCheck = await requireTier("pdf-parse");
+  if (!tierCheck.allowed) {
+    return NextResponse.json(
+      { error: tierCheck.reason, upgradeRequired: true, requiredTier: tierCheck.requiredTier },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await req.formData() as unknown as globalThis.FormData;
     const file = formData.get("file") as File | null;
@@ -21,20 +31,35 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Dynamic import with type assertion
+    // pdf-parse v2 uses a class-based API
     const pdfModule = await import("pdf-parse");
-    const pdfParse = (pdfModule.default ?? pdfModule) as unknown as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
-    const data = await pdfParse(buffer);
+    const PDFParse = (pdfModule as any).PDFParse || (pdfModule as any).default?.PDFParse;
+
+    if (!PDFParse) {
+      throw new Error("PDFParse class not found in pdf-parse module");
+    }
+
+    const parser = new PDFParse({ data: buffer });
+    await parser.load();
+    const textResult = await parser.getText();
+    const info = await parser.getInfo();
+    await parser.destroy();
+
+    // getText returns an object with a text property, or a string
+    const text = typeof textResult === "string" ? textResult : (textResult?.text || String(textResult));
+    const pages = info?.numPages || info?.pages || 0;
 
     return NextResponse.json({
-      text: data.text,
-      pages: data.numpages,
+      text,
+      pages,
       filename: file.name,
     });
   } catch (error) {
-    console.error("PDF parse error:", (error as Error).message);
+    const msg = (error as Error).message;
+    console.error("PDF parse error:", msg);
+    console.error("PDF parse stack:", (error as Error).stack);
     return NextResponse.json(
-      { error: "Failed to parse PDF: " + (error as Error).message },
+      { error: "Failed to parse PDF: " + msg },
       { status: 500 }
     );
   }

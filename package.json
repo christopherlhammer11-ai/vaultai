@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "🔨🔐 HammerLock AI — your AI, your data, your rules. Privacy-first intelligence with local encryption and zero cloud dependency.",
   "type": "module",
-  "author": "Hammer Enterprises",
+  "author": "HammerLock AI",
   "license": "MIT",
   "main": "electron/main.js",
   "bin": {
@@ -14,12 +14,15 @@
     "lint": "echo 'Add linting later'",
     "test": "echo 'No tests yet' && exit 0",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
     "electron:dev": "electron .",
-    "electron:build": "next build && electron-builder --mac --win",
-    "electron:build:mac": "next build && electron-builder --mac",
-    "electron:build:win": "next build && electron-builder --win"
+    "electron:build": "prisma generate && next build && electron-builder --mac --win",
+    "electron:build:mac": "prisma generate && next build && electron-builder --mac",
+    "electron:build:win": "prisma generate && next build && electron-builder --win"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
@@ -61,6 +64,7 @@
       "electron/**/*",
       "app/**/*",
       "lib/**/*",
+      "prisma/schema.prisma",
       "public/**/*",
       "bin/**/*",
       "templates/**/*",

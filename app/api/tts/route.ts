@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import path from "path";
 import os from "os";
 import { config as dotenvConfig } from "dotenv";
+import { requireTier } from "@/lib/license-guard";
 
 // Load user env from ~/.hammerlock/.env (for Electron packaged builds)
 // If encrypted, env vars are loaded via /api/vault-session on vault unlock
@@ -27,6 +28,15 @@ const VALID_VOICES = new Set(["alloy", "echo", "fable", "onyx", "nova", "shimmer
 const DEFAULT_VOICE = "nova";
 
 export async function POST(req: Request) {
+  // Tier gate: text-to-speech requires Pro or higher
+  const tierCheck = await requireTier("tts");
+  if (!tierCheck.allowed) {
+    return NextResponse.json(
+      { error: tierCheck.reason, upgradeRequired: true, requiredTier: tierCheck.requiredTier },
+      { status: 403 }
+    );
+  }
+
   try {
     const { text, voice } = await req.json();
 

@@ -34,7 +34,7 @@ const defaultSubscription = (): SubscriptionStatus => ({
   activatedAt: null,
 });
 
-/** Desktop Electron app = always pro (user already purchased Core or higher) */
+/** Desktop Electron app detection */
 function isElectron(): boolean {
   if (typeof window === "undefined") return false;
   return !!(window as unknown as Record<string, unknown>).electron ||
@@ -43,8 +43,6 @@ function isElectron(): boolean {
 
 /** Check if subscription is genuinely active (not expired) */
 function isSubscriptionActive(sub: SubscriptionStatus): boolean {
-  // Desktop app: always active — user paid on the website before downloading
-  if (isElectron()) return true;
   if (!sub.active) return false;
   if (sub.trialEnd) {
     return new Date(sub.trialEnd).getTime() > Date.now();
@@ -61,6 +59,8 @@ type SubscriptionContextValue = {
   incrementMessageCount: () => void;
   resetMessageCount: () => void;
   clearSubscription: () => void;
+  licenseTier: SubscriptionTier;
+  licenseLoading: boolean;
 };
 
 export type PremiumFeature =
@@ -101,6 +101,39 @@ const SubscriptionContext = createContext<SubscriptionContextValue | undefined>(
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [subscription, setSubscription] = useState<SubscriptionStatus>(defaultSubscription());
   const [messageCount, setMessageCount] = useState(0);
+  const [licenseTier, setLicenseTier] = useState<SubscriptionTier>("free");
+  const [licenseLoading, setLicenseLoading] = useState(false);
+
+  // Fetch license tier from server on mount (Electron desktop only)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isElectron()) return;
+
+    setLicenseLoading(true);
+    fetch("/api/license/check")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.tier) {
+          const tier = data.tier as SubscriptionTier;
+          setLicenseTier(tier);
+          // Also sync to subscription state so the rest of the app sees it
+          if (TIER_RANK[tier] > 0) {
+            setSubscription((prev) => ({
+              ...prev,
+              tier,
+              active: true,
+            }));
+          }
+        }
+      })
+      .catch(() => {
+        // Fail-open: leave as free tier
+        console.warn("[subscription-store] Failed to check license, defaulting to free");
+      })
+      .finally(() => {
+        setLicenseLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -161,21 +194,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const canSendMessage = useMemo(() => {
-    // Desktop app: unlimited messages
-    if (isElectron()) return true;
+    // Desktop app: check license tier from server
+    if (isElectron()) {
+      // Core or higher → unlimited messages
+      if (TIER_RANK[licenseTier] >= TIER_RANK["core"]) return true;
+      // Free tier on desktop → same message limit
+      return messageCount < FREE_MESSAGE_LIMIT;
+    }
+    // Web: check subscription status
     if (isSubscriptionActive(subscription)) return true;
     return messageCount < FREE_MESSAGE_LIMIT;
-  }, [subscription, messageCount]);
+  }, [subscription, messageCount, licenseTier]);
 
   const isFeatureAvailable = useCallback(
     (feature: PremiumFeature) => {
-      // Desktop app: all features unlocked
-      if (isElectron()) return true;
+      // Desktop app: use server-verified license tier
+      if (isElectron()) {
+        const requiredTier = FEATURE_TIERS[feature];
+        return TIER_RANK[licenseTier] >= TIER_RANK[requiredTier];
+      }
+      // Web: use subscription status
       if (!isSubscriptionActive(subscription)) return false;
       const requiredTier = FEATURE_TIERS[feature];
       return TIER_RANK[subscription.tier] >= TIER_RANK[requiredTier];
     },
-    [subscription]
+    [subscription, licenseTier]
   );
 
   const clearSubscription = useCallback(() => {
@@ -196,8 +239,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       incrementMessageCount,
       resetMessageCount,
       clearSubscription,
+      licenseTier,
+      licenseLoading,
     }),
-    [subscription, messageCount, canSendMessage, isFeatureAvailable, activateSubscription, incrementMessageCount, resetMessageCount, clearSubscription]
+    [subscription, messageCount, canSendMessage, isFeatureAvailable, activateSubscription, incrementMessageCount, resetMessageCount, clearSubscription, licenseTier, licenseLoading]
   );
 
   return (

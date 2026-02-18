@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import path from "path";
 import os from "os";
 import { config as dotenvConfig } from "dotenv";
+import { requireTier } from "@/lib/license-guard";
 
 // Load user env from ~/.hammerlock/.env (for Electron packaged builds)
 // If encrypted, env vars are loaded via /api/vault-session on vault unlock
@@ -37,6 +38,15 @@ const LOCALE_TO_WHISPER: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
+  // Tier gate: transcription requires Pro or higher
+  const tierCheck = await requireTier("transcribe");
+  if (!tierCheck.allowed) {
+    return NextResponse.json(
+      { error: tierCheck.reason, upgradeRequired: true, requiredTier: tierCheck.requiredTier },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await req.formData() as unknown as globalThis.FormData;
     const audio = formData.get("audio") as File | null;

@@ -1,0 +1,42 @@
+// HammerLock AI — License Database Schema
+// SQLite via Prisma for license key enforcement
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model License {
+  id                   String    @id @default(cuid())
+  key                  String    @unique // HL-XXXX-XXXX-XXXX-XXXX
+  tier                 String // core | pro | teams
+  status               String    @default("active") // active | revoked | expired
+  billingType          String    @default("onetime") // onetime | subscription
+
+  // Stripe linkage
+  stripeCustomerId     String?
+  stripeSessionId      String    @unique
+  stripeSubscriptionId String?
+  customerEmail        String?
+
+  // Subscription lifecycle
+  currentPeriodEnd     DateTime? // null for lifetime (core one-time)
+  cancelAtPeriodEnd    Boolean   @default(false)
+
+  // Device binding
+  deviceId             String? // set on first activation
+  deviceName           String? // e.g. "Chris's MacBook Pro"
+  activatedAt          DateTime?
+
+  // Metadata
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([stripeCustomerId])
+  @@index([customerEmail])
+  @@index([deviceId])
+}

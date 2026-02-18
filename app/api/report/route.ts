@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Anonymizer } from "@/lib/anonymize";
+import { requireTier } from "@/lib/license-guard";
 
 /**
  * POST /api/report
@@ -229,6 +230,15 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
 }
 
 export async function POST(req: Request) {
+  // Tier gate: reports require Pro or higher
+  const tierCheck = await requireTier("report");
+  if (!tierCheck.allowed) {
+    return NextResponse.json(
+      { error: tierCheck.reason, upgradeRequired: true, requiredTier: tierCheck.requiredTier },
+      { status: 403 }
+    );
+  }
+
   try {
     const { messages, reportType, timeRange } = await req.json();
 

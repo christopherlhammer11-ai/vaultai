@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import crypto from "crypto";
+import { requireTier } from "@/lib/license-guard";
 
 /**
  * POST /api/share — Create a shareable link for selected vault entries
@@ -24,6 +25,15 @@ async function ensureSharesDir() {
 }
 
 export async function POST(req: Request) {
+  // Tier gate: sharing requires Core or higher
+  const tierCheck = await requireTier("share");
+  if (!tierCheck.allowed) {
+    return NextResponse.json(
+      { error: tierCheck.reason, upgradeRequired: true, requiredTier: tierCheck.requiredTier },
+      { status: 403 }
+    );
+  }
+
   try {
     const { entries, expiresIn, sharedBy } = await req.json();
 
