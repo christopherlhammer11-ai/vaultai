@@ -3521,7 +3521,6 @@ footer .logo-mark { font-size: 0.85rem; }
 
 .pricing-grid > .pricing-card {
   flex: 0 1 calc((100% - 4 * var(--space-md)) / 5);
-  min-width: 200px;
 }
 
 .pricing-card {
@@ -3675,7 +3674,7 @@ footer .logo-mark { font-size: 0.85rem; }
   text-decoration: underline;
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1100px) {
   .pricing-grid > .pricing-card {
     flex: 0 1 calc((100% - 2 * var(--space-md)) / 3);
   }
