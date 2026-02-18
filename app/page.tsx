@@ -417,7 +417,9 @@ export default function LandingPage() {
           {plans.map((plan) => (
             <div key={plan.name} className={`pricing-card${plan.popular ? ' popular' : ''}${plan.enterprise ? ' enterprise' : ''}`}>
               {plan.popular && <div className="pricing-badge">{t.site_plan_popular}</div>}
-              {plan.tag && <div className="pricing-tag">{plan.tag}</div>}
+              <div className="pricing-tag-row">
+                {plan.tag && <span className="pricing-tag">{plan.tag}</span>}
+              </div>
               <h3>{plan.name}</h3>
               <p className="pricing-description">{plan.description}</p>
               <div className="pricing-price">
