@@ -83,21 +83,35 @@ async function runStatus() {
   const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
   const hasBrave = !!getBraveKey();
 
+  // Build formatted status with clear visual indicators
+  const providers: [string, boolean][] = [
+    ["Ollama", ollamaUp],
+    ["OpenAI", hasOpenAI],
+    ["Anthropic", hasAnthropic],
+    ["Gemini", hasGemini],
+    ["Groq", hasGroq],
+    ["Mistral", hasMistral],
+    ["DeepSeek", hasDeepSeek],
+    ["Brave Search", hasBrave],
+  ];
+
+  const active = providers.filter(([, ok]) => ok);
+  const inactive = providers.filter(([, ok]) => !ok);
+
   const lines = [
     `**HammerLock AI Status**`,
     ``,
-    `Vault: ${vaultExists ? "active" : "not set up"}`,
-    `Persona: ${personaExists ? "loaded" : "not found"} (${personaPath})`,
+    `${vaultExists ? "\u{1F7E2}" : "\u26AA"} Vault: ${vaultExists ? "active" : "not set up"}`,
+    `${personaExists ? "\u{1F7E2}" : "\u26AA"} Persona: ${personaExists ? "loaded" : "not found"}`,
     ``,
-    `**Providers**`,
-    `Ollama: ${ollamaUp ? "connected" : "offline"}`,
-    `OpenAI: ${hasOpenAI ? "configured" : "not set"}`,
-    `Anthropic: ${hasAnthropic ? "configured" : "not set"}`,
-    `Gemini: ${hasGemini ? "configured" : "not set"}`,
-    `Groq: ${hasGroq ? "configured" : "not set"}`,
-    `Mistral: ${hasMistral ? "configured" : "not set"}`,
-    `DeepSeek: ${hasDeepSeek ? "configured" : "not set"}`,
-    `Brave Search: ${hasBrave ? "configured" : "not set"}`,
+    `**Active Providers**`,
+    ...(active.length > 0
+      ? active.map(([name]) => `\u{1F7E2} ${name} — connected`)
+      : [`\u26AA No providers configured`]),
+    ``,
+    ...(inactive.length > 0
+      ? [`**Inactive**`, ...inactive.map(([name]) => `\u26AA ${name}`)]
+      : [`\u2728 All providers configured!`]),
   ];
   return lines.join("\n");
 }

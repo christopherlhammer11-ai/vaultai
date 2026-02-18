@@ -81,7 +81,7 @@ const FEATURE_TIERS: Record<PremiumFeature, SubscriptionTier> = {
   voice_input: "pro",
   voice_output: "pro",
   pdf_export: "pro",
-  pdf_upload: "pro",
+  pdf_upload: "free",
   personas: "core",
   file_vault: "core",
   reports: "pro",

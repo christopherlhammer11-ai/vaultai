@@ -3059,6 +3059,7 @@ footer .logo-mark { font-size: 0.85rem; }
 
 /* Input area — pinned to bottom, Claude Code style */
 .console-input {
+  position: relative;
   padding: 8px 20px 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
   background: rgba(8, 8, 8, 0.98);
@@ -3138,6 +3139,67 @@ footer .logo-mark { font-size: 0.85rem; }
 }
 
 .attachment-remove:hover { color: var(--accent); }
+
+/* ── @mention agent picker dropdown ── */
+.mention-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 8px;
+  right: 8px;
+  margin-bottom: 6px;
+  background: rgba(18, 18, 18, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.88rem;
+  text-align: left;
+  transition: background 0.15s;
+}
+.mention-item:hover,
+.mention-item.active {
+  background: rgba(255, 255, 255, 0.06);
+}
+.mention-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mention-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mention-tagline {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mention-hint {
+  padding: 4px 12px 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  text-align: center;
+}
 
 .input-bar {
   display: flex;
@@ -5172,6 +5234,19 @@ footer .trust-badge {
   }
   .sidebar-lock { margin-top: 0; white-space: nowrap; font-size: 0.75rem; flex-shrink: 0; }
   .sidebar-bottom { display: none; }
+  /* Prevent sidebar collapse on mobile — always show the horizontal strip */
+  .console-sidebar.collapsed {
+    width: 100%;
+    height: auto;
+    max-height: 52px;
+    padding: 8px 12px;
+    overflow: visible;
+    overflow-x: auto;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    opacity: 1;
+  }
+  .sidebar-toggle { display: none; }
+  .sidebar-reopen-btn { display: none; }
   .console-topbar { gap: 6px; padding: 10px 14px; min-height: 44px; }
   .topbar-brand span { font-size: 0.78rem; letter-spacing: 0.08em; }
   .topbar-title { font-size: 0.88rem; }

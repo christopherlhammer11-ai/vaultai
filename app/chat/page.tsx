@@ -524,6 +524,10 @@ export default function ChatPage() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const dragCounterRef = useRef(0);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  // ---- @mention agent picker state ----
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentionMenu, setShowMentionMenu] = useState(false);
+  const [mentionIndex, setMentionIndex] = useState(0);
   // ---- Agent state ----
   const [activeAgentId, setActiveAgentId] = useState<string>(DEFAULT_AGENT_ID);
   const [customAgents, setCustomAgents] = useState<AgentDef[]>([]);
@@ -590,6 +594,15 @@ export default function ChatPage() {
     t.pill_search,
     t.pill_report,
   ];
+
+  // ---- @mention filtered agents ----
+  const allAgents = [...BUILT_IN_AGENTS, ...customAgents];
+  const mentionAgents = showMentionMenu
+    ? allAgents.filter(a =>
+        a.name.toLowerCase().includes(mentionQuery.toLowerCase()) ||
+        a.id.toLowerCase().includes(mentionQuery.toLowerCase())
+      ).slice(0, 6)
+    : [];
 
   // Auto-focus input on mount
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -3194,6 +3207,31 @@ export default function ChatPage() {
               <button onClick={() => setUploadedPdf(null)} className="attachment-remove"><X size={12} /></button>
             </div>
           )}
+          {/* @mention agent picker dropdown */}
+          {showMentionMenu && mentionAgents.length > 0 && (
+            <div className="mention-menu">
+              {mentionAgents.map((agent, i) => (
+                <button
+                  key={agent.id}
+                  className={`mention-item${i === mentionIndex ? " active" : ""}`}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    setActiveAgentId(agent.id);
+                    setInput(prev => prev.replace(/@\w*$/, "").trim());
+                    setShowMentionMenu(false);
+                    setMentionQuery("");
+                    inputRef.current?.focus();
+                  }}
+                  onMouseEnter={() => setMentionIndex(i)}
+                >
+                  <span className="mention-dot" style={{ background: agent.color }} />
+                  <span className="mention-name">{agent.name}</span>
+                  <span className="mention-tagline">{agent.tagline}</span>
+                </button>
+              ))}
+              <div className="mention-hint">↑↓ navigate · Enter to select · Esc to close</div>
+            </div>
+          )}
           <div className="input-bar">
             <button type="button" className="input-icon-btn" onClick={handleUpload} title={t.sidebar_upload_pdf}>
               <Plus size={18} />
@@ -3226,8 +3264,53 @@ export default function ChatPage() {
               ref={inputRef}
               placeholder={isListening ? t.chat_placeholder_recording : (sending ? "🔨 Hammering out a response..." : t.chat_placeholder)}
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){e.preventDefault();sendCommand();} }}
+              onChange={e => {
+                const val = e.target.value;
+                setInput(val);
+                // Detect @mention trigger
+                const atMatch = val.match(/@(\w*)$/);
+                if (atMatch) {
+                  setMentionQuery(atMatch[1]);
+                  setShowMentionMenu(true);
+                  setMentionIndex(0);
+                } else {
+                  setShowMentionMenu(false);
+                  setMentionQuery("");
+                }
+              }}
+              onKeyDown={e => {
+                if (showMentionMenu && mentionAgents.length > 0) {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setMentionIndex(i => (i + 1) % mentionAgents.length);
+                    return;
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setMentionIndex(i => (i - 1 + mentionAgents.length) % mentionAgents.length);
+                    return;
+                  }
+                  if (e.key === "Enter" || e.key === "Tab") {
+                    e.preventDefault();
+                    const agent = mentionAgents[mentionIndex];
+                    if (agent) {
+                      setActiveAgentId(agent.id);
+                      // Strip @query from input
+                      setInput(prev => prev.replace(/@\w*$/, "").trim());
+                      setShowMentionMenu(false);
+                      setMentionQuery("");
+                    }
+                    return;
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setShowMentionMenu(false);
+                    setMentionQuery("");
+                    return;
+                  }
+                }
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommand(); }
+              }}
             />
             <button type="button" className="send-btn" onClick={() => sendCommand()} disabled={sending || !input.trim()}>
               <Send size={16} />
