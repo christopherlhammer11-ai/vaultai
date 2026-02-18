@@ -68,7 +68,14 @@ const NUDGE_CATALOG: Record<string, NudgeDef> = {
   agents_tip: {
     id: "agents_tip",
     icon: "🤖",
-    message: "Try switching agents in the sidebar! I have specialized modes for coding, writing, health, finance, and more.",
+    message: "You're chatting with the general assistant. Try a specialist! Strategist does competitive analysis, Counsel handles legal research, Analyst builds financial models, and Writer polishes your drafts.",
+    ctaLabel: "Browse Agents \u2192",
+    ctaCommand: "__open_agents_tab__",
+  },
+  agent_deep_tip: {
+    id: "agent_deep_tip",
+    icon: "📄",
+    message: "Pro tip: Upload a PDF and switch to the right agent \u2014 Counsel for contracts, Analyst for financials, Researcher for academic papers. Each agent reads the file through its specialist lens.",
   },
 };
 
@@ -89,6 +96,11 @@ const THINKING_MESSAGES = [
   "Hold tight, almost there...",
   "Shuffling through the data...",
   "Thinking cap: ON...",
+  "🔨 Hammering it out...",
+  "🔨 Forging your answer...",
+  "🔨 Nailing this down...",
+  "🔨 Striking while the iron's hot...",
+  "🔨 Drop the hammer in 3... 2...",
 ];
 function getThinkingMessage() {
   return THINKING_MESSAGES[Math.floor(Math.random() * THINKING_MESSAGES.length)];
@@ -105,6 +117,234 @@ const AGENT_EMOJI: Record<string, string> = {
 function AgentIcon({ name, size = 14 }: { name: string; size?: number }) {
   const emoji = AGENT_EMOJI[name] || "\uD83E\uDD16";
   return <span style={{ fontSize: size * 0.9, lineHeight: 1 }}>{emoji}</span>;
+}
+
+/** Agent onboarding tips — shown on first switch to each agent */
+const AGENT_INTRO_TIPS: Record<string, { tips: string[]; example: string }> = {
+  strategist: {
+    tips: [
+      "Start by describing your business in 2\u20133 sentences \u2014 Strategist remembers context for the whole conversation",
+      "Ask it to challenge your assumptions: \"What am I missing in this plan?\"",
+      "Use it for framework-driven analysis: \"Run a SWOT\" or \"Map my competitive landscape\"",
+    ],
+    example: "I'm launching a B2B SaaS for compliance teams in fintech. Help me map the competitive landscape and find the gaps.",
+  },
+  counsel: {
+    tips: [
+      "Always specify the jurisdiction: \"Under California law...\" or \"Per EU GDPR requirements...\"",
+      "Upload contracts as PDFs and ask: \"Flag any unusual clauses or missing protections\"",
+      "Use it for research, not advice \u2014 it will always remind you to consult a licensed attorney",
+    ],
+    example: "Review this vendor agreement and flag any one-sided terms, missing IP protections, or liability concerns.",
+  },
+  analyst: {
+    tips: [
+      "Give it numbers first \u2014 the Analyst works best with specific data points",
+      "Ask for structured scenarios: \"Build a bull/base/bear case for this acquisition\"",
+      "Use it for quick market sizing: \"What's the TAM/SAM/SOM for [industry] in [region]?\"",
+    ],
+    example: "I'm raising a Series A at $15M pre. Our ARR is $1.2M growing 15% MoM. Help me build the financial model.",
+  },
+  researcher: {
+    tips: [
+      "Be specific about scope: \"Research the last 3 years of studies on [topic]\"",
+      "Ask it to evaluate source quality: \"How credible is this? What's the methodology?\"",
+      "Request structured outputs: \"Give me background, methodology, findings, analysis, and limitations\"",
+    ],
+    example: "Search for recent studies on employee retention in remote-first companies. Synthesize the findings.",
+  },
+  operator: {
+    tips: [
+      "Start with the outcome: \"I need to launch [X] by [date]. Break it down for me.\"",
+      "Use it as a daily standup partner: \"Here's what I did today, what should I focus on tomorrow?\"",
+      "Have it prioritize: \"I have 12 tasks. Help me rank them P0/P1/P2.\"",
+    ],
+    example: "I'm shipping a product update next Friday. Here's what's left: [list]. Help me prioritize and create a day-by-day plan.",
+  },
+  writer: {
+    tips: [
+      "Always state the audience: \"This is for our investors\" vs. \"This is for our engineering team\"",
+      "Ask for drafts first, then iterate: \"Draft v1, then I'll give you feedback\"",
+      "Specify tone: \"Write this like a CEO update \u2014 confident but not arrogant\"",
+    ],
+    example: "Draft a cold email to a potential enterprise customer. We sell compliance automation for fintech. Keep it under 150 words.",
+  },
+};
+
+/** Vault settings key for tracking which agents have been introduced */
+const AGENT_INTRO_SEEN_KEY = "agent_intro_seen";
+
+/** ─── WORKFLOW ENGINE ───
+ * Agent-aware action buttons + smart multi-step workflow chains.
+ * Each agent gets contextual actions based on what it just generated,
+ * plus proactive multi-step workflow suggestions.
+ */
+
+type WorkflowAction = {
+  id: string;
+  icon: string;
+  label: string;
+  /** Command template — {content} is replaced with the AI response */
+  command: string;
+};
+
+type WorkflowChain = {
+  id: string;
+  icon: string;
+  label: string;
+  /** Steps described for the user */
+  description: string;
+  /** Array of commands to execute sequentially */
+  steps: string[];
+  /** Keywords that trigger this chain suggestion (matched against AI response) */
+  triggers: string[];
+};
+
+/** Per-agent quick actions shown as buttons on AI responses */
+const AGENT_ACTIONS: Record<string, WorkflowAction[]> = {
+  analyst: [
+    { id: "email_report", icon: "📧", label: "Email This", command: "Send email with subject 'Financial Analysis from HammerLock AI': {content}" },
+    { id: "save_notes", icon: "📝", label: "Save to Notes", command: "Create note in Apple Notes: Financial Analysis\n\n{content}" },
+    { id: "add_tasks", icon: "✅", label: "Create Tasks", command: "Add to my todo list: Review and validate the financial model assumptions, Update revenue forecast spreadsheet, Schedule review meeting" },
+  ],
+  strategist: [
+    { id: "email_report", icon: "📧", label: "Email This", command: "Send email with subject 'Strategy Brief from HammerLock AI': {content}" },
+    { id: "save_notes", icon: "📝", label: "Save to Notes", command: "Create note in Apple Notes: Strategy Brief\n\n{content}" },
+    { id: "add_tasks", icon: "✅", label: "Action Items", command: "Add to my todo list: Execute on strategy recommendations, Research competitor moves, Schedule strategy review" },
+  ],
+  counsel: [
+    { id: "email_report", icon: "📧", label: "Email Analysis", command: "Send email with subject 'Legal Analysis from HammerLock AI': {content}" },
+    { id: "save_notes", icon: "📝", label: "Save to Notes", command: "Create note in Apple Notes: Legal Analysis\n\n{content}" },
+    { id: "calendar_review", icon: "📅", label: "Schedule Review", command: "Schedule a meeting to review legal analysis findings" },
+  ],
+  researcher: [
+    { id: "email_report", icon: "📧", label: "Email Research", command: "Send email with subject 'Research Brief from HammerLock AI': {content}" },
+    { id: "save_notes", icon: "📝", label: "Save to Notes", command: "Create note in Apple Notes: Research Brief\n\n{content}" },
+    { id: "add_tasks", icon: "✅", label: "Follow-ups", command: "Add to my todo list: Validate research sources, Deep-dive into key findings, Compile final research report" },
+  ],
+  operator: [
+    { id: "add_tasks", icon: "✅", label: "Create Tasks", command: "Add to my todo list: {content}" },
+    { id: "calendar", icon: "📅", label: "Schedule It", command: "Add to calendar: {content}" },
+    { id: "email_team", icon: "📧", label: "Email Team", command: "Send email with subject 'Action Plan from HammerLock AI': {content}" },
+  ],
+  writer: [
+    { id: "email_draft", icon: "📧", label: "Send as Email", command: "Send email: {content}" },
+    { id: "save_notes", icon: "📝", label: "Save Draft", command: "Create note in Apple Notes: Draft\n\n{content}" },
+    { id: "copy_clean", icon: "📋", label: "Copy Clean", command: "__copy_clean__" },
+  ],
+  general: [
+    { id: "email_it", icon: "📧", label: "Email This", command: "Send email with subject 'From HammerLock AI': {content}" },
+    { id: "save_notes", icon: "📝", label: "Save to Notes", command: "Create note in Apple Notes: {content}" },
+    { id: "remind_me", icon: "⏰", label: "Remind Me", command: "Set a reminder: Follow up on this — {content}" },
+  ],
+};
+
+/** Smart workflow chains — multi-step sequences suggested based on context */
+const WORKFLOW_CHAINS: Record<string, WorkflowChain[]> = {
+  analyst: [
+    {
+      id: "full_report_flow",
+      icon: "🔄",
+      label: "Full Report Pipeline",
+      description: "Save analysis → Create review tasks → Email to stakeholders",
+      steps: [
+        "Create note in Apple Notes: Financial Analysis Report\n\n{content}",
+        "Add to my todo list: Review financial model assumptions, Validate conversion rate estimates, Update P&L spreadsheet with new projections",
+        "Send email with subject 'Financial Analysis Ready for Review': I've completed a financial analysis. Key findings are saved in Notes. Please review when you have a chance.",
+      ],
+      triggers: ["revenue", "forecast", "model", "scenario", "bull", "bear", "base case", "projection", "financial"],
+    },
+    {
+      id: "investor_prep",
+      icon: "💰",
+      label: "Investor Prep Pipeline",
+      description: "Save model → Draft investor email → Schedule pitch prep",
+      steps: [
+        "Create note in Apple Notes: Investor-Ready Financial Model\n\n{content}",
+        "Add to my todo list: Polish financial model for investors, Prepare Q&A for tough questions, Update pitch deck with new numbers",
+        "Schedule a meeting for pitch deck review and investor prep session",
+      ],
+      triggers: ["series", "fundrais", "investor", "valuation", "pitch", "raise", "round"],
+    },
+  ],
+  strategist: [
+    {
+      id: "strategy_exec",
+      icon: "🔄",
+      label: "Strategy → Execution",
+      description: "Save strategy → Create action items → Email team → Schedule kickoff",
+      steps: [
+        "Create note in Apple Notes: Strategy Document\n\n{content}",
+        "Add to my todo list: Execute top 3 strategic priorities, Assign ownership for each initiative, Set 30/60/90 day milestones",
+        "Schedule a meeting for strategy kickoff and team alignment",
+      ],
+      triggers: ["strategy", "competitive", "swot", "market entry", "go-to-market", "positioning", "roadmap"],
+    },
+  ],
+  counsel: [
+    {
+      id: "legal_review_flow",
+      icon: "🔄",
+      label: "Legal Review Pipeline",
+      description: "Save findings → Flag action items → Schedule attorney review",
+      steps: [
+        "Create note in Apple Notes: Legal Review Findings\n\n{content}",
+        "Add to my todo list: Address flagged contract issues, Consult with licensed attorney on key concerns, Prepare revised contract draft",
+        "Schedule a meeting for legal review with outside counsel",
+      ],
+      triggers: ["contract", "clause", "liability", "indemnif", "warrant", "breach", "compliance", "risk", "legal"],
+    },
+  ],
+  researcher: [
+    {
+      id: "research_to_action",
+      icon: "🔄",
+      label: "Research → Report → Share",
+      description: "Save research → Compile report → Email findings",
+      steps: [
+        "Create note in Apple Notes: Research Findings\n\n{content}",
+        "Add to my todo list: Validate key research sources, Identify gaps for follow-up research, Draft executive summary of findings",
+        "Send email with subject 'Research Findings Summary': Research is complete. Key findings have been saved to Notes. Summary attached.",
+      ],
+      triggers: ["study", "research", "finding", "evidence", "literature", "source", "methodology", "paper"],
+    },
+  ],
+  operator: [
+    {
+      id: "plan_to_calendar",
+      icon: "🔄",
+      label: "Plan → Tasks → Calendar",
+      description: "Create all tasks → Block calendar time → Email team the plan",
+      steps: [
+        "Add to my todo list: {content}",
+        "Schedule a meeting for weekly sprint review and progress check",
+        "Send email with subject 'This Week\\'s Plan': Here\\'s the execution plan for this week. Tasks have been created and calendar time blocked.",
+      ],
+      triggers: ["plan", "sprint", "priorit", "p0", "p1", "task", "deadline", "milestone", "checklist", "standup"],
+    },
+  ],
+  writer: [
+    {
+      id: "publish_flow",
+      icon: "🔄",
+      label: "Draft → Review → Send",
+      description: "Save draft → Create review task → Send when ready",
+      steps: [
+        "Create note in Apple Notes: Content Draft\n\n{content}",
+        "Add to my todo list: Proofread and polish the draft, Get feedback from team, Schedule publication date",
+      ],
+      triggers: ["draft", "blog", "post", "article", "email", "copy", "pitch", "newsletter", "script"],
+    },
+  ],
+};
+
+/** Detect which workflow chains are relevant based on AI response content */
+function detectRelevantChains(agentId: string, responseText: string): WorkflowChain[] {
+  const chains = WORKFLOW_CHAINS[agentId] || [];
+  const lower = responseText.toLowerCase();
+  return chains.filter(chain =>
+    chain.triggers.some(trigger => lower.includes(trigger))
+  );
 }
 
 /** Detect if running inside Electron desktop app */
@@ -187,6 +427,10 @@ export default function ChatPage() {
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
   const [copiedToast, setCopiedToast] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [chainRunning, setChainRunning] = useState(false);
+  const [chainStep, setChainStep] = useState(0);
+  const [chainTotal, setChainTotal] = useState(0);
+  const [workflowToast, setWorkflowToast] = useState<string | null>(null);
   const [activeNudge, setActiveNudge] = useState<NudgeDef | null>(null);
   const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { shouldShow: shouldShowNudge, dismissNudge, disableAll: disableAllNudges } = useNudges();
@@ -881,9 +1125,11 @@ export default function ChatPage() {
       if (!isQuickUtility) {
         const msgCount = messageCount + 1;
         if (msgCount === 2) triggerNudge("remember_tip");
-        else if (msgCount === 5) triggerNudge("search_tip");
-        else if (msgCount === 8) triggerNudge("voice_tip");
-        else if (msgCount === 12) triggerNudge("agents_tip");
+        else if (msgCount === 5) triggerNudge("agents_tip");
+        else if (msgCount === 8) triggerNudge("search_tip");
+        else if (msgCount === 10) triggerNudge("voice_tip");
+        else if (msgCount === 15) triggerNudge("agent_deep_tip");
+        else if (msgCount === 20) triggerNudge("vault_tip");
       }
 
       // Auto-play TTS if user said "read this out loud", "talk to me", or if input came from voice
@@ -1065,6 +1311,48 @@ export default function ChatPage() {
   handleVoiceRef.current = handleVoice;
 
   // ---- COPY TO CLIPBOARD ----
+  // ---- WORKFLOW ENGINE HANDLERS ----
+  /** Execute a single workflow action (sends command through OpenClaw) */
+  const handleWorkflowAction = useCallback((action: WorkflowAction, msgContent: string) => {
+    if (action.command === "__copy_clean__") {
+      // Special: strip markdown and copy clean text
+      const clean = msgContent.replace(/[#*_`~\[\]()>]/g, "").replace(/\n{3,}/g, "\n\n").trim();
+      navigator.clipboard.writeText(clean).then(() => {
+        setCopiedToast(true);
+        setTimeout(() => setCopiedToast(false), 2000);
+      }).catch(() => {});
+      return;
+    }
+    const truncated = msgContent.length > 2000 ? msgContent.slice(0, 2000) + "..." : msgContent;
+    const cmd = action.command.replace(/\{content\}/g, truncated);
+    sendCommand(cmd);
+  }, [sendCommand]);
+
+  /** Execute a multi-step workflow chain sequentially */
+  const handleWorkflowChain = useCallback(async (chain: WorkflowChain, msgContent: string) => {
+    if (chainRunning) return;
+    setChainRunning(true);
+    setChainTotal(chain.steps.length);
+    const truncated = msgContent.length > 2000 ? msgContent.slice(0, 2000) + "..." : msgContent;
+
+    for (let i = 0; i < chain.steps.length; i++) {
+      setChainStep(i + 1);
+      setWorkflowToast(`🔨 Hammering step ${i + 1}/${chain.steps.length}...`);
+      const cmd = chain.steps[i].replace(/\{content\}/g, truncated);
+      sendCommand(cmd);
+      // Wait between steps to let each action complete
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    setWorkflowToast("🔨 Nailed it! Workflow complete.");
+    setTimeout(() => {
+      setWorkflowToast(null);
+      setChainRunning(false);
+      setChainStep(0);
+      setChainTotal(0);
+    }, 2500);
+  }, [chainRunning, sendCommand]);
+
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text)
       .then(() => {
@@ -1119,6 +1407,13 @@ export default function ChatPage() {
   }, [disableAllNudges]);
 
   const handleNudgeCta = useCallback((command: string) => {
+    // Special command: open the agents section in sidebar
+    if (command === "__open_agents_tab__") {
+      setSidebarOpen(true);
+      setOptionsOpen(true);
+      setActiveNudge(null);
+      return;
+    }
     // If command ends with space, put it in input box
     if (command.endsWith(" ")) {
       setInput(command);
@@ -1817,6 +2112,7 @@ export default function ChatPage() {
                   <div
                     key={agent.id}
                     onClick={() => setActiveAgentId(agent.id)}
+                    title={agent.tagline}
                     style={{
                       display: "flex", alignItems: "center", gap: 8,
                       padding: "6px 10px", borderRadius: 8, cursor: "pointer",
@@ -1839,6 +2135,15 @@ export default function ChatPage() {
                       }}>
                         {agent.name}
                       </div>
+                      {activeAgentId === agent.id && agent.id !== "general" && (
+                        <div style={{
+                          fontSize: "0.65rem", color: "var(--text-muted)",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          marginTop: 1, lineHeight: 1.2,
+                        }}>
+                          {agent.tagline}
+                        </div>
+                      )}
                     </div>
                     {activeAgentId === agent.id && (
                       <div style={{ width: 5, height: 5, borderRadius: 3, background: agent.color, flexShrink: 0 }} />
@@ -2081,6 +2386,96 @@ export default function ChatPage() {
               {(() => {
                 const agent = getAgentById(activeAgentId, customAgents);
                 if (agent && agent.id !== "general") {
+                  const introTips = AGENT_INTRO_TIPS[agent.id];
+                  const seenAgents = Array.isArray(vaultData?.settings?.[AGENT_INTRO_SEEN_KEY])
+                    ? (vaultData.settings[AGENT_INTRO_SEEN_KEY] as string[])
+                    : [];
+                  const hasSeenIntro = seenAgents.includes(agent.id);
+                  const markIntroSeen = () => {
+                    if (hasSeenIntro || !updateVaultData) return;
+                    updateVaultData((prev) => {
+                      const existing = Array.isArray(prev.settings[AGENT_INTRO_SEEN_KEY])
+                        ? (prev.settings[AGENT_INTRO_SEEN_KEY] as string[])
+                        : [];
+                      if (existing.includes(agent.id)) return prev;
+                      return { ...prev, settings: { ...prev.settings, [AGENT_INTRO_SEEN_KEY]: [...existing, agent.id] } };
+                    });
+                  };
+
+                  // First time seeing this agent — show expanded intro card
+                  if (!hasSeenIntro && introTips) {
+                    return (
+                      <>
+                        <div className="welcome-icon-wrap" style={{ background: `${agent.color}18`, color: agent.color }}>
+                          <AgentIcon name={agent.icon} size={32} />
+                        </div>
+                        <h2 className="empty-title" style={{ color: agent.color }}>{agent.name}</h2>
+                        <p className="empty-subtitle">{agent.tagline}</p>
+
+                        {/* Getting started tips */}
+                        <div style={{
+                          background: "var(--bg-card, #0a0a0a)", border: `1px solid ${agent.color}22`,
+                          borderRadius: 12, padding: "16px 20px", width: "100%", maxWidth: 520,
+                          marginTop: 12, marginBottom: 16, textAlign: "left",
+                        }}>
+                          <div style={{
+                            fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
+                            letterSpacing: "0.06em", color: agent.color, marginBottom: 10,
+                          }}>
+                            Getting Started
+                          </div>
+                          <ul style={{
+                            margin: 0, paddingLeft: 16, listStyle: "disc",
+                            color: "var(--text-secondary)", fontSize: "0.82rem", lineHeight: 1.7,
+                          }}>
+                            {introTips.tips.map((tip, i) => (
+                              <li key={i}>{tip}</li>
+                            ))}
+                          </ul>
+                          {/* Example prompt */}
+                          <div style={{
+                            marginTop: 12, background: "var(--bg-tertiary, #111)",
+                            borderRadius: 8, padding: "10px 14px",
+                            fontSize: "0.82rem", color: "var(--text-secondary)", fontStyle: "italic",
+                          }}>
+                            <span style={{ color: agent.color, marginRight: 4, fontStyle: "normal" }}>&rsaquo;</span>
+                            <strong style={{ color: "var(--text-primary)", fontStyle: "normal" }}>Try:</strong>{" "}
+                            &quot;{introTips.example}&quot;
+                          </div>
+                        </div>
+
+                        {/* Quick commands */}
+                        <div className="suggestion-grid">
+                          {agent.quickCommands.slice(0, 4).map(qc => (
+                            <button key={qc.label} className="suggestion-card" onClick={() => {
+                              markIntroSeen();
+                              if (qc.cmd.endsWith(" ")) { setInput(qc.cmd); inputRef.current?.focus(); }
+                              else sendCommand(qc.cmd);
+                            }}>
+                              <span className="suggestion-icon">💬</span>
+                              <span className="suggestion-text">{qc.label}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={markIntroSeen}
+                          style={{
+                            marginTop: 8, padding: "6px 18px", borderRadius: 8,
+                            background: "transparent", border: `1px solid ${agent.color}44`,
+                            color: agent.color, fontSize: "0.78rem", fontWeight: 600,
+                            cursor: "pointer", transition: "all 0.15s",
+                          }}
+                          onMouseEnter={e => { (e.target as HTMLElement).style.background = `${agent.color}12`; }}
+                          onMouseLeave={e => { (e.target as HTMLElement).style.background = "transparent"; }}
+                        >
+                          Got it
+                        </button>
+                      </>
+                    );
+                  }
+
+                  // Already seen intro — compact view (existing behavior)
                   return (
                     <>
                       <div className="welcome-icon-wrap" style={{ background: `${agent.color}18`, color: agent.color }}>
@@ -2171,6 +2566,70 @@ export default function ChatPage() {
                 </div>
               )}
               {msg.pending && <div className="message-status">{t.chat_processing}</div>}
+
+              {/* ─── WORKFLOW ACTIONS — agent-aware action buttons on AI responses ─── */}
+              {!msg.pending && msg.role === "ai" && idx === messages.length - 1 && !sending && !chainRunning && (AGENT_ACTIONS[activeAgentId] || AGENT_ACTIONS.general || []).length > 0 && (
+                <div className="workflow-actions" style={{
+                  display: "flex", flexDirection: "column", gap: 8,
+                  marginTop: 8, paddingTop: 8,
+                  borderTop: "1px solid rgba(255,255,255,0.04)",
+                }}>
+                  {/* Quick actions row */}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {(AGENT_ACTIONS[activeAgentId] || AGENT_ACTIONS.general || []).map(action => (
+                      <button
+                        key={action.id}
+                        className="workflow-action-btn"
+                        onClick={() => handleWorkflowAction(action, msg.content)}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 5,
+                          padding: "5px 10px", borderRadius: 6,
+                          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                          color: "var(--text-secondary)", fontSize: "0.72rem", fontWeight: 500,
+                          cursor: "pointer", transition: "all 0.15s",
+                        }}
+                        onMouseEnter={e => { (e.target as HTMLElement).style.background = "rgba(0,255,136,0.08)"; (e.target as HTMLElement).style.borderColor = "rgba(0,255,136,0.2)"; (e.target as HTMLElement).style.color = "var(--text-primary)"; }}
+                        onMouseLeave={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.04)"; (e.target as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"; (e.target as HTMLElement).style.color = "var(--text-secondary)"; }}
+                      >
+                        <span>{action.icon}</span> {action.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Workflow chain suggestions — multi-step pipelines */}
+                  {detectRelevantChains(activeAgentId, msg.content).length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {detectRelevantChains(activeAgentId, msg.content).map(chain => (
+                        <button
+                          key={chain.id}
+                          className="workflow-chain-btn"
+                          onClick={() => handleWorkflowChain(chain, msg.content)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 8,
+                            padding: "8px 12px", borderRadius: 8,
+                            background: "rgba(0,255,136,0.04)", border: "1px solid rgba(0,255,136,0.12)",
+                            color: "var(--accent)", fontSize: "0.75rem", fontWeight: 600,
+                            cursor: "pointer", transition: "all 0.15s",
+                            textAlign: "left" as const,
+                          }}
+                          onMouseEnter={e => { (e.target as HTMLElement).style.background = "rgba(0,255,136,0.1)"; (e.target as HTMLElement).style.borderColor = "rgba(0,255,136,0.25)"; }}
+                          onMouseLeave={e => { (e.target as HTMLElement).style.background = "rgba(0,255,136,0.04)"; (e.target as HTMLElement).style.borderColor = "rgba(0,255,136,0.12)"; }}
+                        >
+                          <span style={{ fontSize: "1rem" }}>{chain.icon}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div>{chain.label}</div>
+                            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontWeight: 400, marginTop: 1 }}>
+                              {chain.description}
+                            </div>
+                          </div>
+                          <Zap size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Message action buttons — copy on all messages, extra actions on AI */}
               {!msg.pending && msg.role !== "error" && (
                 <div className="message-actions">
@@ -2202,8 +2661,13 @@ export default function ChatPage() {
           ))}
         </div>
         {/* Copied / Saved toasts */}
-        {copiedToast && <div className="copied-toast">{t.msg_copied || "Copied!"}</div>}
-        {vaultSaved && <div className="copied-toast">🔐 {t.msg_saved_vault || "Saved!"}</div>}
+        {copiedToast && <div className="copied-toast">🔨 {t.msg_copied || "Nailed it! Copied."}</div>}
+        {vaultSaved && <div className="copied-toast">🔐 {t.msg_saved_vault || "Hammered into the vault!"}</div>}
+        {workflowToast && (
+          <div className="copied-toast" style={{ background: "rgba(0,255,136,0.15)", borderColor: "rgba(0,255,136,0.3)" }}>
+            🔨 {workflowToast === "Workflow complete!" ? "Nailed it! Workflow complete." : workflowToast} {chainRunning && <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>({chainStep}/{chainTotal})</span>}
+          </div>
+        )}
 
         {/* Nudge toast — contextual tips with opt-out */}
         {activeNudge && (
@@ -2500,13 +2964,6 @@ export default function ChatPage() {
               onClick={handleVoice} title={isListening ? t.voice_stop : t.voice_start}>
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
             </button>
-            <textarea
-              ref={inputRef}
-              placeholder={isListening ? t.chat_placeholder_recording : (sending ? "HammerLock AI is thinking..." : t.chat_placeholder)}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){e.preventDefault();sendCommand();} }}
-            />
             {/* Agent chip — shows current agent, click to switch back to general */}
             {(() => {
               const agent = getAgentById(activeAgentId, customAgents);
@@ -2527,6 +2984,13 @@ export default function ChatPage() {
               }
               return null;
             })()}
+            <textarea
+              ref={inputRef}
+              placeholder={isListening ? t.chat_placeholder_recording : (sending ? "🔨 Hammering out a response..." : t.chat_placeholder)}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){e.preventDefault();sendCommand();} }}
+            />
             <button type="button" className="send-btn" onClick={() => sendCommand()} disabled={sending || !input.trim()}>
               <Send size={16} />
             </button>

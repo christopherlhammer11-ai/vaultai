@@ -59,7 +59,7 @@ async function deriveArgon2Key(password: string, salt: Uint8Array): Promise<Cryp
     dkLen: ARGON2_PARAMS.hashLength,
   });
 
-  return crypto.subtle.importKey("raw", new Uint8Array(keyMaterial) as unknown as ArrayBuffer, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.importKey("raw", new Uint8Array(keyMaterial) as unknown as ArrayBuffer, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
 }
 
 async function derivePbkdf2Key(password: string, salt: Uint8Array): Promise<CryptoKey> {
@@ -80,7 +80,7 @@ async function derivePbkdf2Key(password: string, salt: Uint8Array): Promise<Cryp
     },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
-    false,
+    true,
     ["encrypt", "decrypt"]
   );
 }
