@@ -1126,7 +1126,7 @@ document.getElementById('termCount').innerHTML = `<span>${totalTerms}</span> ter
 const searchInput = document.getElementById('searchInput');
 const noResults = document.getElementById('noResults');
 
-searchInput.addEventListener('input', () => {
+function filterGlossary() {
   const query = searchInput.value.toLowerCase().trim();
   const cards = document.querySelectorAll('.term-card');
   const sections = document.querySelectorAll('.letter-section');
@@ -1147,6 +1147,30 @@ searchInput.addEventListener('input', () => {
   document.getElementById('termCount').innerHTML = query
     ? `<span>${visibleCount}</span> of ${totalTerms} terms`
     : `<span>${totalTerms}</span> terms defined`;
+
+  return visibleCount;
+}
+
+searchInput.addEventListener('input', filterGlossary);
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const query = searchInput.value.toLowerCase().trim();
+    if (!query) return;
+
+    // Find visible cards
+    const visibleCards = [...document.querySelectorAll('.term-card')].filter(c => c.style.display !== 'none');
+    if (visibleCards.length === 0) return;
+
+    // Auto-expand the first visible card and scroll to it
+    const first = visibleCards[0];
+    if (!first.classList.contains('expanded')) {
+      first.classList.add('expanded');
+    }
+    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    searchInput.blur();
+  }
 });
 </script>
 </body>
