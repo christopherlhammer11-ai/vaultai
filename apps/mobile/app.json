@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "VaultAI",
-    "slug": "vaultai-mobile",
+    "name": "HammerLock AI",
+    "slug": "hammerlock-mobile",
     "version": "0.1.0",
     "orientation": "portrait",
-    "scheme": "vaultai",
+    "scheme": "hammerlock",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",

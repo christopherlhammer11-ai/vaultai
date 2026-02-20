@@ -15,7 +15,7 @@ node      94765 miahammer   20u  IPv4 0x27d22006db5de56a      0t0  TCP 127.0.0.1
 
 ## Gateway Health
 ```
-VaultAI gateway (19001): UP (serving Control UI)
+HammerLock AI gateway (19001): UP (serving Control UI)
 Next.js (3000): UP
 /api/health: {"status":"ready"}
 ```
@@ -24,8 +24,8 @@ Next.js (3000): UP
 ```
 0012422 feat: add standalone ui
 70eb013 chore: update setup script
-9bb227f feat: add armored vaultai mascot
-3468272 chore: bootstrap vaultai repo
+9bb227f feat: add armored hammerlock mascot
+3468272 chore: bootstrap hammerlock repo
 ab827d7 Add files via upload
 ---
 On branch main
@@ -34,7 +34,7 @@ Your branch is up to date with 'origin/main'.
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-	modified:   bin/vaultai.js
+	modified:   bin/hammerlock.js
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
@@ -68,7 +68,7 @@ OpenAI key present: True
 ./app/layout.tsx
 ./app/page.tsx
 ./bin
-./bin/vaultai.js
+./bin/hammerlock.js
 ./docs
 ./docs/night-build-snapshot.md
 ./lib
@@ -82,7 +82,7 @@ OpenAI key present: True
 ./package-lock.json
 ./package.json
 ./public
-./public/vaultai-logo.svg
+./public/hammerlock-logo.svg
 ./scripts
 ./scripts/install.sh
 ./templates

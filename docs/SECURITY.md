@@ -1,4 +1,4 @@
-# VaultAI Security Architecture
+# HammerLock AI Security Architecture
 
 ## Encryption
 

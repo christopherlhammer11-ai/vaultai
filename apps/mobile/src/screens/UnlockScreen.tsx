@@ -57,7 +57,7 @@ export default function UnlockScreen() {
       <LinearGradient style={styles.background} colors={[palette.background, '#030406']}>        
         <View style={styles.content}>
           <SurfaceCard variant="elevated" style={styles.card}>
-            <Text style={styles.vaultLabel}>VaultAI</Text>
+            <Text style={styles.vaultLabel}>HammerLock AI</Text>
             <Text style={styles.title}>Unlock your vault</Text>
             <Text style={[styles.subtitle, error && { color: palette.danger }]}>{subtitle}</Text>
 
@@ -99,7 +99,7 @@ export default function UnlockScreen() {
             )}
           </SurfaceCard>
 
-          <Text style={styles.footer}>VaultAI · Local-first encryption · v0.1.0</Text>
+          <Text style={styles.footer}>HammerLock AI · Local-first encryption · v0.1.0</Text>
         </View>
       </LinearGradient>
     </KeyboardAvoidingView>

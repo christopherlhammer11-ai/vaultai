@@ -1,6 +1,6 @@
-# VaultAI Mobile
+# HammerLock AI Mobile
 
-Expo/React Native prototype for the VaultAI operator console. The app implements the MVP flows described in `docs/mobile-ui-spec.md` and reuses the shared `lib/crypto` module for Argon2id/PBKDF2 key derivation.
+Expo/React Native prototype for the HammerLock AI operator console. The app implements the MVP flows described in `docs/mobile-ui-spec.md` and reuses the shared `lib/crypto` module for Argon2id/PBKDF2 key derivation.
 
 ## Getting started
 

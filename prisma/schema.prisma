@@ -27,6 +27,10 @@ model License {
   currentPeriodEnd     DateTime? // null for lifetime (core one-time)
   cancelAtPeriodEnd    Boolean   @default(false)
 
+  // Credit booster add-on (Booster: 1500, Power: 5000, 0: none)
+  boosterUnits            Int       @default(0)
+  boosterSubscriptionId   String?   // Stripe subscription ID for the booster add-on
+
   // Device binding
   deviceId             String? // set on first activation
   deviceName           String? // e.g. "Chris's MacBook Pro"
@@ -39,4 +43,14 @@ model License {
   @@index([stripeCustomerId])
   @@index([customerEmail])
   @@index([deviceId])
+}
+
+model DownloadLead {
+  id        String   @id @default(cuid())
+  email     String
+  source    String   @default("get-app") // get-app | landing | pricing
+  platform  String?  // mac | windows | linux | web
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }

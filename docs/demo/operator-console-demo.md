@@ -8,7 +8,7 @@ This script walks through the new multi-conversation console, Brave search, cred
 
 - Launch the Electron build (`npm run electron:dev`) so Brave search + credits + voice transcription run locally.
 - Ensure `.env.local` has `BRAVE_API_KEY` and OpenAI for Whisper.
-- Seed persona (`~/.vaultai/persona.md`) with founder profile.
+- Seed persona (`~/.hammerlock/persona.md`) with founder profile.
 - Start screen recording (1080p) and system audio.
 
 ## 1. Unlock + dashboard (0:00 – 1:00)
@@ -61,6 +61,6 @@ Key callouts: encrypted vault, persistent persona, offline-first.
 
 - Hook (0-10s): Brave search result with citations overlay + compute meter ticking.
 - Core (10-45s): Jump cuts of multi-conversation rename, persona reminder, voice dictation, PDF drop.
-- Close (45-60s): Credits meter + "Encrypted. Local. Your rules." CTA linking to personalvaultai.com/mobile.
+- Close (45-60s): Credits meter + "Encrypted. Local. Your rules." CTA linking to personalhammerlock.com/mobile.
 - Aspect ratios: 16:9 for YouTube, 9:16 crop for socials.
 - Add captions + subtle bass hit synced to search query.

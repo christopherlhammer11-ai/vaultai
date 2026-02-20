@@ -10,9 +10,9 @@ const WelcomeSequenceScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to VaultAI!</Text>
+      <Text style={styles.title}>Welcome to HammerLock AI!</Text>
       <Text style={styles.description}>Your secure vault is ready. Let’s get started!</Text>
-      <Button title="Start Using VaultAI" onPress={handleFinish} />
+      <Button title="Start Using HammerLock AI" onPress={handleFinish} />
     </View>
   );
 };

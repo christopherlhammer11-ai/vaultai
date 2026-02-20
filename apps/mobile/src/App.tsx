@@ -10,8 +10,9 @@ import ChatScreen from '@mobile/screens/ChatScreen';
 import UnlockScreen from '@mobile/screens/UnlockScreen';
 import VaultCreationScreen from '@mobile/screens/VaultCreationScreen';
 import PasswordSetupScreen from '@mobile/screens/PasswordSetupScreen';
-import WelcomeSequenceScreen from '@mobile/screens/WelcomeSequenceScreen';
-import DemoModeScreen from '@mobile/screens/DemoModeScreen';
+import WelcomeScreen from '@mobile/screens/WelcomeScreen';
+import PersonaSelectionScreen from '@mobile/screens/PersonaSelectionScreen';
+import FirstChatTutorialScreen from '@mobile/screens/FirstChatTutorialScreen';
 import { palette } from '@mobile/theme/colors';
 
 enableScreens(true);
@@ -41,10 +42,11 @@ function Navigator() {
       ) : (
         <Stack.Screen name="Unlock" component={UnlockScreen} />
       )}
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="VaultCreation" component={VaultCreationScreen} />
       <Stack.Screen name="PasswordSetup" component={PasswordSetupScreen} />
-      <Stack.Screen name="WelcomeSequence" component={WelcomeSequenceScreen} />
-      <Stack.Screen name="DemoMode" component={DemoModeScreen} />
+      <Stack.Screen name="PersonaSelection" component={PersonaSelectionScreen} />
+      <Stack.Screen name="FirstChatTutorial" component={FirstChatTutorialScreen} />
     </Stack.Navigator>
   );
 }

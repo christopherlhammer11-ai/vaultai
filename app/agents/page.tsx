@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const agentGuides = [
   {
@@ -93,7 +94,7 @@ export default function AgentsPage() {
   return (
     <div className="page-wrapper" style={{ padding: "0 20px", maxWidth: 900, margin: "0 auto" }}>
       <nav className="site-nav" style={{ justifyContent: "space-between" }}>
-        <Link href="/" className="logo-mark" style={{ textDecoration: "none", color: "inherit" }}>{"\uD83D\uDD12"} HammerLock AI</Link>
+        <Link href="/" className="logo-mark" style={{ textDecoration: "none", color: "inherit" }}><Image src="/brand/hammerlock-icon-192.png" alt="" width={20} height={20} style={{ borderRadius: 3 }} /> HammerLock AI</Link>
         <Link href="/" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 4 }}>
           &larr; Back
         </Link>

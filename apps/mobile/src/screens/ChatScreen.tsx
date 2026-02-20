@@ -1,88 +1,148 @@
-import { useMemo, useState } from "react";
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity } from "react-native";
-import { StatusBar } from "expo-status-bar";
-
-const initialMessages = [
-  { id: "1", role: "system", content: "Vault unlocked. Brave search and local credits synced." },
-  { id: "2", role: "user", content: "Summarize today’s compliance headlines." },
-  { id: "3", role: "ai", content: "1) EU AI Act fines guidance…\n2) FTC draft privacy rule…" }
-];
+import React, { useCallback, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MessageBubble } from '@mobile/components/chat/MessageBubble';
+import { Composer } from '@mobile/components/chat/Composer';
+import { sampleMessages } from '@mobile/data/sampleMessages';
+import { useVaultSession } from '@mobile/providers/VaultSessionProvider';
+import { palette } from '@mobile/theme/colors';
+import { ChatMessage } from '@mobile/types/chat';
+import { encrypt } from '@mobile/lib/crypto';
 
 export default function ChatScreen() {
-  const [messages, setMessages] = useState(initialMessages);
-  const [draft, setDraft] = useState("");
+  const { sessionKey, lastUnlockedAt } = useVaultSession();
+  const [messages, setMessages] = useState<ChatMessage[]>(sampleMessages);
+  const [refreshing, setRefreshing] = useState(false);
+  const [cipherPreview, setCipherPreview] = useState<string>('');
 
-  const styles = useMemo(() => createStyles(), []);
+  const addMessage = useCallback(
+    async (value: string) => {
+      const outgoing: ChatMessage = {
+        id: `${Date.now()}`,
+        author: 'user',
+        body: value,
+        createdAt: new Date().toISOString(),
+        status: 'sent',
+      };
+      setMessages((prev) => [...prev, outgoing]);
 
-  const sendMessage = () => {
-    if (!draft.trim()) return;
-    const now = Date.now().toString();
-    setMessages((prev) => [...prev, { id: now, role: "user", content: draft.trim() }]);
-    setDraft("");
-  };
+      if (sessionKey) {
+        try {
+          const cipher = await encrypt(value, sessionKey);
+          setCipherPreview(cipher.slice(0, 64) + '…');
+        } catch (err) {
+          console.error('encryption preview failed', err);
+        }
+      }
+    },
+    [sessionKey]
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
+
+  const headerSubtitle = useMemo(() => {
+    if (!lastUnlockedAt) return 'Syncing private workspace';
+    return `Unlocked ${new Date(lastUnlockedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }, [lastUnlockedAt]);
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <Text style={styles.title}>VaultAI Mobile</Text>
-        <Text style={styles.subtitle}>Encrypted • Brave Search • Credits 498/500</Text>
+        <View>
+          <Text style={styles.vaultTitle}>HammerLock AI</Text>
+          <Text style={styles.vaultSubtitle}>{headerSubtitle}</Text>
+        </View>
+        <View style={styles.statusPill}>
+          <Text style={styles.statusDot}>●</Text>
+          <Text style={styles.statusText}>Online</Text>
+        </View>
       </View>
 
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <View style={[styles.bubble, item.role === "user" ? styles.userBubble : styles.aiBubble]}>
-            <Text style={styles.meta}>{item.role === "user" ? "You" : "VaultAI"}</Text>
-            <Text style={styles.message}>{item.content}</Text>
-          </View>
-        )}
+        renderItem={({ item }) => <MessageBubble message={item} />}
+        refreshControl={<RefreshControl tintColor={palette.textMuted} refreshing={refreshing} onRefresh={onRefresh} />}
       />
 
-      <View style={styles.composer}>
-        <TextInput
-          placeholder="Ask anything…"
-          placeholderTextColor="#7c7c7c"
-          value={draft}
-          onChangeText={setDraft}
-          style={styles.input}
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      {cipherPreview.length > 0 && (
+        <View style={styles.cipherBanner}>
+          <Text style={styles.cipherLabel}>Last payload encrypted preview:</Text>
+          <Text style={styles.cipherValue}>{cipherPreview}</Text>
+        </View>
+      )}
+
+      <Composer onSend={addMessage} />
+    </SafeAreaView>
   );
 }
 
-const createStyles = () =>
-  StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#050505", paddingHorizontal: 16, paddingBottom: 24 },
-    header: { paddingTop: 12, paddingBottom: 8 },
-    title: { color: "white", fontSize: 22, fontWeight: "600" },
-    subtitle: { color: "#9ca3af", fontSize: 13, marginTop: 2 },
-    listContent: { paddingVertical: 12, gap: 12 },
-    bubble: { borderRadius: 16, padding: 14 },
-    userBubble: { backgroundColor: "#0f172a", alignSelf: "flex-end" },
-    aiBubble: { backgroundColor: "#111827", alignSelf: "flex-start" },
-    meta: { color: "#9ca3af", fontSize: 11, marginBottom: 4 },
-    message: { color: "#f9fafb", fontSize: 15, lineHeight: 20 },
-    composer: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
-    input: {
-      flex: 1,
-      backgroundColor: "#111827",
-      color: "white",
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      borderRadius: 999
-    },
-    sendButton: {
-      backgroundColor: "#22c55e",
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 999
-    },
-    sendButtonText: { color: "#041007", fontWeight: "600" }
-  });
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  vaultTitle: {
+    color: palette.textPrimary,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  vaultSubtitle: {
+    color: palette.textMuted,
+    marginTop: 2,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: palette.surfaceAlt,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  statusDot: {
+    color: palette.accent,
+    fontSize: 10,
+  },
+  statusText: {
+    color: palette.textPrimary,
+    fontSize: 13,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  cipherBanner: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: palette.surface,
+  },
+  cipherLabel: {
+    color: palette.textMuted,
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  cipherValue: {
+    color: palette.textSecondary,
+    fontFamily: 'Menlo',
+    fontSize: 12,
+  },
+});

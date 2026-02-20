@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye, EyeOff, Lock, Shield, Globe, Brain, Mic } from "lucide-react";
+import Image from "next/image";
 import { useVault } from "@/lib/vault-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
@@ -220,7 +221,7 @@ export default function VaultPage() {
           {/* Phase 0: Brand reveal */}
           <div className={`welcome-brand ${welcomePhase >= 0 ? "visible" : ""}`}>
             <div className="welcome-lock-wrap">
-              <Lock size={48} strokeWidth={1.5} />
+              <Image src="/brand/hammerlock-icon-192.png" alt="HammerLock AI" width={56} height={56} style={{ borderRadius: 8 }} />
             </div>
             <h1 className="welcome-title">HammerLock AI</h1>
             <p className="welcome-tagline">{t.welcome_tagline}</p>
@@ -259,7 +260,7 @@ export default function VaultPage() {
         <div className={`vault-card${cardVisible ? " vault-card-enter" : ""}`}>
           {/* Brand header */}
           <div className="vault-brand">
-            <Lock size={14} />
+            <Image src="/brand/hammerlock-icon-192.png" alt="" width={16} height={16} style={{ borderRadius: 3 }} />
             <span>HammerLock AI</span>
           </div>
 

@@ -5,6 +5,7 @@
 
 import { Check, Globe, Lock, Menu, Smartphone, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useI18n, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 
@@ -58,6 +59,7 @@ export default function LandingPage() {
     { label: '01', title: t.site_step1_title, body: t.site_step1_body },
     { label: '02', title: t.site_step2_title, body: t.site_step2_body },
     { label: '03', title: t.site_step3_title, body: t.site_step3_body },
+    { label: '04', title: t.site_step4_title, body: t.site_step4_body },
   ];
 
   const comparisonRows = [
@@ -194,7 +196,7 @@ export default function LandingPage() {
     <div className="page-wrapper">
       <nav className="site-nav">
         <a href="/" className="logo-mark" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Lock size={16} />
+          <Image src="/brand/hammerlock-icon-192.png" alt="" width={22} height={22} style={{ borderRadius: 4 }} />
           HammerLock AI
         </a>
         <ul>
@@ -203,6 +205,7 @@ export default function LandingPage() {
           <li><a href="#pricing">{t.site_nav_pricing}</a></li>
           <li><a href="#how">{t.site_nav_how}</a></li>
           <li><a href="#why">{t.site_nav_why}</a></li>
+          <li><a href="/blog">Research</a></li>
         </ul>
         <div className="lang-picker" ref={langRef} style={{ position: 'relative' }}>
           <button
@@ -262,6 +265,7 @@ export default function LandingPage() {
             <a href="#pricing" onClick={() => setMobileNavOpen(false)}>{t.site_nav_pricing}</a>
             <a href="#how" onClick={() => setMobileNavOpen(false)}>{t.site_nav_how}</a>
             <a href="#why" onClick={() => setMobileNavOpen(false)}>{t.site_nav_why}</a>
+            <a href="/blog" onClick={() => setMobileNavOpen(false)}>Research</a>
             <a href="#pricing" className="btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileNavOpen(false)}>{t.site_cta}</a>
           </div>
         </>
@@ -463,6 +467,34 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+
+        {/* Credit Booster Add-ons */}
+        <div className="booster-addons" style={{
+          marginTop: 40, padding: '24px 32px', background: 'rgba(0,255,136,0.03)',
+          border: '1px solid rgba(0,255,136,0.12)', borderRadius: 14, textAlign: 'center',
+          maxWidth: 680, marginLeft: 'auto', marginRight: 'auto',
+        }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--accent)', marginBottom: 12 }}>
+            {t.site_plan_need_more}
+          </h3>
+          <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+            <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong>{t.site_plan_booster}</strong> <span style={{ color: 'var(--accent)' }}>{t.site_plan_booster_price}</span>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{t.site_plan_booster_desc}</div>
+            </div>
+            <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong>{t.site_plan_power}</strong> <span style={{ color: 'var(--accent)' }}>{t.site_plan_power_price}</span>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{t.site_plan_power_desc}</div>
+            </div>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+            {t.site_plan_byok_unlimited}
+          </p>
+        </div>
+
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: 20, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
+          {t.site_plan_credits_footnote}
+        </p>
       </section>
 
       <section id="how" className="timeline-section fade-in-section">
@@ -480,6 +512,31 @@ export default function LandingPage() {
               <p>{step.body}</p>
             </div>
           ))}
+        </div>
+        <div style={{
+          marginTop: 40, padding: '20px 28px', background: 'rgba(0,255,136,0.04)',
+          border: '1px solid rgba(0,255,136,0.12)', borderRadius: 12,
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, justifyContent: 'center',
+        }}>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Need the AI engine?
+          </span>
+          <a
+            href="https://ollama.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary"
+            style={{ textDecoration: 'none', fontSize: '0.85rem', padding: '8px 16px' }}
+          >
+            Download Ollama (free) &rarr;
+          </a>
+          <a
+            href="/get-app"
+            className="btn-secondary"
+            style={{ textDecoration: 'none', fontSize: '0.85rem', padding: '8px 16px' }}
+          >
+            See all models &amp; setup guide &rarr;
+          </a>
         </div>
       </section>
 
@@ -562,6 +619,35 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* BLOG / RESEARCH */}
+      <section className="features fade-in-section" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="section-label">Research</div>
+        <h2>The Open Source Intelligence Files</h2>
+        <p className="section-subtitle">
+          Deep dives into why open source isn&apos;t just a philosophy &mdash; it&apos;s the only architecture that puts you in control.
+        </p>
+        <div className="blog-preview-grid">
+          {[
+            { num: "01", pillar: "Philosophy", title: "The Code That Changed Everything: A Brief History of Open Source" },
+            { num: "02", pillar: "AI Models", title: "Ollama, LLaMA, Mistral, Gemma: Your 2026 Field Guide to Local AI" },
+            { num: "03", pillar: "Why OSS Wins", title: "Why Open Source Always Wins \u2014 And What Closed Systems Hide" },
+            { num: "04", pillar: "Privacy + OSS", title: "Open Source and Privacy Are the Same Fight" },
+            { num: "05", pillar: "Business Case", title: "Build on What You Can Inspect: The Business Case for Open Source" },
+          ].map((a) => (
+            <a key={a.num} href="/blog" className="blog-preview-card">
+              <span className="blog-preview-num">{a.num} / {a.pillar}</span>
+              <span className="blog-preview-title">{a.title}</span>
+              <span className="blog-preview-meta">HammerLock Research Desk</span>
+            </a>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <a href="/blog" className="btn-secondary" style={{ textDecoration: 'none' }}>
+            Read all articles &rarr;
+          </a>
+        </div>
+      </section>
+
       <section id="cta" className="final-cta fade-in-section">
         <div className="final-cta-card">
           <h2>{t.site_cta_final}</h2>
@@ -578,7 +664,7 @@ export default function LandingPage() {
 
       <footer className="site-footer">
         <a href="/" className="logo-mark" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Lock size={16} /> HammerLock AI
+          <Image src="/brand/hammerlock-icon-192.png" alt="" width={22} height={22} style={{ borderRadius: 4 }} /> HammerLock AI
         </a>
         <div className="trust-badges">
           <span className="trust-badge">🔐 {t.site_footer_aes}</span>

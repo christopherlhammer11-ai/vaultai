@@ -19,6 +19,10 @@ const PLAN_CONFIG: Record<string, PlanConfig> = {
   "pro-monthly":      { priceEnv: "STRIPE_PRICE_PRO_MONTHLY",      mode: "subscription" },
   // Teams — $49/user/mo
   "teams-monthly":    { priceEnv: "STRIPE_PRICE_TEAMS_MONTHLY",    mode: "subscription", perSeat: true },
+  // Booster — +$10/mo (adds 1,500 monthly cloud AI credits)
+  "booster-monthly":  { priceEnv: "STRIPE_PRICE_BOOSTER_MONTHLY",  mode: "subscription" },
+  // Power — +$25/mo (adds 5,000 monthly cloud AI credits)
+  "power-monthly":    { priceEnv: "STRIPE_PRICE_POWER_MONTHLY",    mode: "subscription" },
 };
 
 const VALID_PLANS = new Set(Object.keys(PLAN_CONFIG));

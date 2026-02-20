@@ -6,7 +6,7 @@ export default function SettingsScreen() {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('default-model');
 
-  const { setApiKey, setModel } = useVaultSession();
+  const { setApiKey, setModel: updateModel } = useVaultSession();
 
 const handleSave = () => {
     setApiKey(apiKey);

@@ -1,5 +1,5 @@
 {
-  "name": "vaultai-mobile",
+  "name": "hammerlock-mobile",
   "private": true,
   "main": "expo/AppEntry.js",
   "scripts": {
@@ -9,11 +9,14 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~3.2.3",
+    "babel-plugin-module-resolver": "^5.0.2",
     "expo": "^51.0.0",
     "expo-router": "^6.0.23",
     "expo-status-bar": "^1.11.1",
     "react": "^18.2.0",
-    "react-native": "0.74.0"
+    "react-native": "0.74.0",
+    "react-native-web": "^0.19.13"
   },
   "devDependencies": {
     "@types/react": "^18.2.45",

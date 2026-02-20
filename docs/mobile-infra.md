@@ -1,21 +1,21 @@
-# VaultAI Mobile Infra Runbook
+# HammerLock AI Mobile Infra Runbook
 
 _Last updated: 2026-02-14 — Infra_
 
 ## 1. Overview
-VaultAI’s mobile client will be built as a React Native app using Expo + EAS (Expo Application Services). The control surface lives in a shared codebase with the web/electron clients, but mobile compilation relies on Expo-managed native projects. The pipeline below standardizes build + release so VaultAI engineers can ship reproducible TestFlight builds without leaking keys or coupling tightly to local machines.
+HammerLock AI’s mobile client will be built as a React Native app using Expo + EAS (Expo Application Services). The control surface lives in a shared codebase with the web/electron clients, but mobile compilation relies on Expo-managed native projects. The pipeline below standardizes build + release so HammerLock AI engineers can ship reproducible TestFlight builds without leaking keys or coupling tightly to local machines.
 
 ## 2. EAS Build Setup
 1. **Tooling prerequisites**
    - `npm install -g eas-cli`
    - Ensure Node 20 LTS, Xcode (latest stable), and fastlane CLIs are installed.
-   - Sign in to Expo: `eas login` (use the shared VaultAI Expo account stored in 1Password).
+   - Sign in to Expo: `eas login` (use the shared HammerLock AI Expo account stored in 1Password).
 2. **Project bootstrap**
-   - Inside repo: `cd mobile && npx create-expo-app@latest vaultai-mobile --template expo-template blank` (or wire up existing mobile package).
+   - Inside repo: `cd mobile && npx create-expo-app@latest hammerlock-mobile --template expo-template blank` (or wire up existing mobile package).
    - Configure `app.json/app.config.ts` with `expo.extra` for API base URLs, release channel, and Sentry DSN (no secrets here; only identifiers).
-   - Initialize EAS: `eas init --id vaultai-mobile` to bind project to the Expo dashboard.
+   - Initialize EAS: `eas init --id hammerlock-mobile` to bind project to the Expo dashboard.
 3. **Managed credentials**
-   - iOS: run `eas credentials` to upload the shared VaultAI Apple Distribution cert + push key (stored in 1Password). EAS will manage provisioning profiles.
+   - iOS: run `eas credentials` to upload the shared HammerLock AI Apple Distribution cert + push key (stored in 1Password). EAS will manage provisioning profiles.
    - Android (future): store keystore in Expo credentials store; keep backup in the infra vault.
 4. **Build profiles** (`eas.json`)
    - Define `production`, `preview`, `development` profiles with distinct release channels (`production`, `beta`, `dev`) and `.env.*` selectors.
@@ -36,14 +36,14 @@ VaultAI’s mobile client will be built as a React Native app using Expo + EAS (
 
 ## 3. TestFlight Distribution
 1. **App Store Connect linkage**
-   - Use the VaultAI Apple Developer team. App identifier: `ai.vault.mobile` (reserve via App Store Connect → Certificates, Identifiers & Profiles).
+   - Use the HammerLock AI Apple Developer team. App identifier: `ai.hammerlock.mobile` (reserve via App Store Connect → Certificates, Identifiers & Profiles).
    - Configure bundle ID inside `app.json` (`expo.ios.bundleIdentifier`).
 2. **Upload path**
    - EAS automatically uploads builds to App Store Connect when the account is linked. Verify in Expo dashboard under _Build details → Submit to App Store_.
    - Alternative manual upload: download the `.ipa` artifact and run `xcrun altool --upload-app --type ios --file <build>.ipa --apple-id <apple_id> --password <app-specific-pass>`.
 3. **Internal testing**
    - Create TestFlight groups: `Infra`, `Core dev`, `Stakeholders`.
-   - Add release notes referencing the associated VaultAI release tag.
+   - Add release notes referencing the associated HammerLock AI release tag.
    - Gate production promotion on automated smoke tests (see Section 4) + stakeholder sign-off recorded in Linear ticket.
 4. **Versioning**
    - Align `expo.version` with semantic version from the server release. Increment `ios.buildNumber` per build to avoid TestFlight rejection.
@@ -67,7 +67,7 @@ VaultAI’s mobile client will be built as a React Native app using Expo + EAS (
 ## 6. API Key Handling (Server-Side Only)
 1. **Principle**: Expo/React Native bundles are client-facing; never embed OpenAI/Anthropic/API keys in the app. Treat the mobile app as an untrusted client.
 2. **Approach**
-   - Mobile app authenticates with VaultAI backend (Cognito/Supabase/custom) via OAuth/passwordless.
+   - Mobile app authenticates with HammerLock AI backend (Cognito/Supabase/custom) via OAuth/passwordless.
    - Backend issues short-lived session tokens (JWT) and proxies all AI/provider requests; secrets remain on the server.
    - Use feature-scoped capability flags (returned via API) so the mobile app can enable/disable features without exposing credentials.
 3. **Secure channel**

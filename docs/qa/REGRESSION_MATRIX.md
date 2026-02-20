@@ -1,8 +1,8 @@
-# VaultAI Regression Matrix
+# HammerLock AI Regression Matrix
 
 _Last updated: 2026-02-14_
 
-This matrix tracks the manual/automated coverage for the current VaultAI surface (Next.js web console + Electron desktop wrapper).
+This matrix tracks the manual/automated coverage for the current HammerLock AI surface (Next.js web console + Electron desktop wrapper).
 
 ## Test Environments
 

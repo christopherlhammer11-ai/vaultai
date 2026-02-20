@@ -21,7 +21,7 @@ export type SubscriptionStatus = {
   activatedAt: string | null;
 };
 
-const FREE_MESSAGE_LIMIT = 5;
+const FREE_MESSAGE_LIMIT = 999999; // uncapped — re-enable when products go live
 
 const STORAGE_KEY = "vault_subscription";
 

@@ -709,6 +709,26 @@ async function callDeepSeek(systemPrompt: string, prompt: string) {
 // Track the last LLM error for better diagnostics in serverless
 let lastLLMError: string | null = null;
 
+// Track which model was used for credit cost assignment (chat vs chat_premium)
+let lastModelUsed: string = "";
+
+/**
+ * Determine credit cost type based on model name.
+ * Lightweight/fast models = "chat" (1 unit), premium/large models = "chat_premium" (3 units).
+ * Ollama/gateway = "chat" (local models are free anyway — bypassed elsewhere).
+ */
+function creditTypeForModel(model: string): string {
+  const m = model.toLowerCase();
+  // Lightweight models — 1 unit
+  if (m.includes("4o-mini") || m.includes("flash") || m.includes("phi")
+    || m.includes("deepseek") || m.includes("mistral-small") || m.includes("llama")
+    || m.includes("groq") || m === "ollama" || m === "gateway") {
+    return "chat";
+  }
+  // Premium models (GPT-4o, Claude Sonnet/Opus, Gemini Pro) — 3 units
+  return "chat_premium";
+}
+
 async function callGateway(prompt: string): Promise<string> {
   // Skip CLI gateway in serverless environments (it doesn't exist there)
   const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
@@ -971,13 +991,22 @@ Rules:
 
   // Try cloud providers first (better quality + proper multi-turn context)
   if (hasCloudProvider) {
-    const cloudReply =
-      (await callOpenAIMulti(systemPrompt, historyMessages, scrubbedUser)) ??
-      (await callAnthropicMulti(systemPrompt, historyMessages, scrubbedUser)) ??
-      (await callGeminiMulti(systemPrompt, historyMessages, scrubbedUser)) ??
-      (await callGroqMulti(systemPrompt, historyMessages, scrubbedUser)) ??
-      (await callMistralMulti(systemPrompt, historyMessages, scrubbedUser)) ??
-      (await callDeepSeekMulti(systemPrompt, historyMessages, scrubbedUser));
+    let cloudReply: string | null = null;
+    const providers: Array<{ fn: () => Promise<string | null>; model: string }> = [
+      { fn: () => callOpenAIMulti(systemPrompt, historyMessages, scrubbedUser), model: process.env.OPENAI_MODEL || "gpt-4o-mini" },
+      { fn: () => callAnthropicMulti(systemPrompt, historyMessages, scrubbedUser), model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929" },
+      { fn: () => callGeminiMulti(systemPrompt, historyMessages, scrubbedUser), model: process.env.GEMINI_MODEL || "gemini-2.0-flash" },
+      { fn: () => callGroqMulti(systemPrompt, historyMessages, scrubbedUser), model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile" },
+      { fn: () => callMistralMulti(systemPrompt, historyMessages, scrubbedUser), model: process.env.MISTRAL_MODEL || "mistral-small-latest" },
+      { fn: () => callDeepSeekMulti(systemPrompt, historyMessages, scrubbedUser), model: process.env.DEEPSEEK_MODEL || "deepseek-chat" },
+    ];
+    for (const p of providers) {
+      cloudReply = await p.fn();
+      if (cloudReply) {
+        lastModelUsed = p.model;
+        break;
+      }
+    }
 
     // Restore any placeholders the LLM might echo back
     if (cloudReply) return anon.restore(cloudReply);
@@ -988,8 +1017,9 @@ Rules:
     ? history.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n") + `\nUser: ${userPrompt}`
     : userPrompt;
   const localReply = await callOllama(systemPrompt, localPromptWithHistory);
-  if (localReply) return anon.restore(localReply);
+  if (localReply) { lastModelUsed = "ollama"; return anon.restore(localReply); }
 
+  lastModelUsed = "gateway";
   return await callGateway(userPrompt);
 }
 
@@ -1911,7 +1941,7 @@ export async function POST(req: Request) {
       if (!results.length) {
         // Fall through to normal LLM if no search results — pass same anonymizer
         const reply = await routeToLLM(normalized, { userProfile, agentSystemPrompt, locale, history: chatHistory, anonymizer: anon });
-        if (!isServerless) await deductCredit("chat");
+        if (!isServerless) await deductCredit(creditTypeForModel(lastModelUsed));
         const fallbackParsed = parseFollowUps(reply);
         return NextResponse.json({
           response: cleanLLMResponse(fallbackParsed.clean),
@@ -2048,7 +2078,7 @@ ${formattedResults}
     const actionResult = needsActionExecution(normalized);
     if (actionResult) {
       const gatewayResult = await callGatewayAction(actionResult.message, actionResult.type);
-      if (!isServerless) await deductCredit("chat");
+      if (!isServerless) await deductCredit(creditTypeForModel(lastModelUsed));
       return NextResponse.json({
         response: gatewayResult.response,
         actionType: gatewayResult.actionType,
@@ -2294,7 +2324,7 @@ ${formattedResults}
     if (ttsMatch) {
       const actualQuery = ttsMatch[1].trim();
       const reply = await routeToLLM(actualQuery, { userProfile, agentSystemPrompt, locale, history: chatHistory });
-      if (!isServerless) await deductCredit("chat");
+      if (!isServerless) await deductCredit(creditTypeForModel(lastModelUsed));
       return NextResponse.json({ response: reply });
     }
 
@@ -2347,7 +2377,7 @@ ${formattedResults}
         `Here's the user's recent conversation history. Summarize the key themes and topics they discussed this session in a natural, warm way. Don't list messages — synthesize. Use a conversational tone like "You've been exploring..." or "This week you talked about...". Keep it to 3-5 sentences.\n\nHistory:\n${historyText}`,
         { userProfile, locale }
       );
-      if (!isServerless) await deductCredit("chat");
+      if (!isServerless) await deductCredit(creditTypeForModel(lastModelUsed));
       return NextResponse.json({ response: summaryReply });
     }
 
@@ -2433,7 +2463,7 @@ ${formattedResults}
         imagePrompt,
         { userProfile, agentSystemPrompt, locale, history: chatHistory }
       );
-      if (!isServerless) await deductCredit("chat");
+      if (!isServerless) await deductCredit(creditTypeForModel(lastModelUsed));
       return NextResponse.json({ response: reply });
     }
 
@@ -2466,7 +2496,7 @@ ${formattedResults}
     }
 
     const reply = await routeToLLM(normalized, { userProfile, agentSystemPrompt, locale, history: chatHistory });
-    if (!isServerless) await deductCredit("chat");
+    if (!isServerless) await deductCredit(creditTypeForModel(lastModelUsed));
     const mainParsed = parseFollowUps(reply);
     return NextResponse.json({
       response: cleanLLMResponse(mainParsed.clean),

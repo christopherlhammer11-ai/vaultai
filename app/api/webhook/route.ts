@@ -15,6 +15,14 @@ function determineTierFromPrice(priceId: string | undefined): string {
   return "core"; // fallback
 }
 
+/** Check if a price ID is a credit booster add-on (not a base plan) */
+function isBoosterPrice(priceId: string | undefined): false | { units: number; name: string } {
+  if (!priceId) return false;
+  if (priceId === process.env.STRIPE_PRICE_BOOSTER_MONTHLY) return { units: 1500, name: "booster" };
+  if (priceId === process.env.STRIPE_PRICE_POWER_MONTHLY) return { units: 5000, name: "power" };
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   if (!STRIPE_SECRET) {
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
@@ -61,6 +69,33 @@ export async function POST(req: NextRequest) {
         // Determine tier from line items
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
         const priceId = lineItems.data[0]?.price?.id;
+
+        // Check if this is a credit booster add-on (not a base plan)
+        const booster = isBoosterPrice(priceId);
+        if (booster) {
+          // Booster/Power add-on — attach to existing customer's license
+          const customerId = session.customer as string;
+          if (customerId) {
+            const existingLicense = await prisma.license.findFirst({
+              where: { stripeCustomerId: customerId, status: "active" },
+              orderBy: { createdAt: "desc" },
+            });
+            if (existingLicense) {
+              await prisma.license.update({
+                where: { id: existingLicense.id },
+                data: {
+                  boosterUnits: booster.units,
+                  boosterSubscriptionId: (session.subscription as string) ?? null,
+                },
+              });
+              console.log("[webhook] Booster attached:", { name: booster.name, units: booster.units, licenseId: existingLicense.id });
+            } else {
+              console.warn("[webhook] Booster purchased but no active license found for customer:", customerId);
+            }
+          }
+          break;
+        }
+
         const tier = determineTierFromPrice(priceId);
         const billingType = session.mode === "payment" ? "onetime" : "subscription";
 
@@ -155,13 +190,27 @@ export async function POST(req: NextRequest) {
       });
 
       try {
-        await prisma.license.updateMany({
-          where: { stripeSubscriptionId: subscription.id },
-          data: { status: "expired" },
+        // Check if this is a booster subscription being cancelled
+        const boosterLicense = await prisma.license.findFirst({
+          where: { boosterSubscriptionId: subscription.id },
         });
-        console.log("[webhook] License expired for subscription:", subscription.id);
+        if (boosterLicense) {
+          // Remove booster units but don't expire the base license
+          await prisma.license.update({
+            where: { id: boosterLicense.id },
+            data: { boosterUnits: 0, boosterSubscriptionId: null },
+          });
+          console.log("[webhook] Booster removed for license:", boosterLicense.id);
+        } else {
+          // Base subscription cancelled — expire the license
+          await prisma.license.updateMany({
+            where: { stripeSubscriptionId: subscription.id },
+            data: { status: "expired" },
+          });
+          console.log("[webhook] License expired for subscription:", subscription.id);
+        }
       } catch (err) {
-        console.error("[webhook] Failed to expire license:", (err as Error).message);
+        console.error("[webhook] Failed to handle subscription deletion:", (err as Error).message);
       }
       break;
     }

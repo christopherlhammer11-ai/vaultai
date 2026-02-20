@@ -8,21 +8,21 @@
       "distribution": "internal",
       "channel": "dev",
       "env": {
-        "VAULTAI_ENV": "development"
+        "HAMMERLOCK_ENV": "development"
       }
     },
     "preview": {
       "distribution": "internal",
       "channel": "beta",
       "env": {
-        "VAULTAI_ENV": "preview"
+        "HAMMERLOCK_ENV": "preview"
       }
     },
     "production": {
       "channel": "production",
       "autoIncrement": true,
       "env": {
-        "VAULTAI_ENV": "production"
+        "HAMMERLOCK_ENV": "production"
       }
     }
   },

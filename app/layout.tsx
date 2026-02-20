@@ -26,6 +26,19 @@ export const metadata: Metadata = {
     icon: "/icon-192.png",
     apple: "/apple-touch-icon.png",
   },
+  openGraph: {
+    title: "HammerLock AI — Your AI. Your Data. Your Rules.",
+    description: "Local-first AI with encrypted memory built for operators. Privacy-first intelligence — no cloud accounts, no data leakage.",
+    images: [{ url: "/brand/hammerlock-og-banner.jpg", width: 1024, height: 1008 }],
+    siteName: "HammerLock AI",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HammerLock AI — Your AI. Your Data. Your Rules.",
+    description: "Local-first AI with encrypted memory built for operators.",
+    images: ["/brand/hammerlock-og-banner.jpg"],
+  },
 };
 
 export const viewport: Viewport = {

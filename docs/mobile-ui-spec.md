@@ -1,10 +1,10 @@
-# VaultAI Mobile App — MVP UI Spec
+# HammerLock AI Mobile App — MVP UI Spec
 
 _Last updated: 2026-02-14 · Author: DemoKid_
 
 ## 1. Purpose & Principles
 
-- **Goal:** Deliver a touch-first VaultAI client that feels purpose-built for phones without losing the clarity of the desktop chat experience.
+- **Goal:** Deliver a touch-first HammerLock AI client that feels purpose-built for phones without losing the clarity of the desktop chat experience.
 - **Principles:**
   1. **Security-first unlock** — biometrics + passphrase fallback with clear affordances.
   2. **Chat stays in focus** — single-column conversation optimized for thumbs, quick toggles, and low-friction voice input.
@@ -55,7 +55,7 @@ _Last updated: 2026-02-14 · Author: DemoKid_
 **Structure:**
 1. **Header (56–64 px height):**
    - Left: vault avatar + chevron (opens vault drawer).
-   - Center: current chat title or "VaultAI"; sublabel for model/status.
+   - Center: current chat title or "HammerLock AI"; sublabel for model/status.
    - Right: icons for search and overflow menu (includes clear chat, export, settings).
 2. **Conversation list:** Scrollable area with message bubbles.
 3. **Inline system cards:** (Model switch, warnings) full-width cards anchored to timeline.

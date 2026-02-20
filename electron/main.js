@@ -27,13 +27,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 
-// Load .env.local from multiple locations (first found wins per key)
+// Load .env from multiple locations (first found wins per key).
+// Skip files that look encrypted (start with HAMMERLOCK_ENC:).
+import fs from "fs";
+
+function loadEnvIfPlaintext(envPath) {
+  try {
+    const content = fs.readFileSync(envPath, "utf-8");
+    if (content.startsWith("HAMMERLOCK_ENC:")) {
+      console.log(`[hammerlock] Skipping encrypted env: ${envPath}`);
+      return;
+    }
+    dotenvConfig({ path: envPath });
+  } catch {
+    // File doesn't exist — that's fine
+  }
+}
+
 // 1. ~/.hammerlock/.env — user's own config (highest priority)
-// 2. App bundle root — for dev mode
+loadEnvIfPlaintext(path.join(os.homedir(), ".hammerlock", ".env"));
+// 2. App bundle root .env.local — bundled with the build
+loadEnvIfPlaintext(path.join(ROOT, ".env.local"));
 // 3. Source checkout — fallback for local dev
-dotenvConfig({ path: path.join(os.homedir(), ".hammerlock", ".env") });
-dotenvConfig({ path: path.join(ROOT, ".env.local") });
-dotenvConfig({ path: path.join(ROOT, ".env") });
+loadEnvIfPlaintext(path.join(ROOT, ".env"));
 const IS_DEV = !app.isPackaged;
 
 const NEXT_PORT = 3100; // Use a different port from dev to avoid conflicts
@@ -43,6 +59,23 @@ const GATEWAY_PROFILE = "hammerlock";
 let mainWindow = null;
 let gatewayProcess = null;
 let nextProcess = null;
+
+// ---------------------------------------------------------------------------
+// Single instance lock — prevent 20 windows from spawning
+// ---------------------------------------------------------------------------
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  // Another instance is already running — quit this one immediately
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    // Someone tried to open a second instance — focus the existing window
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Port check
@@ -62,7 +95,7 @@ function isPortInUse(port) {
 // ---------------------------------------------------------------------------
 // Wait for a port to accept connections
 // ---------------------------------------------------------------------------
-function waitForPort(port, timeoutMs = 15000) {
+function waitForPort(port, timeoutMs = 45000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     const check = () => {
@@ -253,17 +286,9 @@ function createWindow() {
 async function transitionToVault() {
   if (!mainWindow) return;
 
-  // Check license status before navigating
+  // Skip license gate for now — products aren't for sale yet.
+  // When ready to enforce, re-enable the /api/license/check call.
   let targetPath = "/vault";
-  try {
-    const res = await fetch(`http://127.0.0.1:${NEXT_PORT}/api/license/check`);
-    const data = await res.json();
-    if (data.needsActivation) {
-      targetPath = "/activate";
-    }
-  } catch {
-    // If check fails, go to vault anyway (fail-open for first setup)
-  }
 
   const targetURL = `http://127.0.0.1:${NEXT_PORT}${targetPath}`;
 
@@ -539,17 +564,8 @@ app.on("activate", async () => {
         console.error("[hammerlock] Re-launch failed:", err);
       }
     } else {
-      // App is ready, check license then go to vault or activate
+      // Skip license gate — go straight to vault
       let reactivatePath = "/vault";
-      try {
-        const res = await fetch(`http://127.0.0.1:${NEXT_PORT}/api/license/check`);
-        const data = await res.json();
-        if (data.needsActivation) {
-          reactivatePath = "/activate";
-        }
-      } catch {
-        // Fail-open: go to vault
-      }
       mainWindow = new BrowserWindow({
         width: 1280,
         height: 860,

@@ -4,6 +4,7 @@ import { getCreditInfo } from "@/lib/compute-credits";
 /**
  * GET /api/credits
  * Returns compute unit balance for premium desktop users.
+ * Includes period info for monthly reset tracking.
  * Units are only tracked when using the bundled API key.
  */
 export async function GET() {

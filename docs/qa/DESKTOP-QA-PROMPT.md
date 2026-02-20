@@ -1,12 +1,12 @@
-# OpenClaw QA Team — VaultAI Desktop DMG Testing
+# OpenClaw QA Team — HammerLock AI Desktop DMG Testing
 
 ## Your Mission
-You are the QA team for VaultAI Desktop (macOS Electron app). Your job is to install and test the latest DMG build, document every bug you find, and verify that features work correctly. You do NOT modify any source code — you only test, report, and verify.
+You are the QA team for HammerLock AI Desktop (macOS Electron app). Your job is to install and test the latest DMG build, document every bug you find, and verify that features work correctly. You do NOT modify any source code — you only test, report, and verify.
 
 ## Setup
-1. Open `VaultAI.dmg` from the Desktop
-2. Drag VaultAI to Applications (or run directly from the DMG)
-3. Launch VaultAI — you should see a cinematic splash screen, then the vault unlock page
+1. Open `HammerLock AI.dmg` from the Desktop
+2. Drag HammerLock AI to Applications (or run directly from the DMG)
+3. Launch HammerLock AI — you should see a cinematic splash screen, then the vault unlock page
 
 ## Test Matrix — Go through each item and report PASS/FAIL
 
@@ -25,7 +25,7 @@ You are the QA team for VaultAI Desktop (macOS Electron app). Your job is to ins
 - [ ] Vault unlock with wrong password shows error
 
 ### 3. Menu Bar (NEW)
-- [ ] **VaultAI** menu: About, Hide, Quit all work
+- [ ] **HammerLock AI** menu: About, Hide, Quit all work
 - [ ] **File > New Window** (⌘N) opens a new window
 - [ ] **File > New Chat** (⇧⌘N) starts a fresh conversation
 - [ ] **File > Settings** (⌘,) opens the API key modal
@@ -35,7 +35,7 @@ You are the QA team for VaultAI Desktop (macOS Electron app). Your job is to ins
 - [ ] **View > Zoom In/Out/Reset** work correctly
 - [ ] **View > Full Screen** toggles fullscreen mode
 - [ ] **Window > Minimize** works
-- [ ] **Help > VaultAI Documentation** opens browser
+- [ ] **Help > HammerLock AI Documentation** opens browser
 - [ ] **Help > Report an Issue** opens GitHub issues
 - [ ] **Help** shows version number
 
@@ -98,7 +98,7 @@ You are the QA team for VaultAI Desktop (macOS Electron app). Your job is to ins
 - [ ] Can enter other provider keys (Anthropic, Gemini, Groq, Mistral, DeepSeek, Brave)
 - [ ] Saving keys shows success confirmation
 - [ ] After saving, `status` command shows providers as "configured"
-- [ ] Keys persist after app restart (stored in ~/.vaultai/.env)
+- [ ] Keys persist after app restart (stored in ~/.hammerlock/.env)
 
 ### 10. Language Support
 - [ ] Language picker shows all 11 languages
@@ -131,7 +131,7 @@ You are the QA team for VaultAI Desktop (macOS Electron app). Your job is to ins
 - [ ] Tutorial doesn't show again after completion
 
 ### 15. Status Command
-- [ ] Type `status` — shows VaultAI Status with all provider statuses
+- [ ] Type `status` — shows HammerLock AI Status with all provider statuses
 - [ ] Ollama shows "connected" or "offline" correctly
 - [ ] OpenAI/Brave show "configured" when keys are set
 - [ ] Persona shows "loaded" with correct path

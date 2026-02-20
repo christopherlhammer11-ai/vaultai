@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import NextImage from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSubscription, FREE_MESSAGE_LIMIT } from "@/lib/subscription-store";
 import { useVault, type VaultMessage, type VaultFile } from "@/lib/vault-store";
@@ -563,7 +564,9 @@ export default function ChatPage() {
   const [tutorialStep, setTutorialStep] = useState(-1);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, string>>({});
   const [onboardingInput, setOnboardingInput] = useState("");
-  const [computeUnits, setComputeUnits] = useState<{ remaining: number; total: number; usingOwnKey: boolean } | null>(null);
+  const [computeUnits, setComputeUnits] = useState<{ remaining: number; total: number; usingOwnKey: boolean; periodEnd?: string; monthlyAllocation?: number; boosterUnits?: number } | null>(null);
+  const [ollamaDetected, setOllamaDetected] = useState<boolean | null>(null); // null = unknown/loading
+  const [ollamaBannerDismissed, setOllamaBannerDismissed] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -908,7 +911,7 @@ export default function ChatPage() {
         .then(res => res.json())
         .then(data => {
           if (data.remainingUnits !== undefined) {
-            setComputeUnits({ remaining: data.remainingUnits, total: data.totalUnits, usingOwnKey: data.usingOwnKey });
+            setComputeUnits({ remaining: data.remainingUnits, total: data.totalUnits, usingOwnKey: data.usingOwnKey, periodEnd: data.periodEnd, monthlyAllocation: data.monthlyAllocation, boosterUnits: data.boosterUnits });
           }
         })
         .catch(() => {});
@@ -930,6 +933,8 @@ export default function ChatPage() {
           setNeedsApiKeys(true);
           setShowApiKeyModal(true);
         }
+        // Track Ollama status for setup banner
+        if (data.providers) setOllamaDetected(!!data.providers.ollama);
         // Desktop users: bundled key from .env.local handles it — no modal needed
       })
       .catch(() => {});
@@ -1047,6 +1052,7 @@ export default function ChatPage() {
         const data = await res.json();
         if (!mounted) return;
         setGatewayStatus(data.status === "ready" ? "connected" : data.status === "no_provider" ? "offline" : "connecting");
+        if (data.providers) setOllamaDetected(!!data.providers.ollama);
       } catch {
         if (mounted) setGatewayStatus("offline");
       }
@@ -2474,7 +2480,7 @@ export default function ChatPage() {
             <button className="sidebar-toggle" onClick={() => setSidebarOpen(prev => !prev)} title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}>
               {sidebarOpen ? <PanelLeftClose size={16} /> : <Menu size={16} />}
             </button>
-            <Lock size={18} /><span>HAMMERLOCK AI</span>
+            <NextImage src="/brand/hammerlock-icon-192.png" alt="" width={20} height={20} style={{ borderRadius: 3 }} /><span>HAMMERLOCK AI</span>
           </div>
           <div className="topbar-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {(() => {
@@ -2749,42 +2755,145 @@ export default function ChatPage() {
                   );
                 }
                 const userName = vaultData?.settings?.user_name as string | undefined;
+                const heroAgents = BUILT_IN_AGENTS.filter(a => a.id !== "general").slice(0, 10);
                 return (
                   <>
-                    <div className="welcome-icon-wrap">
-                      <Lock size={32} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
-                      <div className="welcome-glow" />
+                    {/* Hero lock with orbital ring */}
+                    <div className="welcome-hero">
+                      <div className="welcome-orbit-ring" />
+                      <div className="welcome-icon-wrap">
+                        <Shield size={28} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
+                        <div className="welcome-glow" />
+                      </div>
                     </div>
-                    <h2 className="empty-title">{userName ? `${t.welcome_back || "Welcome back"}, ${userName}` : t.chat_empty_title}</h2>
+
+                    {/* Title + animated tagline */}
+                    <h2 className="empty-title">
+                      {userName ? `${t.welcome_back || "Welcome back"}, ${userName}` : t.chat_empty_title}
+                    </h2>
+                    <p className="empty-tagline">{(t as any).chat_empty_tagline || "Your AI. Your Data. Your Rules."}</p>
                     <p className="empty-subtitle">{t.chat_empty_subtitle}</p>
+
+                    {/* Agent showcase — color dots */}
+                    <div className="agent-showcase">
+                      {heroAgents.map((agent, i) => (
+                        <button
+                          key={agent.id}
+                          className="agent-dot"
+                          title={`${agent.name} — ${agent.tagline}`}
+                          onClick={() => { setActiveAgentId(agent.id); }}
+                          style={{ "--dot-color": agent.color, "--dot-delay": `${i * 0.06}s` } as React.CSSProperties}
+                        >
+                          <span className="agent-dot-pip" />
+                          <span className="agent-dot-name">{agent.name}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Quick action cards */}
                     <div className="suggestion-grid">
-                      <button className="suggestion-card" onClick={() => sendCommand(t.pill_status)}>
-                        <span className="suggestion-icon">⚡</span>
+                      <button className="suggestion-card" style={{ "--card-delay": "0.1s" } as React.CSSProperties} onClick={() => sendCommand(t.pill_status)}>
+                        <span className="suggestion-icon"><Zap size={18} /></span>
                         <span className="suggestion-label">{t.sidebar_system_status || "System Status"}</span>
-                        <span className="suggestion-text">{t.pill_status}</span>
+                        <span className="suggestion-text">Check connections</span>
                       </button>
-                      <button className="suggestion-card" onClick={() => sendCommand(t.pill_persona)}>
-                        <span className="suggestion-icon">🧠</span>
+                      <button className="suggestion-card" style={{ "--card-delay": "0.15s" } as React.CSSProperties} onClick={() => sendCommand(t.pill_persona)}>
+                        <span className="suggestion-icon"><User size={18} /></span>
                         <span className="suggestion-label">{t.sidebar_my_persona || "My Persona"}</span>
-                        <span className="suggestion-text">{t.pill_persona}</span>
+                        <span className="suggestion-text">View your profile</span>
                       </button>
-                      <button className="suggestion-card" onClick={() => { setInput("search "); inputRef.current?.focus(); }}>
-                        <span className="suggestion-icon">🌐</span>
+                      <button className="suggestion-card" style={{ "--card-delay": "0.2s" } as React.CSSProperties} onClick={() => { setInput("search "); inputRef.current?.focus(); }}>
+                        <span className="suggestion-icon"><Globe size={18} /></span>
                         <span className="suggestion-label">{t.site_feat_search_title || "Web Search"}</span>
-                        <span className="suggestion-text">{t.pill_search}</span>
+                        <span className="suggestion-text">Search privately</span>
                       </button>
-                      <button className="suggestion-card" onClick={() => sendCommand(t.pill_report)}>
-                        <span className="suggestion-icon">📊</span>
+                      <button className="suggestion-card" style={{ "--card-delay": "0.25s" } as React.CSSProperties} onClick={() => sendCommand(t.pill_report)}>
+                        <span className="suggestion-icon"><BarChart3 size={18} /></span>
                         <span className="suggestion-label">{t.sidebar_generate_report || "Generate Report"}</span>
-                        <span className="suggestion-text">{t.pill_report}</span>
+                        <span className="suggestion-text">Build a report</span>
                       </button>
                     </div>
-                    <div className="feature-hints">
-                      <div className="feature-hint">🔐 {t.site_footer_aes || "AES-256 Encrypted"}</div>
-                      <div className="feature-hint">🎙️ {t.site_feat_voice_title || "Voice Input"}</div>
-                      <div className="feature-hint">🤖 {t.site_feat_agents_title || "6 AI Agents"}</div>
-                      <div className="feature-hint">📄 {t.site_feat_pdf_title || "PDF Upload"}</div>
+
+                    {/* Trust bar */}
+                    <div className="trust-bar">
+                      <div className="trust-item"><Lock size={12} /> AES-256</div>
+                      <div className="trust-divider" />
+                      <div className="trust-item"><Shield size={12} /> Local-First</div>
+                      <div className="trust-divider" />
+                      <div className="trust-item"><Terminal size={12} /> 11 Agents</div>
                     </div>
+
+                    {/* Ollama setup banner — shown on desktop when Ollama not detected */}
+                    {desktop && ollamaDetected === false && !ollamaBannerDismissed && (
+                      <div className="ollama-setup-banner" style={{
+                        marginTop: 24, maxWidth: 520, width: "100%",
+                        padding: "20px 24px", borderRadius: "var(--radius-lg, 12px)",
+                        background: "rgba(0,255,136,0.04)", border: "1px solid rgba(0,255,136,0.15)",
+                        textAlign: "left", position: "relative",
+                      }}>
+                        <button onClick={() => setOllamaBannerDismissed(true)} style={{
+                          position: "absolute", top: 10, right: 12, background: "none", border: "none",
+                          color: "var(--text-muted)", cursor: "pointer", padding: 4,
+                        }}><X size={14} /></button>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                          <span style={{ fontSize: "1.3rem" }}>🦙</span>
+                          <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                            Want free, unlimited local AI?
+                          </strong>
+                        </div>
+                        <p style={{ margin: "0 0 12px", color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                          Install <strong>Ollama</strong> to run AI models directly on your Mac — no cloud, no credits, completely private. It takes 2 minutes:
+                        </p>
+                        <div style={{
+                          display: "flex", flexDirection: "column", gap: 8,
+                          padding: "12px 16px", background: "var(--bg-secondary, rgba(255,255,255,0.03))",
+                          borderRadius: "var(--radius-md, 8px)", fontSize: "0.82rem", color: "var(--text-secondary)",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ color: "var(--accent)", fontWeight: 700, minWidth: 16 }}>1.</span>
+                            <span>Download Ollama from <a href="https://ollama.com" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "underline" }}>ollama.com</a></span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ color: "var(--accent)", fontWeight: 700, minWidth: 16 }}>2.</span>
+                            <span>Open Terminal and run: <code style={{ background: "rgba(0,255,136,0.08)", color: "var(--accent)", padding: "2px 6px", borderRadius: 4 }}>ollama pull llama3.1</code></span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ color: "var(--accent)", fontWeight: 700, minWidth: 16 }}>3.</span>
+                            <span>Restart HammerLock AI — Ollama connects automatically</span>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
+                          <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer" style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "8px 16px", background: "var(--accent)", color: "#000",
+                            borderRadius: "var(--radius-md, 8px)", fontWeight: 600, fontSize: "0.82rem",
+                            textDecoration: "none", transition: "opacity 0.15s",
+                          }}>
+                            <Download size={14} /> Download Ollama
+                          </a>
+                          <button onClick={() => setOllamaBannerDismissed(true)} style={{
+                            background: "none", border: "1px solid var(--border-color, rgba(255,255,255,0.1))",
+                            color: "var(--text-muted)", padding: "8px 14px", borderRadius: "var(--radius-md, 8px)",
+                            cursor: "pointer", fontSize: "0.82rem",
+                          }}>
+                            I already have it
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ollama connected confirmation — brief success state */}
+                    {desktop && ollamaDetected === true && (
+                      <div style={{
+                        marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "6px 14px", borderRadius: 20, fontSize: "0.78rem",
+                        background: "rgba(0,255,136,0.06)", color: "var(--accent)",
+                        border: "1px solid rgba(0,255,136,0.12)",
+                      }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} />
+                        Ollama connected — local AI active
+                      </div>
+                    )}
                   </>
                 );
               })()}
@@ -3324,20 +3433,33 @@ export default function ChatPage() {
                   {computeUnits && !computeUnits.usingOwnKey && (
                     <span style={{
                       marginLeft: 12,
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
                       color: computeUnits.remaining <= 50 ? "var(--danger, #ff4444)" : "var(--text-secondary)",
                     }}>
-                      {computeUnits.remaining} {t.compute_units}
+                      <span style={{
+                        display: 'inline-block', width: 48, height: 4, borderRadius: 2,
+                        background: 'rgba(255,255,255,0.08)', overflow: 'hidden', verticalAlign: 'middle',
+                      }}>
+                        <span style={{
+                          display: 'block', height: '100%', borderRadius: 2,
+                          width: `${Math.min(100, Math.round((computeUnits.remaining / Math.max(computeUnits.total, 1)) * 100))}%`,
+                          background: computeUnits.remaining / computeUnits.total > 0.5 ? 'var(--accent, #00ff88)'
+                            : computeUnits.remaining / computeUnits.total > 0.2 ? '#f59e0b' : '#ff4444',
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </span>
+                      {computeUnits.remaining} / {computeUnits.total} {t.compute_units}
                       {computeUnits.remaining <= 50 && computeUnits.remaining > 0 && ` — ${t.compute_running_low}`}
                       {computeUnits.remaining <= 0 && ` — ${t.compute_add_key}`}
                     </span>
                   )}
                   {computeUnits?.usingOwnKey && (
-                    <span style={{ marginLeft: 12, color: "var(--text-secondary)" }}>{t.compute_own_key}</span>
+                    <span style={{ marginLeft: 12, color: 'var(--accent)' }}>{t.compute_own_key}</span>
                   )}
                 </>
               : subscription.active
                 ? <span style={{marginLeft:12,color:"var(--accent)"}}>{` ${subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)}`}</span>
-                : <span style={{marginLeft:12}}>{freeLeft > 0 ? t.chat_footer_free_left(freeLeft) : t.chat_footer_free_limit}</span>
+                : FREE_MESSAGE_LIMIT > 9999 ? null : <span style={{marginLeft:12}}>{freeLeft > 0 ? t.chat_footer_free_left(freeLeft) : t.chat_footer_free_limit}</span>
             }
           </div>
         </div>
