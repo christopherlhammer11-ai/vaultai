@@ -1,6 +1,7 @@
 # HammerLock AI — robots.txt
 User-agent: *
 Allow: /
+Allow: /blog/
 Disallow: /api/
 Disallow: /chat
 Disallow: /vault

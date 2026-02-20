@@ -904,7 +904,7 @@ export default function LandingPage() {
               <a href="#agents" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>AI Agents</a>
               <a href="#pricing" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Pricing</a>
               <a href="/get-app" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Download App</a>
-              <a href="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Blog &amp; Guides</a>
+              <a href="/blog/blog-index.html" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Blog &amp; Guides</a>
             </div>
           </div>
 
@@ -913,8 +913,9 @@ export default function LandingPage() {
             <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>OpenClaw</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <a href="https://github.com/christopherlhammer11-ai/hammerlock" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>GitHub Repository</a>
-              <a href="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>OpenClaw Framework</a>
-              <a href="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Enterprise Use Cases</a>
+              <a href="/blog/parallel-provider-racing.html" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Architecture Deep-Dives</a>
+              <a href="/blog/ai-glossary.html" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>AI Glossary</a>
+              <a href="/blog/citation-library.html" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Citation Library</a>
               <a href="https://ollama.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Ollama (Local AI)</a>
             </div>
           </div>

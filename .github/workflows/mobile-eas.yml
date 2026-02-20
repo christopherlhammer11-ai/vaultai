@@ -1,63 +1,95 @@
-name: Mobile Expo CI
+name: Mobile EAS Build
 
 on:
   push:
     branches: ["main"]
     paths:
       - "apps/mobile/**"
-      - "docs/mobile-infra.md"
       - ".github/workflows/mobile-eas.yml"
   pull_request:
     paths:
       - "apps/mobile/**"
-      - "docs/mobile-infra.md"
       - ".github/workflows/mobile-eas.yml"
   workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to build"
+        required: true
+        default: "android"
+        type: choice
+        options:
+          - android
+          - ios
+          - all
+      profile:
+        description: "Build profile"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - preview
+          - production
 
 permissions:
   contents: read
 
 jobs:
-  expo-preview:
-    if: ${{ hashFiles('apps/mobile/package.json') != '' }}
-    runs-on: macos-13
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npx tsc --noEmit
+
+  eas-build:
+    needs: typecheck
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        platform: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.platform == 'all' && 'android","ios' || github.event.inputs.platform)) || fromJSON('["android"]') }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      EAS_PROJECT_DIR: apps/mobile
-      NODE_ENV: development
+    defaults:
+      run:
+        working-directory: apps/mobile
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
 
-      - name: Install dependencies
-        working-directory: ${{ env.EAS_PROJECT_DIR }}
-        run: npm ci
+      - run: npm ci --legacy-peer-deps
 
-      - name: Expo Doctor
-        working-directory: ${{ env.EAS_PROJECT_DIR }}
-        run: npx expo-doctor
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
 
-      - name: EAS Build (Preview iOS)
-        working-directory: ${{ env.EAS_PROJECT_DIR }}
+      - name: EAS Build (${{ matrix.platform }})
         env:
           EAS_NO_VCS_IGNORE: 1
-        run: npx eas build --profile preview --platform ios --non-interactive
+        run: |
+          PROFILE=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.profile || 'preview' }}
+          eas build \
+            --profile $PROFILE \
+            --platform ${{ matrix.platform }} \
+            --non-interactive \
+            --no-wait
 
-      - name: EAS Build (Production iOS)
-        working-directory: ${{ env.EAS_PROJECT_DIR }}
-        env:
-          EAS_NO_VCS_IGNORE: 1
-        run: npx eas build --profile production --platform ios --non-interactive
-
-      - name: Upload Preview Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mobile-ios-preview
-          path: build/mobile-ios-preview.tar.gz
+      - name: Post build link
+        if: always()
+        run: |
+          echo "## 📱 EAS Build Submitted" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform:** ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Profile:** ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.profile || 'preview' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard:** [expo.dev/accounts/clhammer11/projects/hammerlock-mobile/builds](https://expo.dev/accounts/clhammer11/projects/hammerlock-mobile/builds)" >> $GITHUB_STEP_SUMMARY
