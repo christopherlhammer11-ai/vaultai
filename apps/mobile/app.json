@@ -16,18 +16,33 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hammerlockai.mobile"
+      "bundleIdentifier": "com.hammerlockai.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.hammerlockai.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#050505"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "single"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c2efed4e-12a8-4a5a-93dc-8118e316549f"
+      }
+    },
+    "owner": "clhammer11",
+    "updates": {
+      "url": "https://u.expo.dev/c2efed4e-12a8-4a5a-93dc-8118e316549f"
     }
   }
 }

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — HammerLockAI</title>
+<meta name="description" content="Technical deep-dives on privacy architecture, AI agents, and local-first computing from the HammerLock Research Desk.">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--card-h:#1c1c28;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--b2:rgba(0,255,136,.2);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.7;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.hero{margin-top:56px;padding:5rem 2rem 3rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,var(--gd) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;font-family:var(--fm);font-size:.7rem;font-weight:500;color:var(--g);background:var(--gd);border:1px solid var(--b2);padding:.35rem 1rem;border-radius:100px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.5rem}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.15;letter-spacing:-.03em;margin-bottom:1rem}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--g),var(--c));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.05rem;color:var(--t2);max-width:580px;margin:0 auto 2rem;font-weight:300}
+.hero-stat{font-family:var(--fm);font-size:.72rem;color:var(--t3)}
+.hero-stat span{color:var(--g)}
+.filter-nav{max-width:900px;margin:0 auto 2.5rem;display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;padding:0 2rem}
+.filter-nav a{font-family:var(--fm);font-size:.72rem;font-weight:500;color:var(--t2);text-decoration:none;padding:.45rem 1rem;border:1px solid var(--b1);border-radius:8px;transition:all .2s;white-space:nowrap}
+.filter-nav a:hover,.filter-nav a.active{color:var(--g);border-color:var(--b2);background:var(--gd)}
+.main{max-width:900px;margin:0 auto;padding:0 2rem 4rem}
+.series-group{margin-bottom:2.5rem}
+.series-heading{font-family:var(--fm);font-size:.72rem;font-weight:700;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--b1)}
+.post-card{display:flex;gap:1.2rem;padding:1.3rem 1.5rem;background:var(--card);border:1px solid var(--b1);border-radius:14px;margin-bottom:.7rem;text-decoration:none;color:inherit;transition:all .25s}
+.post-card:hover{border-color:rgba(0,255,136,.15);background:var(--card-h);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.pc-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.pc-body{flex:1;min-width:0}
+.pc-badge{font-family:var(--fm);font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border:1px solid;padding:.15rem .5rem;border-radius:5px;display:inline-block;margin-bottom:.4rem}
+.pc-title{font-size:1rem;font-weight:600;line-height:1.35;margin-bottom:.35rem}
+.pc-sub{font-size:.82rem;color:var(--t2);line-height:1.5;margin-bottom:.4rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc-meta{font-family:var(--fm);font-size:.65rem;color:var(--t3)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3)}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.hero{padding:4rem 1.5rem 2rem}.main{padding:0 1rem 3rem}.post-card{padding:1rem;gap:.8rem}.pc-icon{width:36px;height:36px;font-size:1.1rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="#" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-badge">📝 Research Desk</div>
+  <h1>HammerLockAI <em>Blog</em></h1>
+  <p class="hero-sub">Technical deep-dives on privacy architecture, AI agents, and local-first computing. No fluff. No filler. Just the engineering.</p>
+  <p class="hero-stat"><span>12</span> articles across <span>4</span> series</p>
+</header>
+
+<nav class="filter-nav">
+  <a href="#series-architecture" class="active">Architecture</a>
+  <a href="#series-privacy-architecture">Privacy</a>
+  <a href="#series-agent-series">Agents</a>
+  <a href="#series-vertical-series">Verticals</a>
+</nav>
+
+<main class="main">
+<div class="series-group" id="series-architecture">
+<h2 class="series-heading"><span style="color:#00d4ff">//</span> Architecture</h2>
+<a href="/blog/parallel-provider-racing.html" class="post-card">
+  <div class="pc-icon" style="background:#00d4ff15;color:#00d4ff">⚡</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00d4ff;border-color:#00d4ff30">Architecture</div>
+    <h3 class="pc-title">How OpenClaw's Parallel Provider Racing Works — And Why It Matters</h3>
+    <p class="pc-sub">Most AI tools work like a single-lane road. You send a query, it goes to one provider, you wait for a response. If that provider is slow, you wait lon...</p>
+    <span class="pc-meta">4 min read</span>
+  </div>
+</a>
+<a href="/blog/automatic-failover.html" class="post-card">
+  <div class="pc-icon" style="background:#00d4ff15;color:#00d4ff">🔄</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00d4ff;border-color:#00d4ff30">Architecture</div>
+    <h3 class="pc-title">Automatic Failover Explained: How HammerLockAI Keeps Running When Your LLM Doesn't</h3>
+    <p class="pc-sub">Every cloud service goes down. Every AI provider has incidents. OpenAI has had significant outages. Anthropic has had elevated error rates during high...</p>
+    <span class="pc-meta">4 min read</span>
+  </div>
+</a>
+<a href="/blog/token-streaming.html" class="post-card">
+  <div class="pc-icon" style="background:#00d4ff15;color:#00d4ff">📡</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00d4ff;border-color:#00d4ff30">Architecture</div>
+    <h3 class="pc-title">Real-Time Token Streaming: Why You See HammerLockAI Think</h3>
+    <p class="pc-sub">There's a moment every AI user knows: you submit a prompt, a spinner appears, and you wait. Five seconds. Ten seconds. Sometimes twenty. Then, all at ...</p>
+    <span class="pc-meta">5 min read</span>
+  </div>
+</a>
+<a href="/blog/byok-guide.html" class="post-card">
+  <div class="pc-icon" style="background:#00d4ff15;color:#00d4ff">🔑</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00d4ff;border-color:#00d4ff30">Architecture</div>
+    <h3 class="pc-title">Bring Your Own Keys: The Complete API Key Guide for HammerLockAI</h3>
+    <p class="pc-sub">Most AI products make a simple proposition: pay us, we handle everything. Your subscription covers the model access, the compute, the infrastructure. ...</p>
+    <span class="pc-meta">5 min read</span>
+  </div>
+</a>
+</div>
+<div class="series-group" id="series-privacy-architecture">
+<h2 class="series-heading"><span style="color:#b388ff">//</span> Privacy Architecture</h2>
+<a href="/blog/pii-anonymizer.html" class="post-card">
+  <div class="pc-icon" style="background:#b388ff15;color:#b388ff">🛡️</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#b388ff;border-color:#b388ff30">Privacy Architecture</div>
+    <h3 class="pc-title">How HammerLockAI's PII Anonymizer Works Before Your Query Hits the Cloud</h3>
+    <p class="pc-sub">When you type a query into most AI tools, everything you type goes to the cloud exactly as written. Your name, your company's name, your client's name...</p>
+    <span class="pc-meta">4 min read</span>
+  </div>
+</a>
+<a href="/blog/privacy-architecture.html" class="post-card">
+  <div class="pc-icon" style="background:#b388ff15;color:#b388ff">🔐</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#b388ff;border-color:#b388ff30">Privacy Architecture</div>
+    <h3 class="pc-title">Privacy Architecture Deep Dive: What Happens to Your Data at Every Step</h3>
+    <p class="pc-sub">"Privacy-first" is one of the most overused phrases in enterprise software. Every product claims it. Very few can show you the mechanism....</p>
+    <span class="pc-meta">6 min read</span>
+  </div>
+</a>
+</div>
+<div class="series-group" id="series-agent-series">
+<h2 class="series-heading"><span style="color:#00ff88">//</span> Agent Series</h2>
+<a href="/blog/counsel-agent.html" class="post-card">
+  <div class="pc-icon" style="background:#00ff8815;color:#00ff88">⚖️</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00ff88;border-color:#00ff8830">Agent Series</div>
+    <h3 class="pc-title">The Counsel Agent: How to Run IRAC-Form Legal Research Without Leaving Your Device</h3>
+    <p class="pc-sub">Legal research has a structure problem. Raw information — statutes, case law, regulatory guidance, secondary sources — is abundant. The bottleneck is ...</p>
+    <span class="pc-meta">5 min read</span>
+  </div>
+</a>
+<a href="/blog/analyst-agent.html" class="post-card">
+  <div class="pc-icon" style="background:#00ff8815;color:#00ff88">📊</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00ff88;border-color:#00ff8830">Agent Series</div>
+    <h3 class="pc-title">The Analyst Agent: Building Financial Models and Stress-Testing Scenarios in HammerLockAI</h3>
+    <p class="pc-sub">Financial analysis at the professional level is iteration-heavy work. You're not running a model once — you're building a base case, stress-testing it...</p>
+    <span class="pc-meta">5 min read</span>
+  </div>
+</a>
+<a href="/blog/operator-agent.html" class="post-card">
+  <div class="pc-icon" style="background:#00ff8815;color:#00ff88">⚙️</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#00ff88;border-color:#00ff8830">Agent Series</div>
+    <h3 class="pc-title">The Operator Agent: Writing SOPs and Breaking Work Into Accountable Steps</h3>
+    <p class="pc-sub">Most professionals operate from a mix of tacit knowledge, tribal memory, and habits they can't fully articulate. They know how things get done — they ...</p>
+    <span class="pc-meta">6 min read</span>
+  </div>
+</a>
+</div>
+<div class="series-group" id="series-vertical-series">
+<h2 class="series-heading"><span style="color:#ffb800">//</span> Vertical Series</h2>
+<a href="/blog/private-legal-ai.html" class="post-card">
+  <div class="pc-icon" style="background:#ffb80015;color:#ffb800">🏛️</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#ffb800;border-color:#ffb80030">Vertical Series</div>
+    <h3 class="pc-title">Private Legal AI: Running Contract Review and Case Research With Zero Cloud Exposure</h3>
+    <p class="pc-sub">The legal profession has a data problem that didn't exist a decade ago. The tools that make legal work faster — AI-assisted research, contract analysi...</p>
+    <span class="pc-meta">6 min read</span>
+  </div>
+</a>
+<a href="/blog/hipaa-compliant-ai.html" class="post-card">
+  <div class="pc-icon" style="background:#ffb80015;color:#ffb800">🏥</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#ffb800;border-color:#ffb80030">Vertical Series</div>
+    <h3 class="pc-title">HIPAA-Compliant AI: How Healthcare Teams Can Use HammerLockAI for Patient Data Analysis</h3>
+    <p class="pc-sub">Healthcare AI is simultaneously one of the highest-opportunity and highest-risk areas for AI adoption. The opportunity is clear: AI can accelerate cli...</p>
+    <span class="pc-meta">6 min read</span>
+  </div>
+</a>
+<a href="/blog/air-gap-deployment.html" class="post-card">
+  <div class="pc-icon" style="background:#ffb80015;color:#ffb800">🔒</div>
+  <div class="pc-body">
+    <div class="pc-badge" style="color:#ffb800;border-color:#ffb80030">Vertical Series</div>
+    <h3 class="pc-title">Air-Gap Deployment: Running HammerLockAI in Government and Defense Environments</h3>
+    <p class="pc-sub">The most sensitive environments in the world — classified government networks, defense intelligence systems, critical infrastructure operators — have ...</p>
+    <span class="pc-meta">6 min read</span>
+  </div>
+</a>
+</div>
+
+</main>
+
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

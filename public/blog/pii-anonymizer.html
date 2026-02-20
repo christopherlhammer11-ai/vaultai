@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How HammerLockAI's PII Anonymizer Works Before Your Query Hits the Cloud — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#b388ff;background:#b388ff15;border:1px solid #b388ff30;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #b388ff;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#b388ff08;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Privacy Architecture</div>
+  <h1>How HammerLockAI's PII Anonymizer Works Before Your Query Hits the Cloud</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>4 min read</span>
+  </div>
+</div>
+<article>
+<p>When you type a query into most AI tools, everything you type goes to the cloud exactly as written. Your name, your company's name, your client's name, the dollar figures in your analysis, the case details you're researching — all of it transmitted to a third-party server, logged, potentially retained, and in some configurations, used to improve future models.</p>
+<p>HammerLockAI's PII anonymizer intercepts your query before it leaves your device and strips the identifiers out. By the time your query reaches any cloud AI provider, the sensitive specifics have been replaced with generic placeholders. The model answers the anonymized query. The response comes back. HammerLockAI restores the original context locally. You see a complete, contextually accurate response — but the provider never saw your actual data.</p>
+<p>This is what PII scrubbing before cloud transmission means in practice.</p>
+<h2>What Counts as PII</h2>
+<p>PII — Personally Identifiable Information — is the category of data that can identify a specific individual or organization. In the context of professional AI use, the relevant categories include:</p>
+<p><strong>Names.</strong> Personal names, company names, client names, opposing counsel, counterparties, executives. Any named entity that ties a query to a specific real-world person or organization.</p>
+<p><strong>Contact information.</strong> Email addresses, phone numbers, physical addresses. These are direct identifiers that can link a query to an individual even without a name.</p>
+<p><strong>Financial identifiers.</strong> Account numbers, specific dollar figures tied to named parties, invoice numbers, transaction identifiers.</p>
+<p><strong>Legal identifiers.</strong> Case numbers, docket identifiers, contract reference numbers, client matter numbers.</p>
+<p><strong>Medical identifiers.</strong> Patient identifiers, record numbers, diagnosis codes tied to named individuals.</p>
+<p><strong>Geographic specifics.</strong> Precise addresses, GPS coordinates, facility names that could identify a specific location or individual.</p>
+<p>The common thread: data that, combined with the query's subject matter, would allow a provider to identify who the query is about.</p>
+<h2>How the Anonymization Pipeline Works</h2>
+<p>The anonymizer operates as a preprocessing layer between your input and the outbound API call. Here's the sequence:</p>
+<p><strong>Step 1: Entity detection.</strong> The anonymizer scans your query for named entities using a combination of pattern matching (for structured identifiers like emails and phone numbers) and named entity recognition (for names, companies, and locations). It builds a map of detected PII in the query.</p>
+<p><strong>Step 2: Substitution.</strong> Each detected entity is replaced with a generic placeholder. "Sarah Chen, CEO of Meridian Capital" becomes "Person A, CEO of Company A." "john.smith@acmecorp.com" becomes "email_1@domain.com." The query structure and meaning are preserved; the identifiable specifics are replaced.</p>
+<p><strong>Step 3: Placeholder mapping stored locally.</strong> The mapping between real values and placeholders is stored in your encrypted local vault — not transmitted anywhere. This mapping is what allows HammerLockAI to restore the original context in responses.</p>
+<p><strong>Step 4: Anonymized query transmitted.</strong> The scrubbed query — with all PII replaced by placeholders — is what gets sent to the AI provider. The provider sees a coherent, answerable question with generic entity references.</p>
+<p><strong>Step 5: Response restoration.</strong> When the provider's response returns, HammerLockAI applies the reverse mapping: placeholders are replaced with the original values. The response you see in your interface uses real names, companies, and identifiers — because the restoration happened locally before display.</p>
+<h2>What the Provider Actually Sees</h2>
+<p>To understand the protection this provides, it helps to see a concrete example.</p>
+<p>Your query: <em>"I need a summary of the compliance exposure for Nexus Biotech's Q3 FDA submission, specifically around Dr. Amanda Reyes' clinical trial data for their oncology pipeline."</em></p>
+<p>After anonymization, the provider receives: <em>"I need a summary of the compliance exposure for Company A's Q3 FDA submission, specifically around Person A's clinical trial data for their oncology pipeline."</em></p>
+<p>The provider returns a response about compliance exposure, clinical trial data, and FDA submission requirements — all substantively correct and useful. HammerLockAI restores the specific names. You see a response that references Nexus Biotech and Dr. Reyes. The provider never did.</p>
+<p>From a legal and compliance perspective, this matters significantly. You've obtained the analytical value of a frontier AI model without transmitting client-identifiable data to a third-party server. The attorney-client privilege analysis changes. The HIPAA risk profile changes. The fiduciary duty analysis changes.</p>
+<h2>What Anonymization Doesn't Cover</h2>
+<p>It's important to be clear about what the PII anonymizer does and doesn't do.</p>
+<p>The anonymizer addresses the identity exposure problem — ensuring that queries can't be tied to specific named individuals or organizations by the provider. It does not make the subject matter of your query private. If you ask about a specific legal strategy, the general outlines of that strategy are still visible to the provider, even if the client's name isn't.</p>
+<p>For queries where even the subject matter is sensitive — classified information, proprietary trade secrets, particularly sensitive strategic decisions — the right answer is local-only mode: run Ollama locally, disable cloud providers for that session, and ensure the query never leaves your device at all. HammerLockAI supports this configuration. The anonymizer is the second-best option when you need cloud-model capability but want to minimize identifier exposure.</p>
+<p>The anonymizer also isn't perfect at detecting every possible PII pattern in every context. It's particularly strong on structured identifiers (emails, phone numbers) and common named entity types (personal names, company names). It's less reliable on highly domain-specific identifiers — internal codenames, proprietary system names, idiosyncratic organizational identifiers. Review queries containing unusual identifiers before sending if you have concerns.</p>
+<h2>Brave Search and PII Scrubbing</h2>
+<p>HammerLockAI's Brave-powered web search also runs through the PII anonymizer. Search queries are scrubbed before they leave your device, so Brave's search infrastructure never sees your name, your company, or your client's name associated with your search terms.</p>
+<p>This applies to every search HammerLockAI initiates — inline citations, real-time research queries, document context lookups. The search provider sees anonymized queries. You see cited, accurate results with your real context restored.</p>
+<h2>The Local Vault: Where the Mapping Lives</h2>
+<p>The placeholder mapping — the key that maps generic substitutions back to real values — is stored in your encrypted local vault, protected by the same AES-256-GCM encryption as your conversations and uploaded documents. It's never transmitted, never stored on HammerLock servers, and is only accessible to someone who knows your encryption password.</p>
+<p>This means the privacy guarantee is end-to-end: PII is stripped before transmission, the mapping that would allow reconstruction is locked on your device, and the response is reconstructed locally before you see it.</p>
+<p>The provider has an anonymized query. You have the full context. Nobody in between has both.</p>
+<hr />
+<p><em>HammerLockAI is built on a fork of OpenClaw, the open-source agentic AI runtime. <a href="https://github.com/christopherlhammer11-ai/hammerlock">View the source on GitHub →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

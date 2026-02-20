@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air-Gap Deployment: Running HammerLockAI in Government and Defense Environments — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#ffb800;background:#ffb80015;border:1px solid #ffb80030;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #ffb800;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#ffb80008;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Vertical Series</div>
+  <h1>Air-Gap Deployment: Running HammerLockAI in Government and Defense Environments</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>6 min read</span>
+  </div>
+</div>
+<article>
+<p>The most sensitive environments in the world — classified government networks, defense intelligence systems, critical infrastructure operators — have a category of security requirement that goes beyond encryption and access controls: air gapping. Complete physical isolation from the public internet.</p>
+<p>No data in. No data out. The network doesn't exist to the outside world.</p>
+<p>Air-gapped environments are fundamentally incompatible with cloud AI tools. By definition, a system that sends queries to OpenAI, Anthropic, or any other external API cannot operate on an air-gapped network. The cloud model is the antithesis of air-gap security.</p>
+<p>HammerLockAI's local-first architecture, built on Ollama's local model runtime, is designed to operate fully air-gapped. This article covers how to deploy it.</p>
+<h2>What Air-Gap Deployment Actually Means</h2>
+<p>Air gapping is often used loosely to mean "more secure than normal." In its strict technical sense, it means physical isolation: a system that has no network interface connected to an external network, no wireless capability, and no mechanism by which data can traverse to or from an external network without physical media transfer.</p>
+<p>True air-gap environments include:
+- Classified government networks (SIPRNet, JWICS in US military contexts)
+- Nuclear facility control systems
+- Election infrastructure in some jurisdictions
+- Critical infrastructure control networks (power grid, water treatment)
+- High-security financial clearing systems</p>
+<p>In these environments, every piece of software must operate without any external dependency. Models must be downloaded and transferred via physical media before the system goes air-gapped. All processing must happen locally. No telemetry, no update checks, no license validation servers.</p>
+<p>HammerLockAI in air-gap mode meets these requirements.</p>
+<h2>Pre-Deployment: Downloading Models Before You Go Dark</h2>
+<p>The only step that requires internet connectivity in a HammerLockAI air-gap deployment is the initial model download. This must be completed before the system is air-gapped, or the models must be transferred via approved physical media to the air-gapped system.</p>
+<p><strong>Step 1: Download Ollama on an internet-connected system.</strong>
+From ollama.com, download the Ollama runtime for your target OS. This is a single binary (on macOS/Linux) or installer (on Windows).</p>
+<p><strong>Step 2: Pull models while connected.</strong></p>
+<pre><code>ollama pull llama3.1
+ollama pull mistral
+ollama pull phi3
+</code></pre>
+<p>Pull every model you may need. Models are stored at <code>~/.ollama/models</code> on Linux/macOS and <code>%USERPROFILE%\.ollama\models</code> on Windows. These directories contain everything needed to run the models offline.</p>
+<p><strong>Step 3: Download HammerLockAI.</strong>
+Download the HammerLockAI desktop application. Verify the download hash against the published hash before transfer.</p>
+<p><strong>Step 4: Transfer to air-gapped system.</strong>
+Transfer Ollama, the models directory, and HammerLockAI via approved physical media (USB, DVD, or secure file transfer system depending on your environment's approved procedures).</p>
+<p>After transfer, no internet connection is required for any operation. The entire stack — HammerLockAI, Ollama runtime, model weights — operates locally.</p>
+<h2>Configuring HammerLockAI for Air-Gap Operation</h2>
+<p>In HammerLockAI's settings, configure the following for air-gap deployment:</p>
+<p><strong>Disable all cloud providers.</strong> In Settings → API Keys, remove or don't configure any cloud provider keys. With no cloud providers configured, HammerLockAI routes exclusively to Ollama. There will be no attempted outbound connections to cloud APIs.</p>
+<p><strong>Set Ollama as the sole provider.</strong> Confirm in Settings → Models that only Ollama/local models are available. The interface should show only local models in the model selector.</p>
+<p><strong>Disable web search.</strong> Brave-powered search requires internet connectivity. Disable it in settings. Search queries in an air-gapped environment will use only document context provided within the session.</p>
+<p><strong>Verify no telemetry.</strong> HammerLockAI does not collect telemetry or usage data by default. In air-gap environments, verify through network monitoring that no outbound connections are attempted. If your environment requires formal verification, this can be confirmed by running packet capture during a session.</p>
+<p><strong>Set a strong encryption password.</strong> In air-gap environments, your local vault's encryption password is the primary access control. Use a strong passphrase that meets your organization's password policy. There is no remote reset mechanism — losing the password means losing access to vault contents.</p>
+<h2>Recommended Models for Air-Gap Deployment</h2>
+<p>Model selection for air-gap environments involves balancing capability against hardware constraints. Common configurations:</p>
+<p><strong>High-capability systems (GPU server, 48GB+ VRAM):</strong>
+- Llama 3.1 70B (Q4 quantized) — near-frontier capability for complex analysis and research
+- Mistral 8x7B (Mixtral, Q4 quantized) — strong for diverse task types</p>
+<p><strong>Mid-tier systems (workstation with 24GB VRAM or Apple Silicon 48GB unified memory):</strong>
+- Llama 3.1 8B — strong general capability at this tier
+- Mistral 7B — fast, capable, efficient
+- Phi-3 Medium — Microsoft's efficient model, strong on reasoning tasks</p>
+<p><strong>Lower-resource systems (CPU-only or 8GB VRAM):</strong>
+- Llama 3.2 3B — capable at smaller context tasks
+- Phi-3 Mini — very efficient, deployable on constrained hardware
+- Gemma 2B — small but useful for targeted tasks</p>
+<p>For intelligence analysis, document synthesis, and structured research workflows — the primary use cases in government/defense environments — Llama 3.1 8B or larger is the recommended minimum. The 70B model on appropriate GPU hardware delivers output quality competitive with cloud providers for most analytical tasks.</p>
+<h2>Multi-User Air-Gap Deployment</h2>
+<p>For organizations deploying HammerLockAI across multiple users on an air-gapped network:</p>
+<p><strong>Option A: Individual workstation deployment.</strong> Each user runs their own HammerLockAI and Ollama instance. Simple, fully isolated. Each user has their own encrypted vault. Model weights are duplicated across machines (storage cost, but maximum isolation).</p>
+<p><strong>Option B: Shared Ollama server.</strong> A central server runs Ollama and serves models to multiple HammerLockAI instances across the local network. HammerLockAI can point to a remote Ollama endpoint (configured in Settings → Providers → Ollama URL). Individual users run HammerLockAI locally, model inference runs on the shared server. This is the preferred architecture for organizations with a GPU server already in the environment.</p>
+<p><strong>Option C: Full server deployment.</strong> HammerLockAI and Ollama both run on a server, with users accessing through a web interface. This reduces client requirements to a browser. Contact <a href="mailto:info@hammerlockai.com">info@hammerlockai.com</a> for enterprise server deployment configuration.</p>
+<h2>Security Hardening for Classified Environments</h2>
+<p>Standard HammerLockAI deployment is already local-first and encrypted. For classified environments, additional hardening is appropriate:</p>
+<p><strong>Physical security.</strong> The device running HammerLockAI should be physically secured consistent with the classification level of the data being processed. This is a facility/operations security requirement, not a software configuration — but it's the foundation.</p>
+<p><strong>Full disk encryption.</strong> HammerLockAI's vault is AES-256 encrypted, but the vault file still exists on your disk. Enable full disk encryption (FileVault on macOS, BitLocker on Windows, LUKS on Linux) to protect against physical media theft or unauthorized access to the device.</p>
+<p><strong>Session management.</strong> Configure auto-lock on inactivity. HammerLockAI sessions lock when the application is closed or when your device locks. On shared systems, configure short auto-lock timeouts consistent with your organization's policy.</p>
+<p><strong>Audit logging.</strong> HammerLockAI's local session logs provide a record of queries and responses. In environments requiring audit trails, configure log retention consistent with your organization's requirements. Local logs are your audit record — there is no server-side log.</p>
+<p><strong>Model integrity verification.</strong> Before deploying models to classified systems, verify model file hashes against published hashes from Ollama's model registry. This ensures model files haven't been tampered with during transfer.</p>
+<h2>The Capability Argument for Local AI in Sensitive Environments</h2>
+<p>The argument for local AI in classified environments sometimes focuses exclusively on security — what you're preventing. It's worth also making the capability argument: what you're enabling.</p>
+<p>Intelligence analysts, defense researchers, and government officials working on air-gapped networks currently have limited AI access. Most of the productivity gains from AI are unavailable to them because their tools can't reach cloud providers.</p>
+<p>HammerLockAI on an air-gap network gives classified environment users:
+- AI-assisted document synthesis and research
+- Structured analytical frameworks through the Analyst and Researcher agents
+- SOP development and operational planning through the Operator agent
+- Drafting and writing assistance through the Writer agent
+- PDF analysis of classified documents within the vault</p>
+<p>These are substantive productivity capabilities that classified network users currently lack access to. Local AI doesn't just solve the security problem — it opens a capability door that the cloud dependency has kept closed.</p>
+<h2>The On-Premises Enterprise Path</h2>
+<p>For large organizations needing formal on-premises deployment with dedicated support, SLA guarantees, audit log infrastructure, SSO integration, and custom deployment architecture, HammerLockAI offers enterprise contracts.</p>
+<p>Enterprise deployment includes:
+- On-premises or private cloud server deployment
+- Dedicated support engineer
+- Custom SLA and uptime guarantees
+- Audit logs and compliance reporting
+- SSO integration for identity management
+- Custom model configuration</p>
+<p>Contact <a href="mailto:info@hammerlockai.com">info@hammerlockai.com</a> for enterprise and government deployment inquiries.</p>
+<hr />
+<p><em>HammerLockAI supports fully air-gapped deployment. Built on OpenClaw, MIT licensed. <a href="https://github.com/christopherlhammer11-ai/hammerlock">View source on GitHub →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

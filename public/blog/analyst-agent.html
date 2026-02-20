@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Analyst Agent: Building Financial Models and Stress-Testing Scenarios in HammerLockAI — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#00ff88;background:#00ff8815;border:1px solid #00ff8830;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #00ff88;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#00ff8808;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Agent Series</div>
+  <h1>The Analyst Agent: Building Financial Models and Stress-Testing Scenarios in HammerLockAI</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>5 min read</span>
+  </div>
+</div>
+<article>
+<p>Financial analysis at the professional level is iteration-heavy work. You're not running a model once — you're building a base case, stress-testing it against multiple scenarios, identifying the assumptions that drive the most variance, and producing output your client or stakeholders can actually act on.</p>
+<p>HammerLockAI's Analyst agent is built for this workflow. It structures financial reasoning, builds scenario models through conversation, synthesizes earnings and market data, and produces output formatted for professional use — all with your underlying data never touching a cloud server unless you explicitly choose to route there.</p>
+<h2>What the Analyst Does Differently</h2>
+<p>Most AI tools treat financial questions like general knowledge questions: you ask, they answer. The Analyst agent treats financial questions like analytical problems: it asks clarifying questions, structures assumptions explicitly, builds models in layers, and flags where the analysis depends on uncertain inputs.</p>
+<p>This distinction matters practically. A model built on unstated assumptions is a model you can't defend. The Analyst surfaces assumptions before running them — so the output you get reflects your judgment, not hidden defaults.</p>
+<h2>Core Use Cases</h2>
+<h3>Earnings Call Analysis</h3>
+<p>Earnings calls generate a lot of raw content: prepared remarks, Q&amp;A, guidance language, management tone. Extracting what actually matters — the forward-looking signals buried in the guidance language, the analyst questions that reveal market concerns, the divergence between GAAP and non-GAAP framing — requires structured analysis, not just summarization.</p>
+<p>Upload an earnings call transcript (PDF) to HammerLockAI and engage the Analyst:</p>
+<p><em>Query:</em> "Analyze this earnings transcript. Identify: (1) the key guidance changes versus prior quarter, (2) management's stated confidence level on those changes, (3) the questions from analysts that reveal the largest areas of investor uncertainty, and (4) any divergences between GAAP results and the non-GAAP metrics management emphasized."</p>
+<p>The Analyst produces a structured breakdown, not a summary. You get the specific language management used for guidance (which matters for parsing confidence), the precise questions analysts asked (which reveals what the street is focused on), and a clear identification of what management chose to highlight versus what the GAAP numbers showed.</p>
+<h3>Scenario Modeling Through Conversation</h3>
+<p>Building a scenario model doesn't have to mean opening a spreadsheet. The Analyst can walk through a model verbally, establishing assumptions, calculating outputs, and stress-testing variables in a conversational session.</p>
+<p><em>Query:</em> "I'm modeling a potential acquisition. Target has TTM revenue of $42M, 18% EBITDA margins, and the seller is asking a 12x EBITDA multiple. Walk me through a base case, bull case, and bear case for what this looks like at exit in 5 years under different growth and margin expansion assumptions."</p>
+<p>The Analyst structures three scenarios with explicit assumptions for each:</p>
+<p><strong>Base case:</strong> Revenue CAGR assumption, margin assumption, exit multiple assumption → implied return, implied IRR.</p>
+<p><strong>Bull case:</strong> What revenue acceleration and margin expansion would be required to justify the entry multiple → is that achievable given the sector? What would it require operationally?</p>
+<p><strong>Bear case:</strong> If growth slows or margins compress, at what point does the deal not work? What's the entry multiple that protects you against the downside case?</p>
+<p>The session becomes an interactive model-building process. You can push on any assumption: "What if the exit multiple compresses to 8x in the bear case?" The Analyst recalculates and restates the output.</p>
+<h3>Portfolio Exposure Analysis</h3>
+<p><em>Query:</em> "My portfolio has significant exposure to semiconductor companies. Analyze the portfolio's exposure to current US export restriction policy, specifically around advanced chip restrictions to China. Which positions carry the most direct revenue exposure, and what's the second-order effect on the supply chain companies I hold?"</p>
+<p>The Analyst structures the analysis in layers: direct revenue exposure by company, the supply chain second-order effects, the regulatory trajectory, and which positions in the portfolio are most sensitive to escalation or de-escalation.</p>
+<p>This is the kind of cross-sector analytical synthesis that benefits from AI augmentation — synthesizing regulatory policy, company fundamentals, and supply chain dependencies into a coherent risk assessment.</p>
+<h3>Risk Assessment Frameworks</h3>
+<p><em>Query:</em> "I'm presenting a credit risk assessment to a client. Walk me through a systematic framework for evaluating a mid-market company's creditworthiness. I'll give you the specifics and you structure the analysis."</p>
+<p>The Analyst produces a structured framework — quantitative metrics (coverage ratios, leverage, liquidity), qualitative factors (management quality, competitive position, customer concentration), and industry-specific considerations — then applies it to the specifics you provide.</p>
+<p>The output is a structured credit memo framework you can populate with the actual numbers, rather than a blank page and a set of mental notes.</p>
+<h2>Working With Confidential Client Data</h2>
+<p>Financial analysis often involves data you can't transmit to third parties — proprietary trading strategies, non-public company information, client portfolio details. HammerLockAI's approach to this is layered:</p>
+<p><strong>PII anonymization by default.</strong> Client names, account numbers, and identifying information are stripped from queries before cloud transmission. The Analyst reasons about the financial structure — the model, the numbers, the assumptions — not about named individuals or accounts.</p>
+<p><strong>Local-only mode for the most sensitive work.</strong> For analysis involving material non-public information, proprietary strategies, or data that cannot leave your infrastructure under any circumstances, run the Analyst on local Ollama models. The analysis runs entirely on your hardware. Nothing is transmitted.</p>
+<p><strong>Vault encryption for outputs.</strong> Every Analyst session saved to your vault is AES-256 encrypted at rest on your device. Client analysis doesn't live on a cloud server; it lives in your encrypted local vault.</p>
+<h2>How to Structure an Analyst Session for Best Results</h2>
+<p><strong>Start with explicit assumptions.</strong> Before asking the Analyst to model anything, establish the key assumptions explicitly. "Assume a 10-year DCF, WACC of 12%, terminal growth rate of 2.5%. These are my base case assumptions — don't change them unless I tell you to." This anchors the model so you know exactly what's driving the outputs.</p>
+<p><strong>Ask for assumption sensitivity, not just outputs.</strong> After getting a base case, ask: "Which assumption in this model has the most impact on the output? If I'm wrong about [key assumption] by 20%, what happens to the conclusion?" This is stress-testing, which is the actual analysis — not the base case.</p>
+<p><strong>Request explicit uncertainty flagging.</strong> "Flag every conclusion in this analysis where the uncertainty is high enough that a reasonable analyst might reach a different conclusion." This separates what's well-supported from what's judgment-dependent.</p>
+<p><strong>Use the PDF upload for source documents.</strong> Upload 10-Ks, earnings transcripts, offering memoranda, credit agreements — source documents the Analyst can reason against. This grounds the analysis in actual filings rather than general knowledge, which matters both for accuracy and for work product that can be sourced.</p>
+<h2>Output Formats</h2>
+<p>The Analyst can structure output in several formats depending on what you need it for:</p>
+<p><strong>Narrative memo:</strong> For client-facing work that requires explanation of the analysis, not just the numbers. "Draft a 500-word memo explaining this analysis to a sophisticated investor who isn't a financial professional."</p>
+<p><strong>Structured framework:</strong> For internal use — a skeleton you populate with live numbers. "Give me the framework for this analysis as a structured outline I can turn into a working document."</p>
+<p><strong>Comparison table:</strong> For side-by-side analysis. "Build a comparison table of these three scenarios with the key metrics in rows and scenarios in columns."</p>
+<p><strong>Executive summary:</strong> "Condense this analysis to a 3-bullet executive summary for a board presentation."</p>
+<p>The Analyst produces whichever format serves the work, not a one-size-fits-all output.</p>
+<hr />
+<p><em>HammerLockAI agents are available in Core and above. <a href="https://hammerlockai.com/#pricing">Get started →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

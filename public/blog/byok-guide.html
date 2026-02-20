@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bring Your Own Keys: The Complete API Key Guide for HammerLockAI — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#00d4ff;background:#00d4ff15;border:1px solid #00d4ff30;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #00d4ff;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#00d4ff08;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Architecture</div>
+  <h1>Bring Your Own Keys: The Complete API Key Guide for HammerLockAI</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>5 min read</span>
+  </div>
+</div>
+<article>
+<p>Most AI products make a simple proposition: pay us, we handle everything. Your subscription covers the model access, the compute, the infrastructure. You get a clean interface, a monthly bill, and no visibility into what's happening underneath.</p>
+<p>HammerLockAI's Bring Your Own Keys (BYOK) model is a different proposition: connect your own accounts directly to the providers you choose, pay them at their published rates, and route everything through HammerLockAI's interface and privacy layer without anything passing through our infrastructure.</p>
+<p>This guide covers how BYOK works, when to use it, how to configure each provider, and how it interacts with HammerLockAI's privacy architecture.</p>
+<h2>Why BYOK Matters</h2>
+<p>When you use a bundled credits model — paying a platform for AI access — your data routes through that platform's infrastructure before reaching the underlying model provider. The platform makes an API call on your behalf, which means your query passes through their servers.</p>
+<p>With BYOK, the routing is direct: HammerLockAI's runtime makes API calls from your device to the provider using your credentials. There's no intermediary server handling your data. The provider sees a call from your API key, not from a shared platform account.</p>
+<p>Combined with HammerLockAI's PII anonymization layer — which scrubs personal identifiers before any query leaves your device — BYOK gives you a configuration where your data travels from your device, anonymized, directly to the provider of your choice, and the response comes back to your device, where it's encrypted and stored locally.</p>
+<p>That's a meaningfully different data flow than a typical AI platform.</p>
+<h2>Supported Providers and Key Setup</h2>
+<p>HammerLockAI supports BYOK for every major cloud AI provider. Here's where to get keys for each:</p>
+<p><strong>OpenAI (GPT-4o, GPT-4o-mini)</strong>
+Platform.openai.com → API → API Keys → Create new secret key. Set usage limits in the Billing section to avoid surprises. GPT-4o is the full-capability model; GPT-4o-mini is faster and cheaper for simpler queries.</p>
+<p><strong>Anthropic (Claude Sonnet)</strong>
+Console.anthropic.com → API Keys → Create Key. Anthropic's Claude Sonnet models are especially strong for reasoning-intensive tasks — legal analysis, structured research, complex writing. If you're using HammerLockAI's Counsel or Analyst agents for high-stakes work, an Anthropic key is worth having.</p>
+<p><strong>Google (Gemini Flash, Gemini Pro)</strong>
+Aistudio.google.com → Get API key. Gemini Flash is Google's fastest model; Gemini Pro handles longer context and more complex tasks. Google's models are notably strong for document-heavy workflows.</p>
+<p><strong>Groq</strong>
+Console.groq.com → API Keys → Create API Key. Groq runs open-weight models (Llama 3.3 70B and others) on custom hardware optimized for inference speed. It's often the fastest provider in a racing scenario — useful when latency matters more than raw capability.</p>
+<p><strong>Mistral</strong>
+Console.mistral.ai → API Keys. Mistral Small is a strong, efficient model; Mistral Large handles complex tasks. European infrastructure if data residency matters to your compliance requirements.</p>
+<p><strong>DeepSeek</strong>
+Platform.deepseek.com → API Keys. DeepSeek's models are competitive on reasoning benchmarks at lower cost than OpenAI or Anthropic. Worth including for general-purpose queries where cost efficiency matters.</p>
+<h2>Entering Keys in HammerLockAI</h2>
+<p>Keys are stored locally in your encrypted vault — they never leave your device and are never transmitted to HammerLock's servers. In the operator console, navigate to Settings → API Keys, enter each key for the providers you want to enable, and save. Keys are encrypted using the same AES-256 mechanism that protects your conversations and vault.</p>
+<p>You can enable as many or as few providers as you want. BYOK and bundled credits can coexist: HammerLockAI will use your own keys when configured for a provider and fall back to bundled credits for providers where you haven't supplied a key.</p>
+<h2>Cost Comparison: Credits vs. BYOK</h2>
+<p>HammerLockAI's Pro plan includes 1,000 monthly cloud AI credits, with Booster and Power packs available if you need more. Credits use HammerLock's pooled API access, routed through our infrastructure.</p>
+<p>BYOK bypasses credits entirely. You pay providers directly at their published token rates. For high-volume use — multiple research sessions per day, frequent long-form document analysis — BYOK is almost always cheaper than credits. For occasional use, credits are simpler.</p>
+<p>A rough calibration: if you're spending more than a few hours per week in active HammerLockAI sessions, run the math on direct provider costs against your credit consumption. At current API pricing, heavy professional users typically find BYOK significantly cheaper at the Pro usage level.</p>
+<p>The other advantage of BYOK: no monthly credit cycle. You're not trying to manage a credit budget or worrying about overage. Your API accounts are always-on, capacity is whatever your account limits allow, and the bill arrives from the provider at the end of the month.</p>
+<h2>BYOK in the Racing Architecture</h2>
+<p>When you have multiple API keys configured, HammerLockAI's provider racing works across all of them. A query can race simultaneously across your OpenAI key, your Anthropic key, your Groq key, and any other configured providers. The fastest response wins; the others are cancelled.</p>
+<p>This means your BYOK configuration directly affects racing performance. More keys = more providers in the race = higher probability that the fastest one wins on any given query. For maximum performance, configure all six supported providers with your own keys.</p>
+<p>Rate limits apply per account. If your OpenAI account is rate-limited, the race is won by another provider — automatic failover at the account level, not just the provider level.</p>
+<h2>The Ollama Option: Zero-Cost Local Models</h2>
+<p>Every BYOK configuration should include Ollama as the local fallback layer. Ollama itself is free and open-source. Models — Llama 3.1, Mistral, Phi, Gemma — are downloaded once and run on your hardware at zero marginal cost per query.</p>
+<p>For work that doesn't require the capabilities of frontier cloud models (drafting, brainstorming, summarization of moderate complexity), local Ollama models handle the load at no cost. Cloud providers — whether BYOK or credits — get invoked when you need maximum capability.</p>
+<p>A well-configured BYOK setup might route 40–60% of queries to local Ollama, 20–30% to a fast provider like Groq, and the remainder to capability-heavy providers like GPT-4o or Claude Sonnet. The result is a cost structure significantly lower than relying on cloud APIs for everything.</p>
+<h2>API Key Security</h2>
+<p>Your API keys represent real money and real access. A few practices worth following:</p>
+<p>Set spending limits on every provider account. OpenAI, Anthropic, and most others allow you to cap monthly spend at the account level. Set limits that reflect realistic usage — don't leave accounts with no cap.</p>
+<p>Rotate keys periodically. If you suspect a key has been compromised, regenerate it immediately from the provider's console and update it in HammerLockAI. Revocation is instant.</p>
+<p>Understand that HammerLockAI stores your keys in your local encrypted vault. The encryption password you set at install is the only thing standing between your device and your keys. Use a strong password.</p>
+<h2>The Bottom Line</h2>
+<p>BYOK is for professionals who want maximum control over their AI stack. Direct provider relationships, direct billing, no data routing through intermediaries, full access to the racing and failover architecture across all configured accounts, and a cost structure that scales efficiently with heavy use.</p>
+<p>If you're using HammerLockAI as a serious professional tool — not a casual assistant — BYOK is the configuration that makes it perform like one.</p>
+<hr />
+<p><em>Need help configuring a specific provider? Reach us at <a href="mailto:info@hammerlockai.com">info@hammerlockai.com</a></em></p>
+<p><em>HammerLockAI is built on a fork of OpenClaw, the open-source agentic AI runtime. <a href="https://github.com/christopherlhammer11-ai/hammerlock">View the source on GitHub →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

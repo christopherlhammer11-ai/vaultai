@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citation Library — HammerLockAI</title>
+<meta name="description" content="Live links and academic sources backing every technical claim in HammerLockAI blog content.">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--card-h:#1c1c28;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--cd:rgba(0,212,255,.1);--p:#b388ff;--a:#ffb800;--r:#ff6b8a;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--b2:rgba(0,255,136,.2);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.7;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--c)}
+.hero{margin-top:56px;padding:5rem 2rem 3rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,var(--cd) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;font-family:var(--fm);font-size:.7rem;font-weight:500;color:var(--c);background:var(--cd);border:1px solid rgba(0,212,255,.2);padding:.35rem 1rem;border-radius:100px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.5rem}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:700;line-height:1.15;letter-spacing:-.03em;margin-bottom:1rem}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--c),var(--p));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.05rem;color:var(--t2);max-width:600px;margin:0 auto 2rem;font-weight:300}
+.hero-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3)}
+.cat-nav{max-width:900px;margin:0 auto 2rem;display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;padding:0 2rem}
+.cat-nav a{font-family:var(--fm);font-size:.72rem;font-weight:500;color:var(--t2);text-decoration:none;padding:.45rem 1rem;border:1px solid var(--b1);border-radius:8px;transition:all .2s;white-space:nowrap}
+.cat-nav a:hover{color:var(--c);border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.06)}
+.main{max-width:860px;margin:0 auto;padding:0 2rem 4rem}
+/* Tier boxes */
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:3rem;padding:2rem;background:var(--card);border:1px solid var(--b1);border-radius:16px}
+.tiers h3{grid-column:1/-1;font-size:1rem;font-weight:600;margin-bottom:.5rem}
+.tier{padding:1rem;border-radius:10px;border:1px solid var(--b1)}
+.tier.t1{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.03)}
+.tier.t2{border-color:rgba(0,212,255,.2);background:rgba(0,212,255,.03)}
+.tier.t3{border-color:rgba(255,184,0,.2);background:rgba(255,184,0,.03)}
+.tier-l{font-family:var(--fm);font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+.tier.t1 .tier-l{color:var(--g)}.tier.t2 .tier-l{color:var(--c)}.tier.t3 .tier-l{color:var(--a)}
+.tier p{font-size:.8rem;color:var(--t2);line-height:1.5}
+/* Section */
+.sec{margin-bottom:3rem}
+.sec-h{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;padding-bottom:.6rem;border-bottom:1px solid var(--b1)}
+.sec-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.sec-h h2{font-size:1.15rem;font-weight:600}
+.sub{margin-bottom:1.5rem}
+.sub-t{font-size:.92rem;font-weight:600;margin-bottom:.8rem;padding-left:.75rem;border-left:2px solid var(--c)}
+.sub-l{font-family:var(--fm);font-size:.65rem;font-weight:600;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin:0.6rem 0 .4rem}
+.links{display:flex;flex-direction:column;gap:.35rem}
+.lk{display:flex;align-items:center;gap:.6rem;padding:.5rem .85rem;background:var(--card);border:1px solid var(--b1);border-radius:10px;transition:all .2s;text-decoration:none;color:inherit}
+.lk:hover{border-color:rgba(0,212,255,.2);background:var(--card-h);transform:translateX(3px)}
+.lk-dot{width:5px;height:5px;border-radius:50%;background:var(--c);flex-shrink:0;opacity:.6}
+.lk-c{flex:1;min-width:0}
+.lk-n{font-size:.85rem;font-weight:500}
+.lk-u{font-family:var(--fm);font-size:.63rem;color:var(--c);word-break:break-all;opacity:.6}
+.lk:hover .lk-u{opacity:1}
+.lk-e{width:14px;height:14px;color:var(--t3);flex-shrink:0;opacity:0;transition:opacity .2s}
+.lk:hover .lk-e{opacity:.5}
+.cta-box{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(179,136,255,.05));border:1px solid rgba(0,212,255,.15);border-radius:16px;padding:2.5rem;text-align:center;margin-top:2rem}
+.cta-box h3{font-size:1.2rem;font-weight:600;margin-bottom:.5rem}
+.cta-box p{color:var(--t2);font-size:.9rem;margin-bottom:1.5rem}
+.cta-btn{font-family:var(--fm);font-size:.85rem;color:var(--c);text-decoration:none;border:1px solid rgba(0,212,255,.2);padding:.6rem 1.5rem;border-radius:8px;display:inline-block;transition:all .3s}
+.cta-btn:hover{background:rgba(0,212,255,.08);box-shadow:0 0 20px rgba(0,212,255,.1)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3)}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.topbar-nav{gap:.8rem}.hero{padding:4rem 1.5rem 2rem}.main{padding:0 1rem 4rem}.tiers{grid-template-columns:1fr;padding:1.5rem}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="#" class="active">Citations</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-badge">📚 Research Desk</div>
+  <h1>Blog <em>Citation Library</em></h1>
+  <p class="hero-sub">Live links and academic sources backing every technical claim in HammerLockAI content. Every claim is citeable. Every citation is clickable.</p>
+  <p class="hero-meta">Last Updated: February 20, 2026 · Next Review: March 20, 2026</p>
+</header>
+
+<nav class="cat-nav">
+  <a href="#s-os">Open Source History</a>
+  <a href="#s-ai">Local AI Models</a>
+  <a href="#s-priv">Privacy & Encryption</a>
+  <a href="#s-biz">Business & ROI</a>
+  <a href="#s-sec">Security & Compliance</a>
+  <a href="#s-comp">AI Comparisons</a>
+  <a href="#s-ent">Enterprise Architecture</a>
+  <a href="#s-acad">Academic Resources</a>
+</nav>
+
+<main class="main">
+
+<!-- Citation Quality Tiers -->
+<div class="tiers">
+  <h3>🔧 Citation Quality Hierarchy</h3>
+  <div class="tier t1"><div class="tier-l">Tier 1 — Strongest</div><p>Peer-reviewed papers (arXiv, IEEE, ACM), government standards (NIST, NSA, CISA), official technical docs</p></div>
+  <div class="tier t2"><div class="tier-l">Tier 2 — Strong</div><p>Industry research (Gartner, McKinsey, HBR), official project docs (GitHub, org sites), specs (RFCs, W3C)</p></div>
+  <div class="tier t3"><div class="tier-l">Tier 3 — Supporting</div><p>Technical publications, expert blog posts, conference presentations</p></div>
+</div>
+
+<!-- ===== OPEN SOURCE ===== -->
+<section class="sec" id="s-os">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(0,255,136,.1)">🔓</div><h2>Open Source History & Philosophy</h2></div>
+
+  <div class="sub"><h3 class="sub-t">Origins of Open Source Movement</h3>
+    <div class="sub-l">GNU Project & FSF (1983)</div>
+    <div class="links">
+      <a class="lk" href="https://www.gnu.org/gnu/manifesto.html" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Richard Stallman's GNU Manifesto</div><div class="lk-u">gnu.org/gnu/manifesto.html</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.fsf.org/about/history" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">FSF History</div><div class="lk-u">fsf.org/about/history</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.gnu.org/philosophy/free-sw.html" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"What is Free Software?"</div><div class="lk-u">gnu.org/philosophy/free-sw.html</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+    <div class="sub-l">Linux Kernel (1991)</div>
+    <div class="links">
+      <a class="lk" href="https://www.cs.cmu.edu/~awb/linux.history.html" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Torvalds' Original Announcement</div><div class="lk-u">cs.cmu.edu/~awb/linux.history.html</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.linuxfoundation.org/about" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Linux Foundation</div><div class="lk-u">linuxfoundation.org/about</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+    <div class="sub-l">Open Source Initiative (1998)</div>
+    <div class="links">
+      <a class="lk" href="https://opensource.org/osd" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Open Source Definition</div><div class="lk-u">opensource.org/osd</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="http://www.catb.org/~esr/writings/cathedral-bazaar/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Cathedral and the Bazaar</div><div class="lk-u">catb.org/~esr/writings/cathedral-bazaar/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+
+  <div class="sub"><h3 class="sub-t">Major Open Source Milestones</h3>
+    <div class="links">
+      <a class="lk" href="https://www.apache.org/foundation/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Apache Foundation (1995)</div><div class="lk-u">apache.org/foundation/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.mozilla.org/en-US/about/manifesto/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Mozilla Manifesto (2004)</div><div class="lk-u">mozilla.org/en-US/about/manifesto/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://git-scm.com/book/en/v2/Getting-Started-A-Short-History-of-Git" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Git SCM History (2005)</div><div class="lk-u">git-scm.com/.../A-Short-History-of-Git</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://source.android.com/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Android Open Source Project (2008)</div><div class="lk-u">source.android.com</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LOCAL AI MODELS ===== -->
+<section class="sec" id="s-ai">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(0,212,255,.1)">🤖</div><h2>Local AI Models & Performance</h2></div>
+
+  <div class="sub"><h3 class="sub-t">Ollama Framework</h3>
+    <div class="links">
+      <a class="lk" href="https://ollama.com/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Ollama Homepage</div><div class="lk-u">ollama.com</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://github.com/ollama/ollama" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">GitHub Repository</div><div class="lk-u">github.com/ollama/ollama</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://ollama.com/library" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Model Library</div><div class="lk-u">ollama.com/library</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+
+  <div class="sub"><h3 class="sub-t">LLaMA Family (Meta)</h3>
+    <div class="links">
+      <a class="lk" href="https://ai.meta.com/llama/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Meta AI Research — LLaMA</div><div class="lk-u">ai.meta.com/llama/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://arxiv.org/abs/2407.21783" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">LLaMA 3.1 405B Technical Report</div><div class="lk-u">arxiv.org/abs/2407.21783</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://huggingface.co/meta-llama" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Hugging Face — Meta LLaMA</div><div class="lk-u">huggingface.co/meta-llama</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+
+  <div class="sub"><h3 class="sub-t">Mistral, Gemma, Phi & DeepSeek</h3>
+    <div class="links">
+      <a class="lk" href="https://mistral.ai/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Mistral AI</div><div class="lk-u">mistral.ai</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://arxiv.org/abs/2310.06825" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Mistral 7B Paper</div><div class="lk-u">arxiv.org/abs/2310.06825</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://ai.google.dev/gemma" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Google Gemma</div><div class="lk-u">ai.google.dev/gemma</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://arxiv.org/abs/2404.14219" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Phi-3 Technical Report</div><div class="lk-u">arxiv.org/abs/2404.14219</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.deepseek.com/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">DeepSeek</div><div class="lk-u">deepseek.com</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+
+  <div class="sub"><h3 class="sub-t">Benchmark Leaderboards</h3>
+    <div class="links">
+      <a class="lk" href="https://chat.lmsys.org/?leaderboard" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">LMSYS Chatbot Arena</div><div class="lk-u">chat.lmsys.org/?leaderboard</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">HF Open LLM Leaderboard</div><div class="lk-u">huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://crfm.stanford.edu/helm/latest/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Stanford HELM</div><div class="lk-u">crfm.stanford.edu/helm/latest/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRIVACY & ENCRYPTION ===== -->
+<section class="sec" id="s-priv">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(179,136,255,.1)">🔐</div><h2>Privacy & Encryption Standards</h2></div>
+
+  <div class="sub"><h3 class="sub-t">AES-256 Encryption</h3>
+    <div class="links">
+      <a class="lk" href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">NIST FIPS 197 — AES Standard</div><div class="lk-u">nvlpubs.nist.gov/.../NIST.FIPS.197.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">NIST SP 800-38D — GCM Mode</div><div class="lk-u">nvlpubs.nist.gov/.../800-38d.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://nodejs.org/api/crypto.html" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Node.js Crypto Module</div><div class="lk-u">nodejs.org/api/crypto.html</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.w3.org/TR/WebCryptoAPI/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">W3C Web Crypto API</div><div class="lk-u">w3.org/TR/WebCryptoAPI/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+
+  <div class="sub"><h3 class="sub-t">PII & Regulatory Standards</h3>
+    <div class="links">
+      <a class="lk" href="https://gdpr-info.eu/art-4-gdpr/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">GDPR Article 4</div><div class="lk-u">gdpr-info.eu/art-4-gdpr/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://oag.ca.gov/privacy/ccpa" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">CCPA PII Requirements</div><div class="lk-u">oag.ca.gov/privacy/ccpa</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.hhs.gov/hipaa/for-professionals/privacy/index.html" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">HIPAA Privacy Rule</div><div class="lk-u">hhs.gov/hipaa/.../privacy/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://github.com/microsoft/presidio" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Microsoft Presidio — PII Detection</div><div class="lk-u">github.com/microsoft/presidio</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+
+  <div class="sub"><h3 class="sub-t">Local-First Architecture</h3>
+    <div class="links">
+      <a class="lk" href="https://www.inkandswitch.com/local-first/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"Local-First Software" — Ink & Switch</div><div class="lk-u">inkandswitch.com/local-first/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://martin.kleppmann.com/papers/local-first.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"You Own Your Data" — Kleppmann</div><div class="lk-u">martin.kleppmann.com/papers/local-first.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://signal.org/docs/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Signal Protocol</div><div class="lk-u">signal.org/docs/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BUSINESS ===== -->
+<section class="sec" id="s-biz">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(255,184,0,.1)">💼</div><h2>Business Case & ROI</h2></div>
+  <div class="sub"><h3 class="sub-t">Cloud AI Pricing</h3>
+    <div class="links">
+      <a class="lk" href="https://openai.com/api/pricing/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">OpenAI API Pricing</div><div class="lk-u">openai.com/api/pricing/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.anthropic.com/pricing" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Anthropic Claude Pricing</div><div class="lk-u">anthropic.com/pricing</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://cloud.google.com/vertex-ai/pricing" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Google Vertex AI Pricing</div><div class="lk-u">cloud.google.com/vertex-ai/pricing</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECURITY ===== -->
+<section class="sec" id="s-sec">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(255,107,138,.1)">🛡️</div><h2>Security & Compliance</h2></div>
+  <div class="sub"><h3 class="sub-t">Standards & Frameworks</h3>
+    <div class="links">
+      <a class="lk" href="https://www.nist.gov/cyberframework" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">NIST Cybersecurity Framework</div><div class="lk-u">nist.gov/cyberframework</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://dodcio.defense.gov/Portals/0/Documents/Library/DoD-Zero-Trust-Reference-Architecture.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">DoD Zero Trust Reference Architecture</div><div class="lk-u">dodcio.defense.gov/.../DoD-Zero-Trust-Reference-Architecture.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.cisa.gov/topics/cybersecurity-best-practices" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">CISA Security Best Practices</div><div class="lk-u">cisa.gov/topics/cybersecurity-best-practices</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.nsa.gov/Press-Room/Cybersecurity-Advisories-Guidance/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">NSA Cybersecurity Guidance</div><div class="lk-u">nsa.gov/.../Cybersecurity-Advisories-Guidance/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== AI COMPARISONS ===== -->
+<section class="sec" id="s-comp">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(0,212,255,.1)">📊</div><h2>AI Model Comparisons</h2></div>
+  <div class="sub"><h3 class="sub-t">Benchmarks & Reports</h3>
+    <div class="links">
+      <a class="lk" href="https://arxiv.org/abs/2303.08774" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">GPT-4 Technical Report</div><div class="lk-u">arxiv.org/abs/2303.08774</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://arxiv.org/abs/2212.08073" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Constitutional AI Paper (Anthropic)</div><div class="lk-u">arxiv.org/abs/2212.08073</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://docs.anthropic.com/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Claude API Documentation</div><div class="lk-u">docs.anthropic.com</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://ai.meta.com/blog/code-llama-large-language-model-coding/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Code Llama Performance</div><div class="lk-u">ai.meta.com/blog/code-llama...</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://llava-vl.github.io/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">LLaVA — Vision + Language</div><div class="lk-u">llava-vl.github.io</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ENTERPRISE ===== -->
+<section class="sec" id="s-ent">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(0,255,136,.1)">🏢</div><h2>Enterprise Architecture</h2></div>
+  <div class="sub"><h3 class="sub-t">Agentic AI Frameworks</h3>
+    <div class="links">
+      <a class="lk" href="https://python.langchain.com/docs/get_started/introduction" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">LangChain</div><div class="lk-u">python.langchain.com/docs/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://microsoft.github.io/autogen/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">AutoGen (Microsoft)</div><div class="lk-u">microsoft.github.io/autogen/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.crewai.io/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">CrewAI</div><div class="lk-u">crewai.io</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+  <div class="sub"><h3 class="sub-t">Infrastructure & Auth</h3>
+    <div class="links">
+      <a class="lk" href="https://kubernetes.io/docs/concepts/workloads/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Kubernetes for AI Workloads</div><div class="lk-u">kubernetes.io/docs/concepts/workloads/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://martinfowler.com/bliki/CircuitBreaker.html" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Circuit Breaker Pattern</div><div class="lk-u">martinfowler.com/bliki/CircuitBreaker.html</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://oauth.net/2/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">OAuth 2.0</div><div class="lk-u">oauth.net/2/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://openid.net/connect/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">OpenID Connect</div><div class="lk-u">openid.net/connect/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://developer.okta.com/docs/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Okta Integration</div><div class="lk-u">developer.okta.com/docs/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ACADEMIC ===== -->
+<section class="sec" id="s-acad">
+  <div class="sec-h"><div class="sec-icon" style="background:rgba(179,136,255,.1)">📖</div><h2>Additional Academic Resources</h2></div>
+  <div class="sub"><h3 class="sub-t">Foundational AI Papers</h3>
+    <div class="links">
+      <a class="lk" href="https://arxiv.org/abs/1706.03762" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"Attention Is All You Need" (2017)</div><div class="lk-u">arxiv.org/abs/1706.03762</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://arxiv.org/abs/1810.04805" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"BERT: Pre-training of Deep Bidirectional Transformers"</div><div class="lk-u">arxiv.org/abs/1810.04805</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://arxiv.org/abs/2212.08073" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"Constitutional AI: Harmlessness from AI Feedback"</div><div class="lk-u">arxiv.org/abs/2212.08073</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+  <div class="sub"><h3 class="sub-t">Privacy Research</h3>
+    <div class="links">
+      <a class="lk" href="https://www.ipc.on.ca/wp-content/uploads/resources/7foundationalprinciples.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"Privacy by Design" — Cavoukian</div><div class="lk-u">ipc.on.ca/.../7foundationalprinciples.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/dwork.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"Differential Privacy" — Dwork (2006)</div><div class="lk-u">microsoft.com/.../dwork.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.cs.cornell.edu/~shmat/courses/cs5436/warren-brandeis.pdf" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">"The Right to Privacy" — Warren & Brandeis (1890)</div><div class="lk-u">cs.cornell.edu/.../warren-brandeis.pdf</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+  <div class="sub"><h3 class="sub-t">Industry Guidelines</h3>
+    <div class="links">
+      <a class="lk" href="https://ai.google/responsibility/principles/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Google AI Principles</div><div class="lk-u">ai.google/responsibility/principles/</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://www.microsoft.com/en-us/ai/responsible-ai" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Microsoft Responsible AI</div><div class="lk-u">microsoft.com/en-us/ai/responsible-ai</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a class="lk" href="https://partnershiponai.org/" target="_blank"><div class="lk-dot"></div><div class="lk-c"><div class="lk-n">Partnership on AI</div><div class="lk-u">partnershiponai.org</div></div><svg class="lk-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-box">
+  <h3>Need help finding sources?</h3>
+  <p>We curate authoritative sources for your specific claims. Typically respond within 24-48 hours.</p>
+  <a href="mailto:research@hammerlockai.com?subject=Citation Request" class="cta-btn">research@hammerlockai.com</a>
+</div>
+
+</main>
+
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.<br>
+  Every claim should be citeable. Every citation should be clickable.
+</footer>
+
+</body>
+</html>

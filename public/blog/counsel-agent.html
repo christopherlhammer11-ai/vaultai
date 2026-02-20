@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Counsel Agent: How to Run IRAC-Form Legal Research Without Leaving Your Device — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#00ff88;background:#00ff8815;border:1px solid #00ff8830;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #00ff88;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#00ff8808;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Agent Series</div>
+  <h1>The Counsel Agent: How to Run IRAC-Form Legal Research Without Leaving Your Device</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>5 min read</span>
+  </div>
+</div>
+<article>
+<p>Legal research has a structure problem. Raw information — statutes, case law, regulatory guidance, secondary sources — is abundant. The bottleneck is processing: taking a pile of sources and producing organized, citeable, logically structured analysis that can actually be used.</p>
+<p>The Counsel agent in HammerLockAI is designed for exactly this workflow. It doesn't replace legal judgment. It handles the structuring, the sourcing, the synthesis, and the drafting — so you can spend more time on the analysis that requires your expertise and less time on the work that doesn't.</p>
+<h2>What IRAC Actually Means in This Context</h2>
+<p>IRAC — Issue, Rule, Application, Conclusion — is the foundational analytical structure for legal writing. It's not a stylistic preference; it's the logical skeleton of sound legal argument. The Counsel agent produces output in IRAC form by default for analytical queries, which means:</p>
+<p><strong>Issue:</strong> A precise statement of the legal question being analyzed. Not a vague framing — an exact question that a court or regulator might be called to decide.</p>
+<p><strong>Rule:</strong> The governing law. Statutes, regulations, relevant case holdings, administrative guidance. Cited with jurisdiction and source.</p>
+<p><strong>Application:</strong> The rule applied to the specific facts at hand. This is where the analysis actually lives — not general law, but this law applied to this situation.</p>
+<p><strong>Conclusion:</strong> A direct answer to the issue, with appropriate qualification for areas of legal uncertainty.</p>
+<p>This structure is what makes Counsel output useful for legal professionals rather than just informative. You get analysis you can work with, not a summary you have to restructure from scratch.</p>
+<h2>Core Use Cases</h2>
+<h3>Regulatory Research</h3>
+<p>Regulatory landscapes shift constantly — FDA guidance updates, SEC rulemaking, state-level compliance requirements, international regulatory divergence. Keeping current across multiple jurisdictions and regulatory bodies is a research burden that compounds over time.</p>
+<p>A typical Counsel workflow for regulatory research:</p>
+<p><em>Query:</em> "Summarize current FDA requirements for dietary supplement structure/function claims under 21 CFR 101.93, focusing on the notification requirement, substantiation standard, and the disclaimer language required."</p>
+<p>Counsel will retrieve the relevant regulatory text, synthesize the current substantiation standard (competent and reliable scientific evidence), walk through the notification timeline (30 days after first marketing), and produce the required disclaimer language verbatim.</p>
+<p><em>Query:</em> "How does the FTC's 2023 guidance on endorsements and testimonials interact with FDA's dietary supplement advertising authority? Where do their jurisdictions overlap and where do they conflict?"</p>
+<p>This is the kind of cross-agency jurisdictional question that requires synthesizing multiple regulatory frameworks. Counsel structures it — FTC authority, FDA authority, the overlap zone, the practical compliance implications.</p>
+<h3>Contract Analysis</h3>
+<p>Upload a contract as a PDF and ask Counsel to analyze it. Common workflows:</p>
+<p><strong>Clause identification:</strong> "Identify all limitation of liability provisions in this agreement and flag any that deviate from standard market terms."</p>
+<p><strong>Risk flagging:</strong> "What provisions in this distribution agreement create exposure for the distributor in an international market context?"</p>
+<p><strong>Redline suggestions:</strong> "This indemnification clause is missing a cap. Draft two alternative versions — one favorable to the indemnitor, one as a compromise position — and explain the commercial logic of each."</p>
+<p>Counsel doesn't just pull quotes — it structures the analysis around the contract's intent, identifies the commercial logic behind provisions, and produces alternative language with the reasoning explained.</p>
+<h3>Case Research</h3>
+<p><em>Query:</em> "What is the current circuit split on the issue of personal jurisdiction over foreign corporations under Daimler AG v. Bauman? Which circuits have the most expansive reading and which have applied the narrowest interpretation?"</p>
+<p>Counsel produces an IRAC-form brief on the issue — the constitutional question (due process, general vs. specific jurisdiction), the Daimler holding, the subsequent circuit developments, and a clear summary of where the split stands.</p>
+<p><em>Query:</em> "I need a heat map of state-level variations in non-compete enforceability, focusing on the healthcare sector. Which states have the strongest restrictions and which have the most permissive regimes?"</p>
+<p>This is comparative jurisdiction analysis — Counsel synthesizes the landscape across 50 states, identifying the key variables (consideration requirements, geographic/duration limits, blue-penciling standards) and flagging the states most likely to affect your analysis.</p>
+<h3>Compliance Memos</h3>
+<p>Counsel is particularly useful for drafting the first version of compliance memos — documents that require legal structure, citation discipline, and regulatory accuracy but don't always require partner-level attention for initial drafting.</p>
+<p><em>Query:</em> "Draft a compliance memo addressing whether our company's practice of [specific practice] is compliant with [specific regulation]. Use IRAC structure. Flag areas of uncertainty requiring further legal review."</p>
+<p>The output is a structured memo with an issues section, applicable rules, application analysis, and a conclusion that explicitly flags where the analysis is solid versus where there's genuine legal uncertainty requiring human review.</p>
+<h2>How Privilege Interacts with This Workflow</h2>
+<p>Attorney-client privilege protects confidential communications between an attorney and client made for the purpose of obtaining or providing legal advice. The privilege analysis for AI-assisted legal work turns substantially on what data you transmit to the AI provider.</p>
+<p>With HammerLockAI's Counsel agent:</p>
+<p><strong>Client identifiers are stripped before cloud transmission.</strong> The PII anonymizer removes names, company identifiers, matter numbers, and other identifying information before any query reaches a cloud provider. The provider receives a legal question — not a legal question tied to an identifiable client.</p>
+<p><strong>Local-only mode eliminates the transmission question entirely.</strong> Running Ollama locally and directing Counsel to use local models means no data leaves your device. The privilege analysis for attorney-client communications processed entirely on the attorney's own device is straightforward.</p>
+<p><strong>Your vault is encrypted on your device.</strong> Counsel's outputs stored in your vault are AES-256 encrypted at rest. Access requires your password. HammerLock has no access.</p>
+<p>This is meaningfully different from the privilege posture of using a commercial AI tool under standard terms, where client-identifiable data is transmitted to a third-party provider under terms that may or may not qualify as privilege-preserving.</p>
+<p>The cleanest posture for privileged work: local Ollama models, local vault storage, PII anonymization as a second layer of protection for any queries that do go cloud. That's the configuration HammerLockAI supports.</p>
+<h2>Building a Research Session</h2>
+<p>Counsel is most powerful in multi-turn research sessions, not single queries. A well-structured session might look like this:</p>
+<p><strong>Turn 1:</strong> Frame the legal question precisely. "I'm analyzing whether [specific business practice] constitutes [specific legal issue] under [specific regulatory framework]. Define the key legal questions I need to answer."</p>
+<p><strong>Turn 2:</strong> Get the rule. "Walk me through the statutory and regulatory framework governing [the issue]. What are the key provisions and what do they require?"</p>
+<p><strong>Turn 3:</strong> Apply it. "Apply this framework to the following facts: [specific facts]. Where is the analysis clear? Where are the gray areas?"</p>
+<p><strong>Turn 4:</strong> Get the citations. "What case law and regulatory guidance should I cite in the final memo? Identify the most authoritative sources for each element of the analysis."</p>
+<p><strong>Turn 5:</strong> Draft. "Based on our analysis, draft an IRAC-form memo summarizing the issue, applicable law, application, and conclusion. Flag areas where the analysis requires further research or judgment calls."</p>
+<p>By the end of this session, you have a structured first draft with citations, clear identification of the uncertain areas, and an organized analytical framework — all produced without a single piece of client-identifiable data leaving your device.</p>
+<h2>The Citation Discipline</h2>
+<p>One of the most important habits when using Counsel for legal work: verify citations. Counsel is designed to cite with precision, but LLMs can hallucinate case names, misattribute holdings, or cite superseded versions of regulations. Every citation produced by Counsel should be independently verified before it appears in work product.</p>
+<p>Build this into your workflow: after a Counsel research session, run a verification pass on every case cite and regulatory reference. This takes time, but it's the same discipline you'd apply to any first-year associate's research memo. Counsel gets you a well-structured first draft with a solid analytical framework — you bring the verification that makes it reliable work product.</p>
+<hr />
+<p><em>HammerLockAI agents are available in Core and above. <a href="https://hammerlockai.com/#pricing">Get started →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

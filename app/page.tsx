@@ -228,7 +228,7 @@ export default function LandingPage() {
           <li><a href="#pricing">{t.site_nav_pricing}</a></li>
           <li><a href="#how">{t.site_nav_how}</a></li>
           <li><a href="#why">{t.site_nav_why}</a></li>
-          <li><a href="/blog">Research</a></li>
+          <li><a href="/blog/blog-index.html">Research</a></li>
         </ul>
         <div className="lang-picker" ref={langRef} style={{ position: 'relative' }}>
           <button
@@ -748,12 +748,12 @@ export default function LandingPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {[
-              { icon: '🔄', title: 'Parallel Provider Racing', desc: 'Sends your query to multiple AI providers simultaneously. The fastest response wins. If one provider is down, you never notice.', blogLabel: 'How racing works →', blogHref: '/blog' },
-              { icon: '🏠', title: 'Local-First with Ollama', desc: 'Run Llama, Mistral, Phi, or Gemma locally with Ollama. Zero latency, zero cost, zero data leaving your machine. Perfect for sensitive work.', blogLabel: 'Read the field guide →', blogHref: '/blog' },
-              { icon: '🔀', title: 'Automatic Failover', desc: 'If OpenAI is slow, Groq picks it up. If Groq is down, Anthropic steps in. Your workflow never stops, regardless of provider outages.', blogLabel: 'Inside OpenClaw →', blogHref: '/blog' },
-              { icon: '🌊', title: 'Real-Time Streaming', desc: 'Tokens stream to your screen as they generate. No more staring at loading spinners — see the AI think in real time.', blogLabel: 'Speed benchmarks →', blogHref: '/blog' },
-              { icon: '🔑', title: 'Bring Your Own Keys', desc: 'Use your own API keys from any provider. Pay the providers directly at their rates. No markup, no middleman, no data routing through us.', blogLabel: 'API key guide →', blogHref: '/blog' },
-              { icon: '🛡️', title: 'PII Anonymization', desc: 'Built-in anonymizer strips personal data before it reaches any cloud API. Names, emails, phone numbers — automatically redacted and restored.', blogLabel: 'Privacy architecture →', blogHref: '/blog' },
+              { icon: '🔄', title: 'Parallel Provider Racing', desc: 'Sends your query to multiple AI providers simultaneously. The fastest response wins. If one provider is down, you never notice.', blogLabel: 'How racing works →', blogHref: '/blog/parallel-provider-racing.html' },
+              { icon: '🏠', title: 'Local-First with Ollama', desc: 'Run Llama, Mistral, Phi, or Gemma locally with Ollama. Zero latency, zero cost, zero data leaving your machine. Perfect for sensitive work.', blogLabel: 'Read the field guide →', blogHref: '/blog/blog-index.html' },
+              { icon: '🔀', title: 'Automatic Failover', desc: 'If OpenAI is slow, Groq picks it up. If Groq is down, Anthropic steps in. Your workflow never stops, regardless of provider outages.', blogLabel: 'Inside OpenClaw →', blogHref: '/blog/automatic-failover.html' },
+              { icon: '🌊', title: 'Real-Time Streaming', desc: 'Tokens stream to your screen as they generate. No more staring at loading spinners — see the AI think in real time.', blogLabel: 'Speed benchmarks →', blogHref: '/blog/token-streaming.html' },
+              { icon: '🔑', title: 'Bring Your Own Keys', desc: 'Use your own API keys from any provider. Pay the providers directly at their rates. No markup, no middleman, no data routing through us.', blogLabel: 'API key guide →', blogHref: '/blog/byok-guide.html' },
+              { icon: '🛡️', title: 'PII Anonymization', desc: 'Built-in anonymizer strips personal data before it reaches any cloud API. Names, emails, phone numbers — automatically redacted and restored.', blogLabel: 'Privacy architecture →', blogHref: '/blog/privacy-architecture.html' },
             ].map((item) => (
               <div key={item.title} style={{
                 padding: '20px 24px', background: 'rgba(17,17,17,0.6)',

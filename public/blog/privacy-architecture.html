@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Architecture Deep Dive: What Happens to Your Data at Every Step — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#b388ff;background:#b388ff15;border:1px solid #b388ff30;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #b388ff;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#b388ff08;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Privacy Architecture</div>
+  <h1>Privacy Architecture Deep Dive: What Happens to Your Data at Every Step</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>6 min read</span>
+  </div>
+</div>
+<article>
+<p>"Privacy-first" is one of the most overused phrases in enterprise software. Every product claims it. Very few can show you the mechanism.</p>
+<p>This article traces exactly what happens to your data at every step of a HammerLockAI session — from the moment you type a character to the moment a response is stored in your vault. No abstraction, no marketing language. Just the architecture.</p>
+<h2>The Stack Overview</h2>
+<p>HammerLockAI's privacy architecture has four distinct layers, each with a specific role:</p>
+<ol>
+<li><strong>Local encryption layer</strong> — protects data at rest on your device</li>
+<li><strong>PII anonymization layer</strong> — protects identity before any data leaves your device</li>
+<li><strong>Routing layer</strong> — controls which providers see which queries</li>
+<li><strong>Local storage layer</strong> — ensures responses and sessions never reach cloud storage</li>
+</ol>
+<p>Understanding where each layer operates tells you exactly where your data is protected and where it isn't.</p>
+<hr />
+<h2>Step 1: You Type a Query</h2>
+<p>Your keystrokes go directly into the HammerLockAI interface running locally on your device. Nothing is transmitted at this stage. The interface is a local application — no keystroke logging, no real-time sync to a server, no analytics pinging home as you type.</p>
+<p>Your session state — the conversation context, any loaded persona files, your vault contents — exists entirely in local memory and local encrypted storage. Nothing about your session is live on a remote server.</p>
+<p><strong>What leaves your device at this step: Nothing.</strong></p>
+<hr />
+<h2>Step 2: PII Detection and Anonymization</h2>
+<p>Before your query is processed for transmission, the anonymizer scans it for personally identifiable information: names, email addresses, phone numbers, company names, and other identifiers that could link the query to a specific individual or organization.</p>
+<p>Detected PII is replaced with generic placeholders. The original values and their placeholder substitutions are stored in a session mapping held in local memory — not on disk, not transmitted.</p>
+<p>The anonymized query — your original intent intact, but stripped of identifying specifics — is what gets passed to the next stage.</p>
+<p><strong>What leaves your device at this step: Nothing. Anonymization runs entirely locally.</strong></p>
+<hr />
+<h2>Step 3: Query Routing Decision</h2>
+<p>The routing layer decides where the anonymized query goes. This decision is based on your configuration:</p>
+<p><strong>Local-only mode:</strong> The query goes to Ollama, running on your device. It never leaves your machine. The model processes it locally, generates a response locally, and the response is stored locally. No external network connection is made for this query.</p>
+<p><strong>Cloud mode (racing or sequential):</strong> The anonymized query is prepared for transmission to one or more configured cloud providers. Your API keys (stored in your encrypted vault, loaded into memory at session start) are used to authenticate the outbound request. The request is made directly from your device to the provider's API — there is no HammerLock intermediary server handling the transmission.</p>
+<p><strong>Hybrid mode:</strong> Some queries go local (typically lower-complexity tasks, sensitive sessions), some go cloud (high-capability requirements). The routing can be configured manually or set to automatic based on query characteristics.</p>
+<p><strong>What leaves your device at this step:</strong> In cloud mode, the anonymized query is transmitted directly to the provider API over HTTPS. Your IP address is visible to the provider. The content of the query is anonymized. Your API key authenticates the request — providers can associate requests with your account, but not with identifiable query content.</p>
+<hr />
+<h2>Step 4: Provider Processing</h2>
+<p>The cloud AI provider — OpenAI, Anthropic, Groq, Gemini, Mistral, or DeepSeek — receives the anonymized query and processes it. The provider has no access to:</p>
+<ul>
+<li>Your real name or your clients' names (stripped by the anonymizer)</li>
+<li>Your company name or your clients' company names (stripped)</li>
+<li>Email addresses, phone numbers, or other contact identifiers (stripped)</li>
+<li>Your previous sessions (not transmitted — context lives in your local session only)</li>
+<li>Your vault contents (never transmitted)</li>
+<li>Your persona files (not sent to the provider — used locally for context, summarized when included in the prompt)</li>
+</ul>
+<p>The provider does have access to:</p>
+<ul>
+<li>The anonymized query content (the substance of what you're asking)</li>
+<li>Your API key (if BYOK) or HammerLock's pooled key (if credits)</li>
+<li>Your IP address (standard for any API request)</li>
+<li>Provider-side logs per their own retention policies</li>
+</ul>
+<p><strong>This is the exposure window.</strong> The provider sees the subject matter of your query, even if they don't see the identities involved. For most professional use cases, this is an acceptable tradeoff. For highly sensitive queries where even the subject matter can't be disclosed to third parties, use local-only mode.</p>
+<hr />
+<h2>Step 5: Response Transmission</h2>
+<p>The provider streams the response back to your device over HTTPS. Each token arrives encrypted in transit (TLS 1.3 on all major providers). The response is received by the HammerLockAI runtime running locally.</p>
+<p>At no point is the response written to a HammerLock server. It streams directly from the provider to your local application.</p>
+<p><strong>What leaves your device at this step: Nothing.</strong></p>
+<hr />
+<h2>Step 6: Response Restoration</h2>
+<p>The locally-held PII mapping from Step 2 is applied to the incoming response. Placeholders in the response — "Person A," "Company A," "email_1@domain.com" — are replaced with the original values. This restoration happens in local memory before the response is displayed.</p>
+<p>What you see in the interface is the complete, contextually accurate response with real names and identifiers restored. The provider never saw those real values; you see them because the restoration happened on your device.</p>
+<p><strong>What leaves your device at this step: Nothing.</strong></p>
+<hr />
+<h2>Step 7: Local Storage and Encryption</h2>
+<p>When the session is saved, the full conversation — including the original (pre-anonymized) query, the restored response, and any associated context — is encrypted using AES-256-GCM and written to local storage. The encryption key is derived from your password using PBKDF2 key stretching.</p>
+<p>The encrypted data on your device is unreadable without your password. There is no recovery mechanism — HammerLock has no copy of your password and cannot decrypt your vault. If you forget your password, your encrypted data cannot be recovered. This is a deliberate design choice. Recoverability requires a trusted party who holds a key; we don't hold one.</p>
+<p><strong>What is stored on HammerLock servers: Nothing. Your conversation history, vault, and persona files exist only on your device.</strong></p>
+<hr />
+<h2>The Complete Data Flow, Summarized</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What Happens</th>
+<th>Data Off Device?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>You type</td>
+<td>Input captured locally</td>
+<td>No</td>
+</tr>
+<tr>
+<td>PII scan</td>
+<td>Identifiers detected, mapping created in memory</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>Query directed to local or cloud</td>
+<td>No (local) / Anonymized query only (cloud)</td>
+</tr>
+<tr>
+<td>Provider</td>
+<td>Model processes anonymized query</td>
+<td>Anonymized query visible to provider</td>
+</tr>
+<tr>
+<td>Response</td>
+<td>Streamed back over HTTPS</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Restoration</td>
+<td>Placeholders replaced locally</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>Encrypted, stored locally</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Where HammerLockAI Sits vs. the Law</h2>
+<p>For professionals operating under legal data protection regimes — attorney-client privilege, HIPAA, GDPR, fiduciary duty — understanding this architecture matters beyond convenience.</p>
+<p><strong>Attorney-client privilege:</strong> Transmitting client information to a third-party AI provider is a disclosure. Courts are still working through whether AI providers are "agents" of the attorney that preserve privilege. The safest position — no client identifiers transmitted — is what HammerLockAI's anonymizer enables. Local-only mode is the absolute safest position.</p>
+<p><strong>HIPAA:</strong> Covered entities transmitting patient data to AI providers trigger Business Associate Agreement (BAA) requirements. Most AI providers' standard terms don't qualify as BAAs. HammerLockAI's anonymizer prevents patient identifiers from being transmitted; local-only mode prevents any PHI from leaving the covered entity's infrastructure.</p>
+<p><strong>GDPR:</strong> Data minimization is a foundational principle — collect and process only what is necessary. Transmitting anonymized queries to process your AI tasks is a significantly more defensible position than transmitting full-context queries with identifiable data. Local-only mode eliminates the third-country transfer problem entirely.</p>
+<p><strong>Fiduciary duty:</strong> Financial advisors and wealth managers owe their clients a duty that includes protecting confidential information. Running client portfolio data through a commercial AI tool with standard terms is a compliance risk. HammerLockAI's anonymizer, used correctly, meaningfully reduces that exposure.</p>
+<hr />
+<h2>The Honest Caveat</h2>
+<p>No privacy architecture is a complete legal opinion. This document describes the technical reality of how HammerLockAI processes data. Whether that technical reality satisfies your specific professional obligations under specific regulatory regimes is a legal question that your counsel should evaluate.</p>
+<p>What we can say with precision: the architecture described here is the architecture HammerLockAI runs. Your data path is local — except for the anonymized query that reaches the provider in cloud mode. That is a meaningfully better posture than the alternative.</p>
+<hr />
+<p><em>HammerLockAI is built on a fork of OpenClaw, the open-source agentic AI runtime. <a href="https://github.com/christopherlhammer11-ai/hammerlock">View the source on GitHub →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>

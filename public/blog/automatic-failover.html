@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatic Failover Explained: How HammerLockAI Keeps Running When Your LLM Doesn't — HammerLockAI Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--g:#00ff88;--gd:rgba(0,255,136,.15);--c:#00d4ff;--t1:#e8e8ef;--t2:#8888a0;--t3:#55556a;--b1:rgba(255,255,255,.06);--ff:'Sora',sans-serif;--fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;z-index:1000}
+.topbar-logo{font-family:var(--fm);font-weight:700;font-size:.9rem;color:var(--g);text-decoration:none;letter-spacing:.05em}
+.topbar-logo span{color:var(--t3)}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:.78rem;font-weight:500;color:var(--t2);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.topbar-nav a:hover{color:var(--g)}
+.topbar-nav a.active{color:var(--g)}
+.post-hero{margin-top:56px;padding:4rem 2rem 2rem;max-width:780px;margin-left:auto;margin-right:auto}
+.post-badge{display:inline-block;font-family:var(--fm);font-size:.68rem;font-weight:600;color:#00d4ff;background:#00d4ff15;border:1px solid #00d4ff30;padding:.3rem .8rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem}
+.post-hero h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.post-meta{font-family:var(--fm);font-size:.72rem;color:var(--t3);display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.post-meta span{display:flex;align-items:center;gap:.3rem}
+article{max-width:780px;margin:0 auto;padding:0 2rem 4rem}
+article h2{font-size:1.35rem;font-weight:700;margin:2.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--b1);letter-spacing:-.01em}
+article h3{font-size:1.05rem;font-weight:600;margin:2rem 0 .8rem;color:var(--t1)}
+article p{font-size:.95rem;color:var(--t2);margin-bottom:1.2rem;line-height:1.8}
+article strong{color:var(--t1);font-weight:600}
+article ul,article ol{margin:0 0 1.2rem 1.5rem;color:var(--t2)}
+article li{margin-bottom:.5rem;font-size:.92rem;line-height:1.7}
+article code{font-family:var(--fm);font-size:.82rem;background:var(--card);padding:.15rem .4rem;border-radius:4px;border:1px solid var(--b1)}
+article pre{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:1.2rem 1.5rem;overflow-x:auto;margin:1rem 0 1.5rem;font-family:var(--fm);font-size:.8rem;line-height:1.6;color:var(--t2)}
+article pre code{background:none;border:none;padding:0}
+article blockquote{border-left:3px solid #00d4ff;padding:.8rem 1.2rem;margin:1rem 0 1.5rem;background:#00d4ff08;border-radius:0 8px 8px 0}
+article blockquote p{color:var(--t2);margin-bottom:0}
+article hr{border:none;border-top:1px solid var(--b1);margin:2rem 0}
+article a{color:var(--c);text-decoration:none;border-bottom:1px solid rgba(0,212,255,.3);transition:border-color .2s}
+article a:hover{border-color:var(--c)}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.75rem;color:var(--t3);text-decoration:none;padding:.5rem 0;transition:color .2s;margin-bottom:1rem}
+.back-link:hover{color:var(--g)}
+.foot{border-top:1px solid var(--b1);padding:2rem;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--t3);max-width:780px;margin:0 auto}
+.foot a{color:var(--g);text-decoration:none}
+@media(max-width:640px){.topbar{padding:0 1rem}.post-hero{padding:3rem 1.5rem 1.5rem}article{padding:0 1.5rem 3rem}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a href="https://hammerlockai.com" class="topbar-logo">HAMMERLOCK<span>AI</span></a>
+  <div class="topbar-nav">
+    <a href="/blog/blog-index.html" class="active">Blog</a>
+    <a href="/blog/ai-glossary.html">Glossary</a>
+    <a href="/blog/citation-library.html">Citations</a>
+  </div>
+</nav>
+<div class="post-hero">
+  <a href="/blog/blog-index.html" class="back-link">← Back to Blog</a>
+  <div class="post-badge">Architecture</div>
+  <h1>Automatic Failover Explained: How HammerLockAI Keeps Running When Your LLM Doesn't</h1>
+  <div class="post-meta">
+    <span>HammerLock Research Desk</span>
+    <span>4 min read</span>
+  </div>
+</div>
+<article>
+<p>Every cloud service goes down. Every AI provider has incidents. OpenAI has had significant outages. Anthropic has had elevated error rates during high-traffic periods. Groq, Gemini, Mistral — none of them have a perfect uptime record, and none of them ever will. Cloud infrastructure is not a guarantee; it's a probability.</p>
+<p>The question isn't whether your AI provider will have an incident. The question is what happens to your work when it does.</p>
+<p>For most AI tools, the answer is simple: you stop. You get an error message, a spinning loader that never resolves, or a cryptic 503. Your session is interrupted. You wait.</p>
+<p>HammerLockAI's automatic failover means the answer is different: you don't notice.</p>
+<h2>What Failover Actually Is</h2>
+<p>Failover is the automatic detection of a provider failure and the seamless routing of your request to an alternative provider — without you doing anything, without you seeing an error, and without your workflow stopping.</p>
+<p>It's a concept borrowed from enterprise networking and distributed systems, where redundancy isn't a luxury — it's an engineering requirement. The idea is simple: no single component should be a point of failure for the whole system. If one node goes down, traffic reroutes. The system continues.</p>
+<p>OpenClaw, the open-source runtime underlying HammerLockAI, applies this principle to LLM routing. You have one AI assistant from your perspective. Under the hood, that assistant is backed by a multi-provider routing layer that actively monitors availability and quality.</p>
+<h2>How OpenClaw's Failover Works</h2>
+<p><strong>Detection happens at the connection layer.</strong> When a provider returns an error code — 429 (rate limit), 503 (service unavailable), 500 (internal server error), or a timeout — OpenClaw treats it as a signal to reroute. It doesn't retry the same provider. It moves to the next available one.</p>
+<p><strong>The provider priority list is configurable.</strong> By default, HammerLockAI maintains a ranked list of providers based on your configuration. In parallel racing mode, the fastest provider wins. In sequential failover mode, providers are tried in priority order. Both modes ensure that a single provider's failure doesn't halt your session.</p>
+<p><strong>Local models are the ultimate backstop.</strong> If every configured cloud provider is unavailable — a scenario that's unlikely but not impossible — Ollama-powered local models on your device are the final layer. Llama, Mistral, Phi, or Gemma running locally have no dependency on internet connectivity, no API rate limits, and no external availability windows. They're always up if your machine is running.</p>
+<p><strong>Error types are handled differently.</strong> A rate limit (429) triggers immediate rerouting to a provider with available capacity. A temporary server error (503) triggers rerouting with the original provider flagged for a backoff period — it'll be tried again after a cooldown. A network timeout triggers the same. The response to each failure type is calibrated to avoid making the problem worse (hammering a rate-limited provider, for instance).</p>
+<h2>What You See vs. What's Happening</h2>
+<p>From the interface, failover is invisible. You submit a query. A response streams back. If a provider failed mid-stream, OpenClaw handles the rerouting and the re-submission at the runtime level — below the interface layer.</p>
+<p>In some edge cases where a provider fails mid-response (rare, but it happens), you may see a brief pause before the response resumes from an alternative provider. This is the worst-case user experience — a momentary delay, not a broken session.</p>
+<p>Compare that to the alternative: a hard error, a broken session, and having to restart your workflow from scratch.</p>
+<h2>Why This Matters for Professional Use</h2>
+<p>For professionals using HammerLockAI in high-stakes workflows, failover is a reliability guarantee, not a convenience feature. Consider the scenarios:</p>
+<p><strong>Legal research session:</strong> You're deep into a multi-source research thread. Your primary provider throttles. Without failover, your session breaks mid-thought. With failover, the next provider picks up and your research continues.</p>
+<p><strong>Financial modeling:</strong> You're iterating on a scenario analysis. Provider has an outage during market hours. Without failover, you lose the thread and potentially the timing. With failover, your analysis session is uninterrupted.</p>
+<p><strong>Competitive intelligence:</strong> You're building a briefing under a deadline. Provider returns repeated 503s. Without failover, you're scrambling. With failover, you don't notice there was a problem.</p>
+<p>These aren't hypotheticals. Cloud AI providers have real incidents, often during peak usage hours — which often coincide with when you most need reliable AI access.</p>
+<h2>BYOK and Failover</h2>
+<p>When you bring your own API keys, failover works across your own provider accounts. If your OpenAI key hits its rate limit, failover routes to your Anthropic key, then your Groq key, in the configured priority order. You're paying each provider directly at their rates, and the failover logic ensures you're always using capacity you actually have available.</p>
+<p>This is how high-volume professional setups should work. Not a single API key with a hard limit that stops your session, but a layered set of accounts with automatic routing across whichever has capacity.</p>
+<h2>The Local-First Guarantee</h2>
+<p>At the base of HammerLockAI's failover stack sits the local model layer. With Ollama installed and a model downloaded, you have an AI assistant that cannot be affected by provider outages, rate limits, API pricing changes, or internet connectivity issues.</p>
+<p>This is what "local-first" means in practice. Not that cloud providers are never used — they're faster, they run larger models, and they're the right choice for most queries. But the local layer means that even in the worst case — every cloud provider simultaneously unavailable — your HammerLockAI session keeps running.</p>
+<p>Your AI. Your data. Your rules. Even when the cloud isn't cooperating.</p>
+<hr />
+<p><em>HammerLockAI is built on a fork of OpenClaw, the open-source agentic AI runtime. <a href="https://github.com/christopherlhammer11-ai/hammerlock">View the source on GitHub →</a></em></p>
+</article>
+<footer class="foot">
+  © 2026 <a href="https://hammerlockai.com">HammerLockAI</a> — Your AI. Your Data. Your Rules.
+</footer>
+</body>
+</html>
