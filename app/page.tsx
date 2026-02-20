@@ -601,6 +601,17 @@ export default function LandingPage() {
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: 20, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
           {t.site_plan_credits_footnote}
         </p>
+
+        {/* Cancel anytime + contact */}
+        <div style={{ textAlign: 'center', marginTop: 24, padding: '16px 24px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 6px', fontWeight: 600 }}>
+            Cancel anytime. No long-term contracts. No hidden fees.
+          </p>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+            All subscriptions can be cancelled instantly from your Stripe dashboard. Questions? Reach us at{' '}
+            <a href="mailto:info@hammerlockai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@hammerlockai.com</a>
+          </p>
+        </div>
       </section>
 
       <section id="how" className="timeline-section fade-in-section">
@@ -737,12 +748,12 @@ export default function LandingPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {[
-              { icon: '🔄', title: 'Parallel Provider Racing', desc: 'Sends your query to multiple AI providers simultaneously. The fastest response wins. If one provider is down, you never notice.' },
-              { icon: '🏠', title: 'Local-First with Ollama', desc: 'Run Llama, Mistral, Phi, or Gemma locally with Ollama. Zero latency, zero cost, zero data leaving your machine. Perfect for sensitive work.' },
-              { icon: '🔀', title: 'Automatic Failover', desc: 'If OpenAI is slow, Groq picks it up. If Groq is down, Anthropic steps in. Your workflow never stops, regardless of provider outages.' },
-              { icon: '🌊', title: 'Real-Time Streaming', desc: 'Tokens stream to your screen as they generate. No more staring at loading spinners — see the AI think in real time.' },
-              { icon: '🔑', title: 'Bring Your Own Keys', desc: 'Use your own API keys from any provider. Pay the providers directly at their rates. No markup, no middleman, no data routing through us.' },
-              { icon: '🛡️', title: 'PII Anonymization', desc: 'Built-in anonymizer strips personal data before it reaches any cloud API. Names, emails, phone numbers — automatically redacted and restored.' },
+              { icon: '🔄', title: 'Parallel Provider Racing', desc: 'Sends your query to multiple AI providers simultaneously. The fastest response wins. If one provider is down, you never notice.', blogLabel: 'How racing works →', blogHref: '/blog' },
+              { icon: '🏠', title: 'Local-First with Ollama', desc: 'Run Llama, Mistral, Phi, or Gemma locally with Ollama. Zero latency, zero cost, zero data leaving your machine. Perfect for sensitive work.', blogLabel: 'Read the field guide →', blogHref: '/blog' },
+              { icon: '🔀', title: 'Automatic Failover', desc: 'If OpenAI is slow, Groq picks it up. If Groq is down, Anthropic steps in. Your workflow never stops, regardless of provider outages.', blogLabel: 'Inside OpenClaw →', blogHref: '/blog' },
+              { icon: '🌊', title: 'Real-Time Streaming', desc: 'Tokens stream to your screen as they generate. No more staring at loading spinners — see the AI think in real time.', blogLabel: 'Speed benchmarks →', blogHref: '/blog' },
+              { icon: '🔑', title: 'Bring Your Own Keys', desc: 'Use your own API keys from any provider. Pay the providers directly at their rates. No markup, no middleman, no data routing through us.', blogLabel: 'API key guide →', blogHref: '/blog' },
+              { icon: '🛡️', title: 'PII Anonymization', desc: 'Built-in anonymizer strips personal data before it reaches any cloud API. Names, emails, phone numbers — automatically redacted and restored.', blogLabel: 'Privacy architecture →', blogHref: '/blog' },
             ].map((item) => (
               <div key={item.title} style={{
                 padding: '20px 24px', background: 'rgba(17,17,17,0.6)',
@@ -752,6 +763,7 @@ export default function LandingPage() {
                 <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>{item.icon}</div>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 6, color: 'var(--text-primary)' }}>{item.title}</h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+                <a href={item.blogHref} style={{ display: 'inline-block', marginTop: 10, fontSize: '0.78rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>{item.blogLabel}</a>
               </div>
             ))}
           </div>
@@ -768,12 +780,12 @@ export default function LandingPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
             {[
-              { title: 'Private Legal AI', desc: 'Law firms processing client documents with zero cloud exposure. Contract review, case research, and compliance checks — all running locally with attorney-client privilege intact.', tag: 'Legal' },
-              { title: 'Healthcare Data Analysis', desc: 'HIPAA-compliant AI processing of patient data. Medical record summarization, clinical trial matching, and research synthesis without data leaving the hospital network.', tag: 'Healthcare' },
-              { title: 'Financial Modeling', desc: 'Investment firms running AI analysis on proprietary trading data. Portfolio optimization, risk assessment, and market research with no data leakage to third parties.', tag: 'Finance' },
-              { title: 'Government & Defense', desc: 'Air-gapped AI deployments for classified environments. Intelligence analysis, document processing, and decision support on isolated networks.', tag: 'Gov/Defense' },
-              { title: 'Enterprise Knowledge Base', desc: 'Companies deploying internal AI assistants trained on proprietary documentation. SOPs, product specs, and internal wikis — searchable and conversational.', tag: 'Enterprise' },
-              { title: 'Developer Tools', desc: 'Embed OpenClaw in your own applications. Build AI-powered features without vendor lock-in. Switch providers, add local models, or go fully offline — your architecture, your choice.', tag: 'Developers' },
+              { title: 'Private Legal AI', desc: 'Law firms processing client documents with zero cloud exposure. Contract review, case research, and compliance checks — all running locally with attorney-client privilege intact.', tag: 'Legal', blogLabel: 'Read the case study →' },
+              { title: 'Healthcare Data Analysis', desc: 'HIPAA-compliant AI processing of patient data. Medical record summarization, clinical trial matching, and research synthesis without data leaving the hospital network.', tag: 'Healthcare', blogLabel: 'HIPAA compliance guide →' },
+              { title: 'Financial Modeling', desc: 'Investment firms running AI analysis on proprietary trading data. Portfolio optimization, risk assessment, and market research with no data leakage to third parties.', tag: 'Finance', blogLabel: 'Enterprise use cases →' },
+              { title: 'Government & Defense', desc: 'Air-gapped AI deployments for classified environments. Intelligence analysis, document processing, and decision support on isolated networks.', tag: 'Gov/Defense', blogLabel: 'Air-gap deployment →' },
+              { title: 'Enterprise Knowledge Base', desc: 'Companies deploying internal AI assistants trained on proprietary documentation. SOPs, product specs, and internal wikis — searchable and conversational.', tag: 'Enterprise', blogLabel: 'Enterprise architecture →' },
+              { title: 'Developer Tools', desc: 'Embed OpenClaw in your own applications. Build AI-powered features without vendor lock-in. Switch providers, add local models, or go fully offline — your architecture, your choice.', tag: 'Developers', blogLabel: 'Developer docs →' },
             ].map((uc) => (
               <div key={uc.title} style={{
                 padding: '24px', background: 'rgba(17,17,17,0.6)',
@@ -787,6 +799,7 @@ export default function LandingPage() {
                 }}>{uc.tag}</span>
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>{uc.title}</h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{uc.desc}</p>
+                <a href="/blog" style={{ display: 'inline-block', marginTop: 12, fontSize: '0.78rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>{uc.blogLabel}</a>
               </div>
             ))}
           </div>
@@ -866,17 +879,67 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="site-footer">
-        <a href="/" className="logo-mark" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Image src="/brand/hammerlock-icon-192.png" alt="" width={22} height={22} style={{ borderRadius: 4 }} /> HammerLock AI
-        </a>
-        <div className="trust-badges">
-          <span className="trust-badge">🔐 {t.site_footer_aes}</span>
-          <span className="trust-badge">🖥️ {t.site_footer_local}</span>
-          <span className="trust-badge">🛡️ {t.site_footer_pii}</span>
+      <footer className="site-footer" style={{ padding: '60px 24px 32px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 40 }}>
+          {/* Brand */}
+          <div>
+            <a href="/" className="logo-mark" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Image src="/brand/hammerlock-icon-192.png" alt="" width={22} height={22} style={{ borderRadius: 4 }} /> HammerLock AI
+            </a>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 16px' }}>
+              Your AI. Your Data. Your Rules.<br />Private, encrypted, open-source AI for professionals.
+            </p>
+            <div className="trust-badges" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <span className="trust-badge">🔐 {t.site_footer_aes}</span>
+              <span className="trust-badge">🖥️ {t.site_footer_local}</span>
+              <span className="trust-badge">🛡️ {t.site_footer_pii}</span>
+            </div>
+          </div>
+
+          {/* Product */}
+          <div>
+            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Product</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <a href="#features" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Features</a>
+              <a href="#agents" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>AI Agents</a>
+              <a href="#pricing" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Pricing</a>
+              <a href="/get-app" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Download App</a>
+              <a href="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Blog &amp; Guides</a>
+            </div>
+          </div>
+
+          {/* OpenClaw */}
+          <div>
+            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>OpenClaw</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <a href="https://github.com/christopherlhammer11-ai/hammerlock" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>GitHub Repository</a>
+              <a href="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>OpenClaw Framework</a>
+              <a href="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Enterprise Use Cases</a>
+              <a href="https://ollama.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.82rem' }}>Ollama (Local AI)</a>
+            </div>
+          </div>
+
+          {/* Contact & Support */}
+          <div>
+            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Contact &amp; Support</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <a href="mailto:info@hammerlockai.com" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 600 }}>info@hammerlockai.com</a>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Customer Service &amp; Sales</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Enterprise Inquiries</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Partnership Opportunities</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: 4 }}>We typically respond within 24 hours.</span>
+            </div>
+          </div>
         </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          <a href="mailto:info@hammerlockai.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>info@hammerlockai.com</a>
+
+        {/* Bottom bar */}
+        <div style={{ maxWidth: 1100, margin: '0 auto', paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            &copy; {new Date().getFullYear()} HammerLock AI. All rights reserved. Built on OpenClaw (MIT License).
+          </p>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Cancel anytime &middot; No long-term contracts &middot; <a href="mailto:info@hammerlockai.com" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Questions? Contact us</a>
+          </p>
         </div>
       </footer>
     </div>
