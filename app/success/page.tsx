@@ -196,24 +196,35 @@ function SuccessContent() {
         <div className="download-grid">
           <div className="download-card">
             <div className="download-card-icon"><Monitor size={28} /></div>
-            <h3>{t.site_getapp_desktop}</h3>
-            <p>{t.site_getapp_desktop_desc}</p>
+            <h3>macOS</h3>
+            <p>Full desktop app with encrypted vault, local AI, and all features.</p>
             <a href="https://github.com/christopherlhammer11-ai/hammerlock/releases/latest/download/HammerLock-AI.dmg" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer">
-              <Download size={16} /> {t.site_getapp_download_mac}
+              <Download size={16} /> Download DMG
             </a>
-            <span className="download-meta">{t.site_getapp_mac_meta} &middot; Apple Silicon &amp; Intel</span>
+            <span className="download-meta">macOS 12+ &middot; Apple Silicon &amp; Intel</span>
           </div>
           <div className="download-card">
-            <div className="download-card-icon"><Globe size={28} /></div>
-            <h3>{t.site_getapp_web}</h3>
-            <p>{t.site_getapp_web_desc}</p>
-            <span className="download-meta">{t.site_getapp_web_meta}</span>
+            <div className="download-card-icon"><Monitor size={28} /></div>
+            <h3>Windows</h3>
+            <p>One-click installer for Windows 10/11 with all desktop features.</p>
+            <a href="https://github.com/christopherlhammer11-ai/hammerlock/releases/latest/download/HammerLock-AI-Setup.exe" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer">
+              <Download size={16} /> Download EXE
+            </a>
+            <span className="download-meta">Windows 10+ &middot; 64-bit</span>
           </div>
           <div className="download-card">
-            <div className="download-card-icon"><Smartphone size={28} /></div>
-            <h3>{t.site_getapp_pwa}</h3>
-            <p>{t.site_getapp_pwa_desc}</p>
-            <span className="download-meta">{t.site_getapp_pwa_meta} &middot; Add to Home Screen</span>
+            <div className="download-card-icon"><Monitor size={28} /></div>
+            <h3>Linux</h3>
+            <p>AppImage or .deb package for Ubuntu, Fedora, and other distros.</p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+              <a href="https://github.com/christopherlhammer11-ai/hammerlock/releases/latest/download/HammerLock-AI.AppImage" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.8rem" }}>
+                <Download size={14} /> AppImage
+              </a>
+              <a href="https://github.com/christopherlhammer11-ai/hammerlock/releases/latest/download/HammerLock-AI.deb" className="btn-primary download-btn" target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.8rem" }}>
+                <Download size={14} /> .deb
+              </a>
+            </div>
+            <span className="download-meta">Ubuntu 20.04+ &middot; 64-bit</span>
           </div>
         </div>
       </div>
