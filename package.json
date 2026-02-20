@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "🔨🔐 HammerLock AI — your AI, your data, your rules. Privacy-first intelligence with local encryption and zero cloud dependency.",
   "type": "module",
-  "author": "HammerLock AI",
+  "author": { "name": "HammerLock AI", "email": "support@hammerlockai.com" },
   "license": "MIT",
   "main": "electron/main.js",
   "bin": {
