@@ -20,9 +20,10 @@
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
     "electron:dev": "electron .",
-    "electron:build": "prisma generate && next build && electron-builder --mac --win",
+    "electron:build": "prisma generate && next build && electron-builder --mac --win --linux",
     "electron:build:mac": "prisma generate && next build && electron-builder --mac",
-    "electron:build:win": "prisma generate && next build && electron-builder --win"
+    "electron:build:win": "prisma generate && next build && electron-builder --win",
+    "electron:build:linux": "prisma generate && next build && electron-builder --linux"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
@@ -130,11 +131,21 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "public/hammerlock-logo.png"
+      "icon": "public/hammerlock-logo.png",
+      "artifactName": "HammerLock-AI-Setup.${ext}"
     },
     "nsis": {
       "oneClick": true,
-      "perMachine": false
+      "perMachine": false,
+      "artifactName": "HammerLock-AI-Setup.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "public/hammerlock-logo.png",
+      "category": "Office",
+      "artifactName": "HammerLock-AI.${ext}",
+      "synopsis": "Local-first AI with encrypted memory",
+      "description": "HammerLock AI — Your AI. Your Data. Your Rules."
     }
   }
 }

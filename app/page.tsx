@@ -478,13 +478,29 @@ export default function LandingPage() {
             {t.site_plan_need_more}
           </h3>
           <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
-            <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <strong>{t.site_plan_booster}</strong> <span style={{ color: 'var(--accent)' }}>{t.site_plan_booster_price}</span>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{t.site_plan_booster_desc}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t.site_plan_booster_desc}</div>
+              <button
+                onClick={() => handleCheckout('booster-monthly')}
+                disabled={checkoutLoading !== null}
+                className="cta-main"
+                style={{ marginTop: 4, padding: '6px 18px', fontSize: '0.85rem' }}
+              >
+                {checkoutLoading === 'booster-monthly' ? t.site_plan_loading : 'Add Booster'}
+              </button>
             </div>
-            <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <strong>{t.site_plan_power}</strong> <span style={{ color: 'var(--accent)' }}>{t.site_plan_power_price}</span>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{t.site_plan_power_desc}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t.site_plan_power_desc}</div>
+              <button
+                onClick={() => handleCheckout('power-monthly')}
+                disabled={checkoutLoading !== null}
+                className="cta-main"
+                style={{ marginTop: 4, padding: '6px 18px', fontSize: '0.85rem' }}
+              >
+                {checkoutLoading === 'power-monthly' ? t.site_plan_loading : 'Add Power Pack'}
+              </button>
             </div>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
