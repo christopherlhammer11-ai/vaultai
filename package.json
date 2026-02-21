@@ -14,7 +14,7 @@
     "lint": "echo 'Add linting later'",
     "test": "echo 'No tests yet' && exit 0",
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",

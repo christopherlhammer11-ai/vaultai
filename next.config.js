@@ -7,7 +7,6 @@ const nextConfig = {
       'pdf-parse',
       '@napi-rs/canvas',
       'pdfjs-dist',
-      '@prisma/client',
     ],
   },
   output: 'standalone',

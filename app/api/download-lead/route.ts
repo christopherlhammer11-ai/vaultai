@@ -1,5 +1,12 @@
+/**
+ * POST /api/download-lead
+ *
+ * Database-free download lead capture.
+ * Logs the lead for now — can be wired to a mailing list API (Mailchimp,
+ * Resend, etc.) later. No Prisma/SQLite dependency.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,14 +21,11 @@ export async function POST(req: NextRequest) {
 
     const normalized = email.trim().toLowerCase();
 
-    // Store the lead (allow duplicate emails — tracks multiple downloads)
-    await prisma.downloadLead.create({
-      data: {
-        email: normalized,
-        source: source || "get-app",
-        platform: platform || null,
-      },
-    });
+    // Log the lead (visible in Vercel function logs)
+    // TODO: Wire to Mailchimp / Resend / ConvertKit for email capture
+    console.log(
+      `[download-lead] ${normalized} | source=${source || "get-app"} | platform=${platform || "unknown"} | ${new Date().toISOString()}`
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {
